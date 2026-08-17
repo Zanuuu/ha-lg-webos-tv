@@ -63,19 +63,43 @@ class Historique:
             lignes = co.execute(
                 "SELECT * FROM ecritures ORDER BY id DESC LIMIT ?", (limite,)
             ).fetchall()
-        return [
-            {
-                "id": ligne["id"],
-                "horodatage": ligne["horodatage"],
-                "entree_id": ligne["entree_id"],
-                "categorie": ligne["categorie"],
-                "cle": ligne["cle"],
-                "ancienne": json.loads(ligne["ancienne"]),
-                "nouvelle": json.loads(ligne["nouvelle"]),
-                "mode_image": ligne["mode_image"],
-            }
-            for ligne in lignes
-        ]
+        return [self._ligne_vers_dict(l) for l in lignes]
 
     async def lister(self, limite: int = 100) -> list[dict]:
         return await asyncio.to_thread(self._lister_sync, limite)
+
+    @staticmethod
+    def _ligne_vers_dict(ligne: sqlite3.Row) -> dict:
+        return {
+            "id": ligne["id"],
+            "horodatage": ligne["horodatage"],
+            "entree_id": ligne["entree_id"],
+            "categorie": ligne["categorie"],
+            "cle": ligne["cle"],
+            "ancienne": json.loads(ligne["ancienne"]),
+            "nouvelle": json.loads(ligne["nouvelle"]),
+            "mode_image": ligne["mode_image"],
+        }
+
+    def _recuperer_sync(self, id_: int) -> dict | None:
+        with self._connexion() as co:
+            ligne = co.execute(
+                "SELECT * FROM ecritures WHERE id = ?", (id_,)
+            ).fetchone()
+        return self._ligne_vers_dict(ligne) if ligne else None
+
+    async def recuperer(self, id_: int) -> dict | None:
+        return await asyncio.to_thread(self._recuperer_sync, id_)
+
+    def _lister_depuis_sync(self, horodatage: float) -> list[dict]:
+        with self._connexion() as co:
+            lignes = co.execute(
+                "SELECT * FROM ecritures WHERE horodatage > ? ORDER BY horodatage DESC",
+                (horodatage,),
+            ).fetchall()
+        return [self._ligne_vers_dict(l) for l in lignes]
+
+    async def lister_depuis(self, horodatage: float) -> list[dict]:
+        """Écritures postérieures à `horodatage`, les plus récentes d'abord —
+        base du retour à un instant donné (restauration.revenir_a)."""
+        return await asyncio.to_thread(self._lister_depuis_sync, horodatage)

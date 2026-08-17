@@ -64,7 +64,10 @@ CORRESPONDANCES = {
         "note": "Valeurs API documentées : low/medium/high1/high2/mediumHavingLevel ; valeur actuelle relevée : high2 (2.2 probable). Libellés affichés à relever sur photo.",
     },
     "image.parametres-avances.luminosite.plage-video": {
-        "categorie": "picture", "cle": "blackLevel", "acces": RW,
+        # Écriture testée le 17/08/2026 (choix simple auto/low/high) :
+        # refusée, la clé attend l'objet complet par type de signal, pas une
+        # valeur simple. RO tant que le bon format n'est pas établi.
+        "categorie": "picture", "cle": "blackLevel", "acces": RO,
         "note": "L'API renvoie un objet par type de signal (auto/low/high).",
     },
     "image.parametres-avances.luminosite.protection-yeux": {
@@ -115,7 +118,10 @@ CORRESPONDANCES = {
         "note": "Valeurs API documentées : « 2.5 » à « 100 » par pas ; whiteBalanceIre10pt pour la méthode 10 points.",
     },
     "image.parametres-avances.couleur.balance-blancs.luminosite-signal-max": {
-        "categorie": "picture", "cle": "whiteBalanceLuminance", "acces": RW,
+        # Écriture testée le 17/08/2026 (valeur relevée, 130) : refusée
+        # (« Out of range or interval »). Rapprochement d'origine spéculatif ;
+        # RO tant que la clé/plage exacte n'est pas établie.
+        "categorie": "picture", "cle": "whiteBalanceLuminance", "acces": RO,
         "note": "Rapprochement présumé ; à confirmer par test.",
     },
     "image.parametres-avances.couleur.balance-blancs.luminosite-signal-selectionne": {
@@ -217,8 +223,13 @@ CORRESPONDANCES = {
         "note": "Rapprochement présumé ; à confirmer par test.",
     },
     "general.systeme.lieu.pays": {
-        "categorie": "option", "cle": "country", "acces": RW,
-        "note": "Valeur relevée : FRA. Écriture risquée (reconfiguration des services) : à ne tester qu'avec prudence.",
+        # Écriture testée le 17/08/2026, y compris avec la valeur déjà
+        # active : déclenche une réinitialisation en cascade de réglages liés
+        # à la région (mode d'image, luminosité, sortie audio, guide audio,
+        # contrôle parental, économie d'énergie). RO tant qu'aucune méthode
+        # sûre n'est identifiée. Détails : docs/incidents-ecriture.md.
+        "categorie": "option", "cle": "country", "acces": RO,
+        "note": "Valeur relevée : FRA.",
     },
     "general.systeme.lieu.code-postal": {
         "categorie": "option", "cle": "zipcode", "acces": RW,

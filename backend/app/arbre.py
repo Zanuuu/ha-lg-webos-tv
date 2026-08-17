@@ -59,6 +59,30 @@ class EntreeNonPilotable(Exception):
     pass
 
 
+def _est_pilotable_api(api: dict | None) -> bool:
+    return bool(
+        api and api.get("acces") == "lecture_ecriture" and api.get("cle")
+        and "<" not in api["cle"]  # clé générique (whiteBalance<Couleur>…)
+    )
+
+
+def entrees_pilotables() -> list[dict]:
+    """Entrées de l'arbre accessibles en écriture par l'API, base des presets."""
+    return [e for e in par_id().values() if _est_pilotable_api(e.get("api"))]
+
+
+def mode_dependant(categorie: str, cle: str) -> bool:
+    """Les réglages d'image sont propres au mode d'image actif — sauf la
+    sélection du mode elle-même, qui n'est pas propre à un mode."""
+    return categorie == "picture" and cle != "pictureMode"
+
+
+# Clés dont l'API attend un booléen JSON natif plutôt que "on"/"off" : écrire
+# "off" y est silencieusement refusé par le téléviseur (constaté le
+# 17/08/2026 sur parentalControl : « No matched extended item »).
+CLES_BOOLEENNES_NATIVES = {("lock", "parentalControl")}
+
+
 def preparer_ecriture(entree_id: str, valeur: Any) -> tuple[str, str, Any]:
     """Vérifie qu'une écriture est possible et valide, renvoie
     (catégorie API, clé API, valeur)."""
@@ -66,11 +90,7 @@ def preparer_ecriture(entree_id: str, valeur: Any) -> tuple[str, str, Any]:
     if entree is None:
         raise EntreeInconnue(entree_id)
     api = entree.get("api") or {}
-    if api.get("acces") != "lecture_ecriture" or not api.get("cle"):
-        raise EntreeNonPilotable(entree_id)
-    if "<" in api["cle"]:
-        # Clé générique (ex. whiteBalance<Couleur>) : l'écriture directe par
-        # entrée n'est pas possible, passer par l'API catégorie/clé.
+    if not _est_pilotable_api(api):
         raise EntreeNonPilotable(entree_id)
 
     bornes = entree.get("bornes")
@@ -88,8 +108,11 @@ def preparer_ecriture(entree_id: str, valeur: Any) -> tuple[str, str, Any]:
             raise ValeurInvalide(
                 f"{valeur!r} absent des choix {valeurs_api}")
 
-    if entree.get("controle") == "interrupteur" and isinstance(valeur, bool):
-        # L'API webOS attend "on"/"off" pour les interrupteurs.
+    if entree.get("controle") == "interrupteur" and isinstance(valeur, bool) \
+            and (api["categorie"], api["cle"]) not in CLES_BOOLEENNES_NATIVES:
+        # L'API webOS attend "on"/"off" pour la plupart des interrupteurs —
+        # sauf les quelques clés (ci-dessous) dont la valeur est un booléen
+        # JSON natif, confirmé par test contre le téléviseur.
         valeur = "on" if valeur else "off"
 
     return api["categorie"], api["cle"], valeur

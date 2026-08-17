@@ -4,11 +4,13 @@ import { indexerParId } from './arbre.js'
 import BarreLaterale from './components/BarreLaterale.jsx'
 import Entete from './components/Entete.jsx'
 import PanneauMenu from './components/PanneauMenu.jsx'
+import PanneauService from './components/PanneauService.jsx'
 import { useEtatTv } from './hooks/useEtatTv.js'
 
 export default function App() {
   const { arbre, reglages, connexion, modeImage, ecrire } = useEtatTv()
   const [chemin, setChemin] = useState([])
+  const [vue, setVue] = useState('reglages')
 
   const index = useMemo(() => (arbre ? indexerParId(arbre) : null), [arbre])
 
@@ -26,8 +28,8 @@ export default function App() {
     setChemin((c) => [...(c.length > 0 ? c : [sections[0]]), entree])
   }
 
-  function revenir(index) {
-    setChemin((c) => c.slice(0, index + 1))
+  function revenir(profondeur) {
+    setChemin((c) => c.slice(0, profondeur + 1))
   }
 
   return (
@@ -36,16 +38,24 @@ export default function App() {
         connexion={connexion}
         modeImage={modeImage}
         entreeModeImage={index?.get('image.mode-selection')}
+        vue={vue}
+        onChangerVue={setVue}
       />
       <div className="corps">
-        <BarreLaterale sections={sections} sectionActiveId={sectionActiveId} onChoisir={choisirSection} />
-        <PanneauMenu
-          chemin={cheminEffectif}
-          reglages={reglages}
-          onEcrire={ecrire}
-          onEntrer={entrer}
-          onRevenir={revenir}
-        />
+        {vue === 'service' ? (
+          <PanneauService index={index} />
+        ) : (
+          <>
+            <BarreLaterale sections={sections} sectionActiveId={sectionActiveId} onChoisir={choisirSection} />
+            <PanneauMenu
+              chemin={cheminEffectif}
+              reglages={reglages}
+              onEcrire={ecrire}
+              onEntrer={entrer}
+              onRevenir={revenir}
+            />
+          </>
+        )}
       </div>
     </div>
   )

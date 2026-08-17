@@ -8,9 +8,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import arbre
+from . import arbre, restauration
 from .historique import Historique
-from .televiseur import ConnexionTvPerdue, Televiseur
+from .presets import PresetExistant, PresetInconnu, Presets, capturer_snapshot
+from .televiseur import Televiseur
 
 log = logging.getLogger(__name__)
 
@@ -29,12 +30,29 @@ class EcritureBrute(BaseModel):
     valeur: Any
 
 
+class CreerPreset(BaseModel):
+    nom: str
+    entrees: list[str] | None = None  # sous-ensemble d'ids ; None = tout ce qui est pilotable
+
+
+class ImporterPreset(BaseModel):
+    nom: str
+    entrees: list[dict[str, Any]]
+    remplacer: bool = False
+
+
+class RevenirA(BaseModel):
+    horodatage: float
+
+
 def creer_app(televiseur: Televiseur | None = None,
-              historique: Historique | None = None) -> FastAPI:
+              historique: Historique | None = None,
+              presets: Presets | None = None) -> FastAPI:
     @asynccontextmanager
     async def cycle_de_vie(app: FastAPI):
         app.state.televiseur = televiseur or Televiseur()
         app.state.historique = historique or Historique()
+        app.state.presets = presets or Presets()
         await app.state.televiseur.demarrer()
         try:
             yield
@@ -61,43 +79,104 @@ def creer_app(televiseur: Televiseur | None = None,
         tv: Televiseur = app.state.televiseur
         return tv.instantane()
 
-    async def _ecrire(entree_id: str | None, categorie: str, cle: str,
-                      valeur: Any) -> dict:
-        tv: Televiseur = app.state.televiseur
-        try:
-            resultat = await tv.ecrire(categorie, cle, valeur)
-        except ConnexionTvPerdue:
-            raise HTTPException(503, "Téléviseur injoignable")
-        if resultat["confirme"]:
-            await app.state.historique.enregistrer(
-                entree_id, categorie, cle,
-                resultat["ancienne"], resultat["nouvelle"],
-                resultat["mode_image"])
-        return {"entree_id": entree_id, "categorie": categorie, "cle": cle,
-                **resultat}
+    def _lever_si_echec_ecriture(resultat: dict) -> None:
+        if resultat["ok"]:
+            return
+        raison = resultat.get("raison", "")
+        if raison == "téléviseur injoignable":
+            raise HTTPException(503, raison)
+        if raison.startswith("refusée par le téléviseur"):
+            raise HTTPException(400, raison)
 
     @app.post("/api/reglages/{entree_id}")
     async def ecrire_reglage(entree_id: str, corps: Ecriture) -> dict:
         try:
-            categorie, cle, valeur = arbre.preparer_ecriture(entree_id, corps.valeur)
+            resultat = await restauration.ecrire_par_entree(
+                app.state.televiseur, app.state.historique, entree_id, corps.valeur)
         except arbre.EntreeInconnue:
             raise HTTPException(404, f"Entrée inconnue : {entree_id}")
         except arbre.EntreeNonPilotable:
             raise HTTPException(400, f"Entrée non pilotable par l'API : {entree_id}")
         except arbre.ValeurInvalide as exc:
             raise HTTPException(400, f"Valeur invalide : {exc}")
-        return await _ecrire(entree_id, categorie, cle, valeur)
+        _lever_si_echec_ecriture(resultat)
+        return resultat
 
     @app.post("/api/reglages-bruts")
     async def ecrire_reglage_brut(corps: EcritureBrute) -> dict:
         # Accès direct catégorie/clé, sans validation par l'arbre : réservé
         # aux clés que l'arbre ne représente pas finement (tableaux de
         # balance des blancs, clés génériques).
-        return await _ecrire(None, corps.categorie, corps.cle, corps.valeur)
+        resultat = await restauration.ecrire(
+            app.state.televiseur, app.state.historique, None,
+            corps.categorie, corps.cle, corps.valeur)
+        _lever_si_echec_ecriture(resultat)
+        return resultat
 
     @app.get("/api/historique")
     async def lister_historique(limite: int = 100) -> list[dict]:
         return await app.state.historique.lister(limite)
+
+    @app.post("/api/historique/{id_}/annuler")
+    async def annuler_historique(id_: int) -> dict:
+        resultat = await restauration.annuler_ecriture(
+            app.state.televiseur, app.state.historique, id_)
+        if not resultat["ok"] and resultat.get("raison") == "entrée d'historique introuvable":
+            raise HTTPException(404, resultat["raison"])
+        return resultat
+
+    @app.post("/api/historique/revenir")
+    async def revenir_historique(corps: RevenirA) -> dict:
+        resultats = await restauration.revenir_a(
+            app.state.televiseur, app.state.historique, corps.horodatage)
+        return {"resultats": resultats}
+
+    @app.get("/api/presets")
+    async def lister_presets() -> list[dict]:
+        return await app.state.presets.lister()
+
+    @app.post("/api/presets")
+    async def creer_preset(corps: CreerPreset) -> dict:
+        tv: Televiseur = app.state.televiseur
+        snapshot = capturer_snapshot(tv.etat, tv.mode_image, corps.entrees)
+        if not snapshot:
+            raise HTTPException(
+                400, "Aucun réglage pilotable à capturer (sélection vide, ou "
+                     "valeurs pas encore lues depuis le téléviseur)")
+        try:
+            return await app.state.presets.sauvegarder(corps.nom, snapshot)
+        except PresetExistant:
+            raise HTTPException(409, f"Un preset nommé « {corps.nom} » existe déjà")
+
+    @app.get("/api/presets/{nom}")
+    async def obtenir_preset(nom: str) -> dict:
+        preset = await app.state.presets.recuperer(nom)
+        if preset is None:
+            raise HTTPException(404, f"Preset inconnu : {nom}")
+        return preset
+
+    @app.delete("/api/presets/{nom}")
+    async def supprimer_preset(nom: str) -> dict:
+        if not await app.state.presets.supprimer(nom):
+            raise HTTPException(404, f"Preset inconnu : {nom}")
+        return {"supprime": nom}
+
+    @app.post("/api/presets/import")
+    async def importer_preset(corps: ImporterPreset) -> dict:
+        try:
+            return await app.state.presets.sauvegarder(
+                corps.nom, corps.entrees, remplacer=corps.remplacer)
+        except PresetExistant:
+            raise HTTPException(
+                409, f"Un preset nommé « {corps.nom} » existe déjà (utilisez remplacer)")
+
+    @app.post("/api/presets/{nom}/appliquer")
+    async def appliquer_preset(nom: str) -> dict:
+        try:
+            return await restauration.appliquer_preset(
+                app.state.televiseur, app.state.historique, app.state.presets, nom)
+        except PresetInconnu:
+            raise HTTPException(404, f"Preset inconnu : {nom}")
 
     @app.websocket("/api/ws")
     async def canal(ws: WebSocket) -> None:

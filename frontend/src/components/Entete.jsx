@@ -6,7 +6,7 @@ const LIBELLES_CONNEXION = {
   connexion: 'Connexion…',
 }
 
-export default function Entete({ connexion, modeImage, entreeModeImage }) {
+export default function Entete({ connexion, modeImage, entreeModeImage, vue, onChangerVue }) {
   const libelleMode = entreeModeImage && modeImage
     ? libelleChoix(entreeModeImage, modeImage) || modeImage
     : null
@@ -20,6 +20,13 @@ export default function Entete({ connexion, modeImage, entreeModeImage }) {
           <span className="puce" />
           {LIBELLES_CONNEXION[connexion] || connexion}
         </span>
+        <button
+          type="button"
+          className="bouton-vue-service"
+          onClick={() => onChangerVue(vue === 'service' ? 'reglages' : 'service')}
+        >
+          {vue === 'service' ? '← Réglages' : 'Presets & historique'}
+        </button>
       </div>
     </header>
   )

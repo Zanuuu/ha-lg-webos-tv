@@ -1,9 +1,11 @@
 import asyncio
 
 import pytest
+from bscpylgtv.exceptions import PyLGTVCmdError
 
 from app.historique import Historique
 from app.main import creer_app
+from app.presets import Presets
 from app.televiseur import Televiseur
 
 
@@ -20,6 +22,9 @@ class FauxClient:
             "sound": {"soundMode": "standard", "eArcSupport": "on"},
         }
         self.rappels = {}
+        # Écritures que le téléviseur doit refuser, ex. {("picture", "gamma")}
+        # — simule une valeur hors plage ou une clé non acceptée.
+        self.refuser: set[tuple[str, str]] = set()
 
     async def subscribe(self, rappel, uri, payload):
         categorie = payload["category"]
@@ -34,6 +39,10 @@ class FauxClient:
             valeurs = self.valeurs.get(categorie, {})
             return {"settings": {k: valeurs[k] for k in payload["keys"] if k in valeurs}}
         if uri == "settings/setSystemSettings":
+            for cle in payload["settings"]:
+                if (categorie, cle) in self.refuser:
+                    raise PyLGTVCmdError({
+                        "payload": {"errorText": f"Out of range: {cle}"}})
             self.valeurs.setdefault(categorie, {}).update(payload["settings"])
             # Comme le vrai téléviseur : l'écriture déclenche la notification
             # d'abonnement (valeurs telles qu'écrites).
@@ -71,8 +80,13 @@ def historique(tmp_path):
 
 
 @pytest.fixture
-def application(televiseur, historique):
-    return creer_app(televiseur=televiseur, historique=historique)
+def presets(tmp_path):
+    return Presets(tmp_path / "presets.sqlite")
+
+
+@pytest.fixture
+def application(televiseur, historique, presets):
+    return creer_app(televiseur=televiseur, historique=historique, presets=presets)
 
 
 async def attendre(condition, delai=2.0):

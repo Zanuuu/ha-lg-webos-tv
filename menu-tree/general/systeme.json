@@ -193,10 +193,14 @@
           "api": {
             "categorie": "option",
             "cle": "country",
-            "acces": "lecture_ecriture"
+            "acces": "lecture_seule"
           },
           "notes": [
-            "[API] Valeur relevée : FRA. Écriture risquée (reconfiguration des services) : à ne tester qu'avec prudence."
+            "[API] Valeur relevée : FRA.",
+            "[API] Écriture testée le 17/08/2026, y compris avec la valeur déjà active (« FRA » -> « FRA ») : déclenche côté téléviseur une réinitialisation en cascade de réglages liés à la région (mode d'image basculé sur Éco, luminosité des pixels OLED, sortie audio numérique, guide audio, contrôle parental, fonction Économie d'énergie tous réinitialisés à leurs valeurs par défaut). Écriture désactivée dans ce service tant qu'aucune méthode sûre n'est identifiée. Détails : docs/incidents-ecriture.md."
+          ],
+          "a_verifier": [
+            "choix"
           ]
         },
         {

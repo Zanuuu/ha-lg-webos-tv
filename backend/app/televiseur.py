@@ -17,6 +17,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from bscpylgtv import WebOsClient
+from bscpylgtv.exceptions import PyLGTVCmdException
 
 from . import config
 
@@ -213,15 +214,25 @@ class Televiseur:
             raise ConnexionTvPerdue
         async with self._verrou_ecriture:
             mode_image = self.mode_image
-            ancienne = self.etat.get(categorie, {}).get(cle)
-            if ancienne is None:
-                lu = await self.lire(categorie, [cle])
-                ancienne = lu.get(cle)
-            await self.client.request(
-                "settings/setSystemSettings",
-                {"category": categorie, "settings": {cle: valeur}},
-            )
-            relue = (await self.lire(categorie, [cle])).get(cle)
+            try:
+                ancienne = self.etat.get(categorie, {}).get(cle)
+                if ancienne is None:
+                    lu = await self.lire(categorie, [cle])
+                    ancienne = lu.get(cle)
+                await self.client.request(
+                    "settings/setSystemSettings",
+                    {"category": categorie, "settings": {cle: valeur}},
+                )
+                relue = (await self.lire(categorie, [cle])).get(cle)
+            except PyLGTVCmdException as exc:
+                # Refus applicatif du téléviseur (valeur hors plage, clé non
+                # acceptée dans ce contexte…) : à distinguer d'une perte de
+                # connexion, l'appelant doit pouvoir continuer sur d'autres
+                # écritures (application de preset, retour arrière en lot).
+                message = getattr(exc, "message", exc)
+                if isinstance(message, dict):
+                    message = message.get("payload", {}).get("errorText", str(message))
+                raise EcritureRefusee(str(message)) from exc
             return {
                 "ancienne": ancienne,
                 "nouvelle": relue,
@@ -232,3 +243,8 @@ class Televiseur:
 
 class ConnexionTvPerdue(Exception):
     """Le téléviseur n'est pas joignable."""
+
+
+class EcritureRefusee(Exception):
+    """Le téléviseur a refusé l'écriture (valeur hors plage, clé non
+    acceptée dans ce contexte, etc.)."""

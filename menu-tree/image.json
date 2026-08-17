@@ -577,7 +577,8 @@
               "notes": [
                 "Vous pouvez utiliser cette fonction lorsque vous regardez du contenu via une entrée externe.",
                 "[API] L'API renvoie un objet par type de signal (auto/low/high).",
-                "[firmware] Le firmware utilise aussi les alias limited/full pour certains contextes."
+                "[firmware] Le firmware utilise aussi les alias limited/full pour certains contextes.",
+                "[API] Écriture testée le 17/08/2026 avec l'une des valeurs de la liste ci-dessous (choix simple) : refusée, car la clé attend l'objet complet par type de signal, pas une valeur simple. Écriture désactivée dans ce service jusqu'à ce que le bon format soit établi. Détails : docs/incidents-ecriture.md."
               ],
               "controle": "liste",
               "visibilite": {
@@ -590,7 +591,7 @@
               "api": {
                 "categorie": "picture",
                 "cle": "blackLevel",
-                "acces": "lecture_ecriture"
+                "acces": "lecture_seule"
               },
               "choix": [
                 {
@@ -1053,6 +1054,9 @@
                   ],
                   "libelle": "Afficher la luminosité au niveau de signal maximal (%)",
                   "description": "Ajuste la luminance du niveau de signal le plus élevé de 100 %.",
+                  "notes": [
+                    "[API] Écriture testée le 17/08/2026 avec la valeur relevée (130) : refusée par le téléviseur (« Out of range or interval »). Rapprochement d'origine spéculatif (marqué « présumé, à confirmer » en phase 2) ; la clé ou la plage exacte reste à établir. Écriture désactivée dans ce service. Détails : docs/incidents-ecriture.md."
+                  ],
                   "controle": "curseur",
                   "source": {
                     "guide": "6.2.5"
@@ -1064,7 +1068,7 @@
                   "api": {
                     "categorie": "picture",
                     "cle": "whiteBalanceLuminance",
-                    "acces": "lecture_ecriture"
+                    "acces": "lecture_seule"
                   },
                   "notes": [
                     "[API] Rapprochement présumé ; à confirmer par test."
