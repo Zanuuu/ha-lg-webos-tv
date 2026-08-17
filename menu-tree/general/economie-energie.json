@@ -1,0 +1,62 @@
+{
+  "id": "general.economie-energie",
+  "chemin": ["Général"],
+  "libelle": "Économie d'énergie",
+  "description": "Permet de réduire la consommation électrique en réglant la luminosité de l’écran.",
+  "controle": "sous-menu",
+  "source": { "guide": "6.14" },
+  "enfants": [
+    {
+      "id": "general.economie-energie.fonction-economie-energie",
+      "chemin": ["Général", "Économie d'énergie"],
+      "libelle": "Fonction Économie d'énergie",
+      "description": "",
+      "notes": [
+        "Les éléments pouvant être configurés varient selon les modèles.",
+        "Si vous utilisez la fonction Fonction Économie d'énergie, la luminosité du périphérique sera modifiée."
+      ],
+      "controle": "liste",
+      "choix": [
+        { "libelle": "Auto", "description": "Le capteur du produit détecte l'éclairage ambiant et règle automatiquement la luminosité de l'écran." },
+        { "libelle": "Désactivé", "description": "Désactive l'option Fonction Économie d'énergie." },
+        { "libelle": "Minimum", "description": "Utilisez la fonction d'économie d'énergie selon l'option Fonction Économie d'énergie définie sur le périphérique." },
+        { "libelle": "Moyen", "description": "Utilisez la fonction d'économie d'énergie selon l'option Fonction Économie d'énergie définie sur le périphérique." },
+        { "libelle": "Maximum", "description": "Utilisez la fonction d'économie d'énergie selon l'option Fonction Économie d'énergie définie sur le périphérique." }
+      ],
+      "source": { "guide": "6.14" }
+    },
+    {
+      "id": "general.economie-energie.luminosite-minimale",
+      "chemin": ["Général", "Économie d'énergie"],
+      "libelle": "Luminosité minimale",
+      "description": "Vous pouvez régler le degré d'obscurité de l'écran lorsque l'option Fonction Économie d'énergie est définie sur Auto.",
+      "controle": "curseur",
+      "visibilite": { "condition_texte": "Fonction Économie d'énergie définie sur Auto." },
+      "source": { "guide": "6.14" },
+      "a_verifier": ["controle", "bornes"]
+    },
+    {
+      "id": "general.economie-energie.arret-auto",
+      "chemin": ["Général", "Économie d'énergie"],
+      "libelle": "Arrêt auto",
+      "description": "Lorsque le périphérique est allumé, il s'éteint automatiquement si vous n'appuyez sur aucun bouton pendant la durée définie.",
+      "notes": [
+        "Certains modèles ne sont pas pris en charge."
+      ],
+      "controle": "liste",
+      "source": { "guide": "6.14" },
+      "a_verifier": ["choix"]
+    },
+    {
+      "id": "general.economie-energie.ecran-desactive",
+      "chemin": ["Général", "Économie d'énergie"],
+      "libelle": "Écran désactivé",
+      "description": "L’écran est désactivé et seul le son est diffusé.\nAppuyez sur n’importe quel bouton à l’exception des boutons de mise sous tension et de volume pour rallumer l’écran.",
+      "notes": [
+        "Il peut ne pas être pris en charge, selon l'application ou la fonction en cours d'exécution."
+      ],
+      "controle": "action",
+      "source": { "guide": "6.14" }
+    }
+  ]
+}

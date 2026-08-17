@@ -1,0 +1,356 @@
+{
+  "id": "general.optimiseur-de-jeu",
+  "chemin": ["Général"],
+  "libelle": "Optimiseur de jeu",
+  "description": "Lorsque vous jouez avec une console de jeu vidéo, configurez les fonctionnalités afin de bénéficier d'une expérience immersive.",
+  "notes": [
+    "Fonctionne avec les entrées HDMI uniquement.",
+    "Si vous définissez Mode Image/Mode du son sur un autre mode que Optimiseur de jeu, certains éléments de Optimiseur de jeu ne peuvent pas être définis.",
+    "Si vous réglez cette fonctionnalité sur Activé, vous ne pourrez pas modifier certains paramètres vidéo.",
+    "Si Optimiseur de jeu est défini sur Activé, un retard audio peut survenir si vous définissez Sortie son sur Périphérique Bluetooth/Haut-parleurs WiSA/Périphérique de sortie optique/Périphérique HDMI(ARC).",
+    "Les éléments pouvant être configurés varient selon les modèles."
+  ],
+  "controle": "sous-menu",
+  "source": { "guide": "6.7" },
+  "enfants": [
+    {
+      "id": "general.optimiseur-de-jeu.activer-la-fonction",
+      "chemin": ["Général", "Optimiseur de jeu"],
+      "libelle": "Optimiseur de jeu",
+      "description": "Configurez les fonctionnalités afin de bénéficier d'une expérience immersive lorsque vous jouez avec une console de jeu vidéo.",
+      "controle": "interrupteur",
+      "source": { "guide": "6.7" },
+      "a_verifier": ["libelle", "description"]
+    },
+    {
+      "id": "general.optimiseur-de-jeu.jeux",
+      "chemin": ["Général", "Optimiseur de jeu"],
+      "libelle": "Jeux",
+      "description": "",
+      "controle": "sous-menu",
+      "source": { "guide": "6.7" },
+      "enfants": [
+        {
+          "id": "general.optimiseur-de-jeu.jeux.genre-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Genre du jeu",
+          "description": "Vous pouvez optimiser l'écran en fonction du type de jeu.",
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.motion-oled",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Motion OLED/OLED Motion Pro",
+          "description": "Pour obtenir une vidéo plus claire, éliminez les images rémanentes.",
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["libelle", "controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.reduire-lumiere-bleue",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Réduire la lumière bleue",
+          "description": "Vous pouvez régler l'émission de lumière bleue pour ne pas vous fatiguer les yeux lorsque vous regardez l'écran.",
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.mode-piece-sombre",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Mode pièce sombre",
+          "description": "Vous pouvez régler la luminosité de tout l'écran pour réduire la fatigue oculaire dans un environnement sombre ou lorsque vous regardez l'écran pendant une longue période.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.limiter-retard-affichage",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Limiter le retard d'affichage",
+          "description": "Réduisez le délai d'entrée en fonction du signal d'image.",
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.tableau-de-bord-de-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Tableau de bord de jeu",
+          "description": "Appuyez sur le bouton Paramètres de la télécommande pendant un jeu pour afficher le Tableau de bord de jeu.Définissez-le sur Désactivé pour l'afficher comme Paramètres rapides pendant un jeu.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" }
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.vrr",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "VRR",
+          "description": "Cela réduit le cisaillement de l'écran et les délais de transmission lorsque vous jouez à un jeu.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.vrr-et-g-sync",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "VRR et G-Sync",
+          "description": "La technologie d'affichage Adaptive Sync de NVIDIA ajuste les images afin de minimiser les déchirures et les saccades de l'écran.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.quick-frame-transport",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Quick Frame Transport",
+          "description": "Réduisez le délai d'entrée vidéo pour une sortie vidéo plus rapide.",
+          "notes": [
+            "Fonctionne uniquement avec les entrées qui prennent en charge Quick Frame Transport.",
+            "Certaines résolutions peuvent ne pas être prises en charge."
+          ],
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" }
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.amd-freesync-premium",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "AMD FreeSync Premium",
+          "description": "La technologie d'affichage Adaptive Sync d'AMD ajuste le taux d'insertion d'images afin de réduire les arrêts et les saccades de l'écran.",
+          "notes": [
+            "Le modèle LED/QNED peut être configuré comme suit : Élevé (90–120 Hz) ou Large (48–120 Hz).L'écran peut scintiller dans certains environnements de jeu.Dans ce cas, réglez-le sur Élevé."
+          ],
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.mode-144hz",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Mode 144 Hz/Mode 165 Hz",
+          "description": "L'écran est plus net lorsque vous jouez.",
+          "notes": [
+            "Cela fonctionne uniquement avec les entrées de jeu ou PC qui prennent en charge le taux de rafraîchissement en Hz correspondant."
+          ],
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["libelle", "presence"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.allm",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "ALLM",
+          "description": "Le périphérique passera automatiquement en mode de faible latence si cette fonction est activée pendant que vous jouez à des jeux.Dans ce cas, certains paramètres de l'image du périphérique peuvent ne pas être appliqués.",
+          "notes": [
+            "Le périphérique connecté doit prendre en charge ce service."
+          ],
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" }
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.ajuster-zones-sombres",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Ajuster les zones sombres",
+          "description": "Lorsque les fonctionnalités VRR, VRR et G-Sync ou AMD FreeSync Premium sont définies sur Activé, vous pouvez calibrer la luminosité des zones sombres.",
+          "notes": [
+            "Cela peut ne pas fonctionner normalement selon les fonctionnalités ou paramètres de la console de jeux ou du PC connecté."
+          ],
+          "controle": "curseur",
+          "visibilite": { "condition_texte": "VRR, VRR et G-Sync ou AMD FreeSync Premium sur Activé." },
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.couleur-de-menu",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Couleur de menu",
+          "description": "La couleur du menu de Optimiseur de jeu et de Tableau de bord de jeu peut être modifiée.",
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.jeux.guide-utilisateur",
+          "chemin": ["Général", "Optimiseur de jeu", "Jeux"],
+          "libelle": "Guide de l'utilisateur",
+          "description": "Allez à l'application Guide de l'utilisateur.",
+          "controle": "action",
+          "source": { "guide": "6.7" }
+        }
+      ]
+    },
+    {
+      "id": "general.optimiseur-de-jeu.image",
+      "chemin": ["Général", "Optimiseur de jeu"],
+      "libelle": "Image",
+      "description": "",
+      "controle": "sous-menu",
+      "source": { "guide": "6.7" },
+      "enfants": [
+        {
+          "id": "general.optimiseur-de-jeu.image.balance-des-noirs",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Balance des noirs",
+          "description": "Vous pouvez régler les zones sombres.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.balance-des-blancs",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Balance des blancs",
+          "description": "Vous pouvez régler les zones claires.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.contraste-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Contraste du jeu",
+          "description": "Permet de régler le contraste entre les zones claires et les zones sombres de l’image.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.niveau-noir-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Niveau de noir du jeu",
+          "description": "Permet de régler la luminosité globale de l’écran.\nVous pouvez utiliser les paramètres de Niveau de noir du jeu spécialement pour définir la partie sombre de l'image.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.ajuster-nettete-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Ajuster la netteté du jeu",
+          "description": "Permet de régler la netteté de l’image.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.profondeur-couleur-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Profondeur de couleur du jeu",
+          "description": "Permet d’atténuer ou de renforcer les couleurs qui s’affichent à l’écran.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.mappage-tons-dynamiques",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Mappage des tons dynamiques",
+          "description": "Paramètres adéquats de contraste en fonction de la luminosité des images du contenu HDR.",
+          "controle": "interrupteur",
+          "visibilite": { "condition_texte": "Contenu HDR." },
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "visibilite"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.reinitialisation",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Réinitialisation",
+          "description": "Vous pouvez réinitialiser les paramètres.",
+          "controle": "action",
+          "source": { "guide": "6.7" }
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.format-image-large",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Format d'image large",
+          "description": "Prend en charge les résolutions avec un rapport d'écran de 21:9 ou 32:9.",
+          "notes": [
+            "Cela ne fonctionne que lorsque le jeu ou l'entrée PC prend en charge un rapport d'écran 21:9 ou 32:9.",
+            "Pour afficher l'écran dans le rapport d'écran sélectionné, la résolution doit être configurée pour correspondre au rapport d'écran souhaité, même sur le PC connecté. 21:9 : 3840 × 1600 (signaux 60 Hz uniquement), 2560 × 1080 ; 32:9 : 3840 × 1080."
+          ],
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.position-ecran",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Position de l'écran",
+          "description": "Vous pouvez modifier la position de l'écran lorsque vous le définissez sur un format grand écran.",
+          "controle": "liste",
+          "visibilite": { "condition_texte": "Format d'image large actif." },
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.image.parametres-image-avances",
+          "chemin": ["Général", "Optimiseur de jeu", "Image"],
+          "libelle": "Paramètres de l'image avancés",
+          "description": "Accédez à l'écran Image → Paramètres avancés.",
+          "controle": "action",
+          "source": { "guide": "6.7" }
+        }
+      ]
+    },
+    {
+      "id": "general.optimiseur-de-jeu.son",
+      "chemin": ["Général", "Optimiseur de jeu"],
+      "libelle": "Son",
+      "description": "",
+      "controle": "sous-menu",
+      "source": { "guide": "6.7" },
+      "enfants": [
+        {
+          "id": "general.optimiseur-de-jeu.son.son-ai-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Son"],
+          "libelle": "Son AI du jeu",
+          "description": "Permet d’optimiser le son pour les jeux.",
+          "notes": [
+            "Ce paramètre s'applique uniquement aux haut-parleurs internes de l'appareil ou aux barres de son LG prenant en charge Partage du mode son du téléviseur."
+          ],
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.son.egaliseur-du-jeu",
+          "chemin": ["Général", "Optimiseur de jeu", "Son"],
+          "libelle": "Égaliseur du jeu",
+          "description": "Le son peut être ajusté en augmentant ou en diminuant certaines bandes de fréquences du signal vocal.",
+          "controle": "curseur",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["controle", "bornes"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.son.dolby-atmos",
+          "chemin": ["Général", "Optimiseur de jeu", "Son"],
+          "libelle": "Dolby Atmos",
+          "description": "L'effet Dolby Atmos s'applique au contenu Dolby Atmos.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.7" }
+        },
+        {
+          "id": "general.optimiseur-de-jeu.son.sortie-son",
+          "chemin": ["Général", "Optimiseur de jeu", "Son"],
+          "libelle": "Sortie son",
+          "description": "Vous pouvez sélectionner un périphérique audio qui émet le son du périphérique.",
+          "notes": [
+            "Si vous avez sélectionné un périphérique audio de type USB lorsque vous jouez à des jeux sur un PC, remplacez le périphérique audio par Utiliser sur le PC dans le Commutateur.Le décalage du son peut être minimisé.Certains modèles ne sont pas pris en charge."
+          ],
+          "controle": "liste",
+          "source": { "guide": "6.7" },
+          "a_verifier": ["choix"]
+        },
+        {
+          "id": "general.optimiseur-de-jeu.son.parametres-son-avances",
+          "chemin": ["Général", "Optimiseur de jeu", "Son"],
+          "libelle": "Paramètres de son avancés",
+          "description": "Accédez à l'écran Son → Paramètres avancés.",
+          "controle": "action",
+          "source": { "guide": "6.7" }
+        }
+      ]
+    }
+  ]
+}

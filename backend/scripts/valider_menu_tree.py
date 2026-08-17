@@ -22,7 +22,7 @@ def main() -> int:
     erreurs = 0
     ids: dict[str, str] = {}
 
-    fichiers = sorted(p for p in ROOT.glob("*.json") if p.name not in ("schema.json", "index.json"))
+    fichiers = sorted(p for p in ROOT.rglob("*.json") if p.name not in ("schema.json", "index.json"))
     for path in fichiers:
         data = json.loads(path.read_text())
         for err in validator.iter_errors(data):

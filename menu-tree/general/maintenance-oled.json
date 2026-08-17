@@ -1,0 +1,73 @@
+{
+  "id": "general.maintenance-oled",
+  "chemin": ["Général"],
+  "libelle": "Maintenance OLED",
+  "description": "Fournit aux utilisateurs de modèles OLED divers services de maintenance premium.",
+  "controle": "sous-menu",
+  "source": { "guide": "6.8" },
+  "enfants": [
+    {
+      "id": "general.maintenance-oled.parametres-image-maintenance",
+      "chemin": ["Général", "Maintenance OLED"],
+      "libelle": "Paramètres de l'image de maintenance",
+      "description": "Cette option configure le mode d'écran adapté à vos habitudes de visionnage.\nLes fonctions Image → Mode Sélection et Général → Économie d'énergie ne peuvent pas être définies lors de l'utilisation des Paramètres de l'image de maintenance.",
+      "controle": "liste",
+      "choix": [
+        { "libelle": "Désactivé", "description": "Désactive l'option Paramètres de l'image de maintenance." },
+        { "libelle": "Mode Confort", "description": "L’image s’affiche avec un niveau de contraste, de luminosité et de netteté standard." },
+        { "libelle": "Mode Salle de spectacle", "description": "Image adéquate pour les films." },
+        { "libelle": "Mode Enfants", "description": "Cette option ajuste la lumière bleue pour adapter l'affichage de l'écran aux enfants." }
+      ],
+      "source": { "guide": "6.8" }
+    },
+    {
+      "id": "general.maintenance-oled.maintenance-ecran-oled",
+      "chemin": ["Général", "Maintenance OLED"],
+      "libelle": "Maintenance de l'écran OLED",
+      "description": "Avec Maintenance de l'écran OLED, vous pouvez régler les problèmes de qualité d’image liés à une rémanence de l’image lorsque l’écran est resté allumé pendant un certain temps.",
+      "controle": "sous-menu",
+      "source": { "guide": "6.8" },
+      "enfants": [
+        {
+          "id": "general.maintenance-oled.maintenance-ecran-oled.nettoyage-pixels",
+          "chemin": ["Général", "Maintenance OLED", "Maintenance de l'écran OLED"],
+          "libelle": "Nettoyage des pixels",
+          "description": "Règle les problèmes d'écran potentiels lorsque l'appareil est allumé pendant une période prolongée.\nL'étalonnage prend entre 10 minutes et 1 heure 30, selon le modèle.",
+          "notes": [
+            "Ne débranchez pas le cordon d'alimentation pendant que l'action est en cours.",
+            "La mise sous tension pendant l'étalonnage de la fonction Nettoyage des pixels annule l'opération."
+          ],
+          "controle": "action",
+          "source": { "guide": "6.8" }
+        },
+        {
+          "id": "general.maintenance-oled.maintenance-ecran-oled.deplacement-ecran",
+          "chemin": ["Général", "Maintenance OLED", "Maintenance de l'écran OLED"],
+          "libelle": "Déplacement de l'écran",
+          "description": "Cette option déplace légèrement l’écran à intervalles réguliers pour empêcher la rémanence de l’image sur l’écran.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.8" },
+          "a_verifier": ["controle"]
+        },
+        {
+          "id": "general.maintenance-oled.maintenance-ecran-oled.luminosite-logo",
+          "chemin": ["Général", "Maintenance OLED", "Maintenance de l'écran OLED"],
+          "libelle": "Ajuster la luminosité du logo",
+          "description": "Réglez la luminosité des images statiques telles que des logos au sein de contenus pour corriger de potentiels problèmes de qualité d'image.",
+          "controle": "liste",
+          "source": { "guide": "6.8" },
+          "a_verifier": ["controle", "choix"]
+        },
+        {
+          "id": "general.maintenance-oled.maintenance-ecran-oled.recommandations-maintenance",
+          "chemin": ["Général", "Maintenance OLED", "Maintenance de l'écran OLED"],
+          "libelle": "Recommandations relatives à la maintenance",
+          "description": "En analysant les habitudes de visualisation, cette fonctionnalité recommande les paramètres d'image optimale. Ceux-ci permettent de réduire la fatigue oculaire ou s'adaptent à l'environnement de visualisation.",
+          "controle": "interrupteur",
+          "source": { "guide": "6.8" },
+          "a_verifier": ["controle"]
+        }
+      ]
+    }
+  ]
+}

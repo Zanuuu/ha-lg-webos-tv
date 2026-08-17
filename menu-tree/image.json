@@ -238,8 +238,14 @@
                 "La désactivation de cette option Désactivé peut augmenter la consommation d’énergie."
               ],
               "controle": "liste",
+              "choix": [
+                { "libelle": "Désactivé", "description": "Permet de désactiver la fonction LED -Local Dimming." },
+                { "libelle": "Faible", "description": "Permet de modifier le taux de contraste." },
+                { "libelle": "Moyen", "description": "Permet de modifier le taux de contraste." },
+                { "libelle": "Élevé", "description": "Permet de modifier le taux de contraste." }
+              ],
               "source": { "guide": "6.2.4" },
-              "a_verifier": ["presence", "controle", "choix"]
+              "a_verifier": ["presence", "choix"]
             },
             {
               "id": "image.parametres-avances.luminosite.protection-yeux",
@@ -502,8 +508,15 @@
               "libelle": "TruMotion",
               "description": "Qualité adéquate des images en succession rapide.",
               "controle": "liste",
+              "choix": [
+                { "libelle": "Désactivé", "description": "Désactive TruMotion." },
+                { "libelle": "Mouvement cinématographique", "description": "Ajustez les saccades du mouvement sur l'écran pour que vous vous sentiez comme dans une salle de cinéma." },
+                { "libelle": "Naturel", "description": "Définissez des images avec beaucoup de mouvements pour obtenir un aspect naturel et clair." },
+                { "libelle": "Mouvement fluide", "description": "Adoucit les images en succession rapide." },
+                { "libelle": "Sélection de l'utilisateur", "description": "Permet de régler manuellement l'option TruMotion." }
+              ],
               "source": { "guide": "6.2.6" },
-              "a_verifier": ["controle", "choix"]
+              "a_verifier": ["choix"]
             }
           ]
         },

@@ -59,6 +59,23 @@ def parse_settings_list(ul: Tag) -> list[dict]:
         libelle = libelle_p.get_text(strip=True) if libelle_p else ""
         corps = texte(li, skip={"ul", "p"})
         item = {"libelle": libelle, "description": corps}
+        options_ul = li.find("ul", class_="list-note", recursive=False)
+        if options_ul:
+            options, options_notes = [], []
+            for opt_li in options_ul.find_all("li", recursive=False):
+                opt_texte = texte(opt_li, skip={"ul"})
+                premier = opt_li.find(["strong"])
+                # Une option est de la forme « <strong>Libellé</strong>: description ».
+                if premier and ":" in opt_texte and opt_texte.index(":") < 60:
+                    opt_libelle, _, opt_desc = opt_texte.partition(":")
+                    options.append({"libelle": opt_libelle.strip(),
+                                    "description": opt_desc.strip()})
+                else:
+                    options_notes.append(opt_texte)
+            if options:
+                item["options"] = options
+            if options_notes:
+                item.setdefault("notes_options", []).extend(options_notes)
         if notes_ul:
             item["notes"] = [texte(n) for n in notes_ul.find_all("li", recursive=False)]
         if sous_ul:
@@ -96,6 +113,8 @@ def main() -> None:
             "ancre": ancre,
             "chemins": [],
             "intro": "",
+            "etapes": [],
+            "notes": [],
             "reglages": [],
         }
         sections.append(current)
@@ -113,6 +132,22 @@ def main() -> None:
             if intro:
                 current["intro"] = intro
             break
+        # Étapes des séquences hors ligne de chemin (souvent la description
+        # de l'action ou des choix Activé/Désactivé).
+        for seq in fragment.find_all("ol", class_="seq-list"):
+            for li in seq.find_all("li", recursive=False):
+                if li.find("img", alt="Tous les paramètres") or li.find("img", alt="Paramètres"):
+                    continue
+                t = texte(li, skip={"ul"})
+                if t and not t.startswith("Appuyez sur"):
+                    current["etapes"].append(t)
+        # Notes de niveau section (hors settings-list) : conditions,
+        # limitations.
+        for note_ul in fragment.find_all("ul", class_="text-body-note"):
+            if note_ul.find_parent("ul", class_="settings-list"):
+                continue
+            for li in note_ul.find_all("li", recursive=False):
+                current["notes"].append(texte(li))
 
     DST.write_text(json.dumps(sections, indent=1, ensure_ascii=False) + "\n")
     n_reglages = sum(len(s["reglages"]) for s in sections)

@@ -1,0 +1,83 @@
+{
+  "id": "general.reseau",
+  "chemin": ["Général"],
+  "libelle": "Réseau",
+  "description": "Si vous configurez les paramètres du réseau, vous pouvez utiliser différents services (le contenu en ligne et les applications, par exemple).",
+  "controle": "sous-menu",
+  "source": { "guide": "6.11" },
+  "enfants": [
+    {
+      "id": "general.reseau.connexion-filaire",
+      "chemin": ["Général", "Réseau"],
+      "libelle": "Connexion filaire (Ethernet)",
+      "description": "Si le routeur connecté au réseau prend en charge la fonction DHCP, la connexion filaire de l'appareil et du routeur permettra de les connecter automatiquement au réseau.\nS'il ne prend pas en charge la configuration automatique, sélectionnez Modifier pour configurer manuellement votre connexion réseau.",
+      "notes": [
+        "Utilisez un câble LAN standard (Cat7 ou supérieur avec un connecteur RJ45, port 10 Base-T ou 100 Base-TX LAN)."
+      ],
+      "controle": "sous-menu",
+      "source": { "guide": "6.11" },
+      "a_verifier": ["controle", "choix"]
+    },
+    {
+      "id": "general.reseau.connexion-wifi",
+      "chemin": ["Général", "Réseau"],
+      "libelle": "Connexion Wi-Fi",
+      "description": "Lorsque la recherche de réseau est terminée, la liste des réseaux disponibles pour la connexion s’affiche.\nSélectionnez un réseau à connecter.Si votre routeur sans fil LAN est protégé par un mot de passe, saisissez le mot de passe configuré pour le routeur.",
+      "controle": "sous-menu",
+      "source": { "guide": "6.11" },
+      "a_verifier": ["libelle"],
+      "enfants": [
+        {
+          "id": "general.reseau.connexion-wifi.autres-parametres-reseau",
+          "chemin": ["Général", "Réseau", "Connexion Wi-Fi"],
+          "libelle": "Autres paramètres réseau",
+          "description": "",
+          "controle": "sous-menu",
+          "source": { "guide": "6.11" },
+          "enfants": [
+            {
+              "id": "general.reseau.connexion-wifi.autres-parametres-reseau.reseau-masque",
+              "chemin": ["Général", "Réseau", "Connexion Wi-Fi", "Autres paramètres réseau"],
+              "libelle": "Ajouter un réseau sans fil masqué",
+              "description": "Vous pouvez ajouter un réseau sans fil en saisissant le nom du réseau directement.",
+              "controle": "action",
+              "source": { "guide": "6.11" }
+            },
+            {
+              "id": "general.reseau.connexion-wifi.autres-parametres-reseau.wps-pbc",
+              "chemin": ["Général", "Réseau", "Connexion Wi-Fi", "Autres paramètres réseau"],
+              "libelle": "Connexion via WPS PBC",
+              "description": "Si le routeur sans fil auquel vous souhaitez vous connecter dispose d'une fonction WPS-PBC (Wi-Fi Protected Setup-Push Button Configuration), il vous suffit d'appuyer sur le bouton WPS-PBC du routeur sans fil pour vous connecter à ce dernier.",
+              "controle": "action",
+              "source": { "guide": "6.11" }
+            },
+            {
+              "id": "general.reseau.connexion-wifi.autres-parametres-reseau.wps-pin",
+              "chemin": ["Général", "Réseau", "Connexion Wi-Fi", "Autres paramètres réseau"],
+              "libelle": "Connexion via WPS PIN",
+              "description": "Cette méthode permet de se connecter à un point d'accès à l'aide d'un code PIN WPS (Wi-Fi Protected Setup).",
+              "controle": "action",
+              "source": { "guide": "6.11" }
+            },
+            {
+              "id": "general.reseau.connexion-wifi.autres-parametres-reseau.wifi-avance",
+              "chemin": ["Général", "Réseau", "Connexion Wi-Fi", "Autres paramètres réseau"],
+              "libelle": "Paramètres Wi-Fi avancés",
+              "description": "Une fois que vous vous êtes connecté à un réseau sans fil, vous pouvez afficher des informations de connexion, telles que des informations d'adresse IP détaillées.En outre, pour modifier l'adresse IP et l'adresse du serveur DNS auquel vous souhaitez vous connecter, appuyez sur Modifier.",
+              "controle": "action",
+              "source": { "guide": "6.11" }
+            }
+          ]
+        },
+        {
+          "id": "general.reseau.connexion-wifi.gerer-reseaux-enregistres",
+          "chemin": ["Général", "Réseau", "Connexion Wi-Fi"],
+          "libelle": "Gérer le réseau Wi-Fi enregistré",
+          "description": "Pour empêcher le passage automatique à des réseaux indésirables, sélectionnez et supprimez le réseau sans fil correspondant.",
+          "controle": "action",
+          "source": { "guide": "6.11" }
+        }
+      ]
+    }
+  ]
+}

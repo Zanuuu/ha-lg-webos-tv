@@ -22,8 +22,10 @@ marqué dans `a_verifier`.
 ## Organisation
 
 Un fichier par section de premier niveau du menu « Tous les paramètres »
-(`image.json`, `son.json`, `general.json`…) plus `index.json` qui donne
-l'ordre des sections. Le schéma formel est dans `schema.json` ; résumé :
+(`image.json`, `son.json`, `assistance.json`), sauf « Général », découpé en
+un fichier par branche dans `general/` (`general/accessibilite.json`,
+`general/systeme.json`…). `index.json` donne l'ordre des sections et la
+composition de Général. Le schéma formel est dans `schema.json` ; résumé :
 
 - `id` : identifiant unique, kebab-case, hiérarchique
   (`image.parametres-avances.luminosite.luminosite-pixels-oled`).
