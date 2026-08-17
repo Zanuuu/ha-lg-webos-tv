@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     // En dev, le backend FastAPI tourne à part : on lui relaie les appels API.
     proxy: {
-      '/api': 'http://127.0.0.1:8000',
+      '/api': { target: 'http://127.0.0.1:8000', ws: true },
     },
   },
 })
