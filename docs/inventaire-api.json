@@ -1,0 +1,3693 @@
+{
+  "categories": {
+    "": {
+      "descripteurs": {
+        "eulaInfoNetwork": {
+          "account": false,
+          "app_id": "",
+          "category": "",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "eulaInfoNetwork",
+          "ui": {
+            "active": false,
+            "displayName": "eulaInfoNetwork",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "file": "/var/palm/license/eulaInfoNetwork.json"
+          },
+          "volatile": false,
+          "vtype": "File"
+        }
+      },
+      "erreurs": [],
+      "lisibles": {
+        "eulaInfoNetwork": {
+          "eulaList": [
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20240806065616375_fr-fr.html",
+              "id": "S_DSC",
+              "title": "Overview",
+              "type": "V",
+              "updated": true,
+              "version": "20240806080_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20240806065635912_fr-fr.html",
+              "id": "S_LGN",
+              "title": "Legal Notice",
+              "type": "L",
+              "updated": true,
+              "version": "20240806081_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20240806070015179_fr-fr.html",
+              "id": "S_DPA",
+              "title": "Accord de partenariat de données",
+              "type": "M",
+              "updated": true,
+              "version": "20240806092_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20240926020551270_fr-fr.html",
+              "id": "S_ALL",
+              "title": "Tout Sélectionner",
+              "type": "S",
+              "updated": true,
+              "version": "20240926014_FR"
+            },
+            {
+              "_id": "",
+              "accepted": true,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20241115025800045_fr-fr.html",
+              "id": "S_SVC",
+              "title": "Conditions d'Utilisation",
+              "type": "M",
+              "updated": true,
+              "version": "20241115415_FR"
+            },
+            {
+              "_id": "",
+              "accepted": true,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20250120052506210_fr-fr.html",
+              "id": "S_VNG",
+              "title": "Informations Vocales",
+              "type": "M",
+              "updated": true,
+              "version": "20250120445_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20250304013551087_fr-fr.html",
+              "id": "S_MKT",
+              "title": "Accord de communication marketing",
+              "type": "M",
+              "updated": true,
+              "version": "20250304105_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20250611074114087_fr-fr.html",
+              "id": "S_PRP",
+              "title": "Politique de Confidentialité",
+              "type": "N",
+              "updated": true,
+              "version": "20250611335_FR"
+            },
+            {
+              "_id": "",
+              "accepted": true,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20250611074126913_fr-fr.html",
+              "id": "S_ADG",
+              "title": "Accord sur les informations de visionnage",
+              "type": "M",
+              "updated": true,
+              "version": "20250611336_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20250611074139284_fr-fr.html",
+              "id": "S_TAG",
+              "title": "Accord sur la publicité basée sur les intérêts",
+              "type": "M",
+              "updated": true,
+              "version": "20250611337_FR"
+            }
+          ]
+        },
+        "eulaStatus": {
+          "acrAdAllowed": false,
+          "acrAllowed": false,
+          "acrGdprAllowed": false,
+          "acrOnAllowed": true,
+          "additional1Allowed": false,
+          "additional2Allowed": false,
+          "additional3Allowed": false,
+          "additional4Allowed": false,
+          "additional5Allowed": false,
+          "additionalDataAllowed": true,
+          "chpAllowed": true,
+          "cookiesAllowed": false,
+          "customAdAllowed": false,
+          "customadsAllowed": false,
+          "generalTermsAllowed": true,
+          "marketingOnAllowed": false,
+          "networkAllowed": true,
+          "remoteDiagAllowed": false,
+          "shoppingOnAllowed": true,
+          "takeOnAllowed": false,
+          "thirdPartySharingAllowed": false,
+          "veranceOnAllowed": false,
+          "voice2Allowed": true,
+          "voiceAllowed": true,
+          "wasuOnAllowed": false
+        },
+        "localeInfo": {
+          "clock": "locale",
+          "keyboards": [
+            "en",
+            "fr"
+          ],
+          "locales": {
+            "AUD": "fr-FR",
+            "AUD2": "en-GB",
+            "FMT": "en-GB",
+            "NLP": "en-GB",
+            "STT": "fr-FR",
+            "TV": "en-GB",
+            "UI": "fr-FR"
+          },
+          "timezone": ""
+        },
+        "mobileSetupStatus": "ready"
+      },
+      "rejetees_desc": [
+        "eulaStatus",
+        "localeInfo",
+        "mobileSetupStatus"
+      ],
+      "rejetees_lecture": [
+        "eulaInfo"
+      ]
+    },
+    "aiPicture": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "ai_Brightness",
+        "ai_Genre",
+        "ai_Picture",
+        "isAiPictureActing"
+      ]
+    },
+    "aspectRatio": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "allDirZoomHPosition",
+        "allDirZoomHRatio",
+        "allDirZoomVPosition",
+        "allDirZoomVRatio",
+        "arcMenuBySystem",
+        "twinCinemaVPosition",
+        "twinZoomHPosition",
+        "twinZoomHRatio",
+        "twinZoomVPosition",
+        "twinZoomVRatio",
+        "vertZoomVPosition",
+        "vertZoomVRatio",
+        "arcPerApp",
+        "justScan"
+      ]
+    },
+    "caption": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "aiCaptionEnable",
+        "caption608PosOption",
+        "caption608PosX",
+        "caption608PosY",
+        "caption708PosOption",
+        "caption708PosX",
+        "caption708PosY",
+        "captionAnalog",
+        "captionBgColor",
+        "captionBgOpacity",
+        "captionDigital",
+        "captionDigitalPosOption",
+        "captionDigitalPosX",
+        "captionDigitalPosY",
+        "captionEdgeColor",
+        "captionEdgeType",
+        "captionEnable",
+        "captionFont",
+        "captionSize",
+        "captionStyle",
+        "captionTextColor",
+        "captionTextOpacity",
+        "captionWindowColor",
+        "captionWindowOpacity",
+        "digitalPlusCaptionLanguage",
+        "hardOfHearing",
+        "japanCaptionEnable",
+        "japanSuperImposeEnable",
+        "naisDevicePaired",
+        "phlCaptionEnable",
+        "phlSuperImposeEnable"
+      ]
+    },
+    "channel": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "aiFavoriteGroup4stb",
+        "aiFavoriteGroup4tv",
+        "analogSystemColor",
+        "audioLanguage",
+        "automaticServiceListUpdate",
+        "autoscanAribFreqBand",
+        "autoscanAribInitalScan",
+        "autoscanCableBlindsearch",
+        "autoscanCableDigitalOnlySearch",
+        "autoscanCableNetworkscan",
+        "autoscanCableQuickScan",
+        "autoscanCableScan",
+        "autoscanCableSkipScrambleSerarch",
+        "autoscanChannelGroup",
+        "autoscanFastscanSatellite",
+        "autoscanSatelliteInitialScan",
+        "autoscanSatelliteScan",
+        "autoscanTerrestrialDigitalOnlySearch",
+        "autoscanTerrestrialScan",
+        "autoscanTerrestrialSecamlSearch",
+        "channelMute",
+        "channelsInHome",
+        "digitalPlus",
+        "dualMono",
+        "ewbsTargetChannel",
+        "favoriteGroupName4stb",
+        "favoriteGroupName4tv",
+        "levelSoundSatellite",
+        "levelSoundTerrestrial",
+        "manualscanSatelliteNetworkSearch",
+        "multiAudio",
+        "multiFeed",
+        "objectAudio",
+        "powerSupply",
+        "programListUpdateCable",
+        "programListUpdateSatellite",
+        "recommended",
+        "recordingRestrictions",
+        "satelliteHDSD",
+        "signalAttenuation",
+        "signalBeepSound",
+        "signingAtsc30",
+        "subtitleLanguage",
+        "supportOperatorProfile",
+        "tuningTypeMDUUniversal",
+        "uhdJackConnected"
+      ]
+    },
+    "commercial": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "15MinAutoOff",
+        "AV1En",
+        "AV2En",
+        "HPDControl",
+        "RGBOverlayInRF",
+        "aMuteTime",
+        "acOn",
+        "ackMask",
+        "alarmTimer",
+        "alarmTimerHour",
+        "alarmTimerMinute",
+        "appLaunchMode",
+        "aspectRatioLock",
+        "atscBand",
+        "atscTuneMode",
+        "audioOutput",
+        "audioPtsOffset",
+        "audioSourceDp",
+        "audioSourceHdmi1",
+        "audioSourceHdmi2",
+        "audioVolumeWatt",
+        "autoCamport",
+        "autoRearAux",
+        "autoRearYC",
+        "autoSensing",
+        "autoServerIp",
+        "autoTeletext",
+        "autoYPrPb",
+        "auxInputAll",
+        "auxInputIndependently",
+        "auxStatus",
+        "bLanPowerSaving",
+        "backlighting",
+        "bandAfc",
+        "bannerEn",
+        "bckAudioM",
+        "bckChTime",
+        "bckPtlM",
+        "bckSetupM",
+        "bckSrcM",
+        "bckVideoM",
+        "bed12",
+        "bigUI",
+        "captionLock",
+        "care365Enable",
+        "chNotAvble",
+        "chTimeSize",
+        "channelLock",
+        "channelOverride",
+        "checkScreen",
+        "chksumError",
+        "commer365CareServiceMode",
+        "commercialFlag",
+        "component1En",
+        "contentsRotation",
+        "contentsSync",
+        "defaultArc",
+        "defeatXds",
+        "destination_ip",
+        "destination_port",
+        "digitalAudioInput",
+        "digitalAudioInputList",
+        "direction_path",
+        "disAudioM",
+        "disAudioMenu",
+        "disChTime",
+        "disPt1M",
+        "disSetupM",
+        "disVideoM",
+        "dispSourceM",
+        "dmrEn",
+        "dpmMode",
+        "dtvChannelUpdate",
+        "dynamicBrightness",
+        "enAlarm",
+        "enAudioCol",
+        "enChTCol",
+        "enNoiseMute",
+        "enPtlCol",
+        "enSetupCol",
+        "enSleepTimer",
+        "enSrcCol",
+        "enTimer",
+        "enVchip",
+        "enVideoCol",
+        "enVideoMute",
+        "enableResetToInitial",
+        "enableSpeaker",
+        "enableUsb",
+        "extClockDimmingPowerOn",
+        "extClockDimmingStandBy",
+        "extClockDisplay",
+        "extClockProgram",
+        "extClockSource",
+        "extOffsetTTXClock",
+        "extSpkVolumeControl",
+        "ezmgr_update_status",
+        "factoryReset",
+        "failover",
+        "failoverPriority",
+        "failoverPriority1",
+        "failoverPriority2",
+        "failoverPriority3",
+        "failoverPriority4",
+        "failoverPriority5",
+        "forAudioM",
+        "forChTime",
+        "forPtlM",
+        "forSetupM",
+        "forSrcM",
+        "forVideoM",
+        "frntYCEn",
+        "functionPre",
+        "gostChannel",
+        "guestMenuState",
+        "guestSetting",
+        "handshkTime",
+        "hcapStartChSSID0",
+        "hcapStartChSSID1",
+        "hcapStartChSSID2",
+        "hcapStartChSSID3",
+        "hcapStartChSSID4",
+        "hcapStartRfChBandType",
+        "hcapStartRfChType",
+        "hcapStartRfFreqHz",
+        "hcapStartRfProgNumber",
+        "hcapTuneCmIpProtocol",
+        "hcapalarmStartChType",
+        "hcapalarmStartFreq",
+        "hcapalarmStartHour",
+        "hcapalarmStartIp",
+        "hcapalarmStartIpPort",
+        "hcapalarmStartIpProgram",
+        "hcapalarmStartIpProtocol",
+        "hcapalarmStartLogical",
+        "hcapalarmStartMajor",
+        "hcapalarmStartMinor",
+        "hcapalarmStartMinute",
+        "hcapalarmStartProgramNumber",
+        "hcapalarmStartRfBandType",
+        "hcapalarmStartSSID0",
+        "hcapalarmStartSSID1",
+        "hcapalarmStartSSID2",
+        "hcapalarmStartSSID3",
+        "hcapalarmStartSSID4",
+        "hcapalarmStartVolume",
+        "hdmi1En",
+        "hdmi2En",
+        "hdmi3En",
+        "hospitalMode",
+        "idHTNGSettingAudioOnlyDisplay",
+        "idHTNGSettingLockChannel",
+        "idHTNGSettingLockInput",
+        "idHTNGSettingLockMenuEnter",
+        "idHTNGSettingLockPower",
+        "idHTNGSettingMax",
+        "idHTNGSettingOsdDisplayOff",
+        "idHTNGSettingWakeUpHour",
+        "idHTNGSettingWakeUpInput",
+        "idHTNGSettingWakeUpMinute",
+        "idHTNGSettingWakeUpSet",
+        "idHTNGSettingWakeUpVolume",
+        "idHTNGSettingWakeUpVolumeRampUpTime",
+        "igmpVersion",
+        "inputSensingAV1",
+        "inputSensingAll",
+        "inputSensingComp1",
+        "inputSensingHDMI1",
+        "inputSensingHDMI2",
+        "inputSensingHDMI3",
+        "installerSeq",
+        "instantOn",
+        "intelligentAuto",
+        "irBankEn",
+        "irBlaster",
+        "irMode",
+        "istm_reserved_3",
+        "istm_reserved_4",
+        "istm_reserved_5",
+        "istm_reserved_6",
+        "istm_reserved_7",
+        "keyDefeat",
+        "keyLock",
+        "keyOperation",
+        "keylessOffHours",
+        "keylessOffHoursEn",
+        "ledCalibrator",
+        "linkSecuredConnection",
+        "linkServerEnable",
+        "linkServerIP",
+        "linkServerIPv6",
+        "linkServerIpType",
+        "linkServerPort",
+        "linkServerStatus",
+        "localAppUpgrade",
+        "lockModeFactory",
+        "lockModeUSB",
+        "log_forwarding_mode",
+        "log_level",
+        "mainSpeaker",
+        "manualServerIp",
+        "maxBlockHour",
+        "maxVolume",
+        "minVolume",
+        "multiOffTimerHour",
+        "multiOffTimerMinute",
+        "multiOffTimerWeekday",
+        "multiOnTimerHour",
+        "multiOnTimerMinute",
+        "multiOnTimerSource",
+        "multiOnTimerWeekday",
+        "multiRemoteKey",
+        "muteDisable",
+        "naturalMode",
+        "ntscScancard",
+        "offTimerCount",
+        "offTimerSchedule",
+        "oldOcv",
+        "onTimerCount",
+        "onTimerOperation",
+        "onTimerSchedule",
+        "oneChannelMap",
+        "osdEn",
+        "osdPortraitMode",
+        "panelCom",
+        "panelHandshake",
+        "panelMaxVol",
+        "panelMinVol",
+        "panelStartVol",
+        "panelTunerOnDelay",
+        "panelType",
+        "panelVolRepeat",
+        "pcrOffset",
+        "permanentBlk",
+        "permanentBlock",
+        "pictureId",
+        "pokeEnable",
+        "pollRate",
+        "powerManage",
+        "powerOnDelay",
+        "powerOnOffHistoroy",
+        "powerOnOffHistory",
+        "ppvChannelMode",
+        "preLoadedApp",
+        "proCentricClockUpdate",
+        "procentricClockFreq",
+        "procentricClockIPAdd_a",
+        "procentricClockIPAdd_b",
+        "procentricClockIPAdd_c",
+        "procentricClockIPAdd_d",
+        "procentricClockIPAddr",
+        "procentricClockIPPort",
+        "procentricClockServiceID",
+        "procentricClockUpdate",
+        "procentricDataCarouselEn",
+        "procentricDataChannel",
+        "procentricDataChannelSlt",
+        "procentricIPAddr_a",
+        "procentricIPAddr_b",
+        "procentricIPAddr_c",
+        "procentricIPAddr_d",
+        "procentricIPPort",
+        "procentricMediaType",
+        "procentricMode",
+        "procentricModulation",
+        "procentricRFFreq",
+        "procentricRFType",
+        "procentricSymbol",
+        "propertyAppUpdateShutDown",
+        "propertyAppUpdateStartUp",
+        "propertyApplicationChannelControl",
+        "propertyBootSequenceOption",
+        "propertyBrowserHttpsSecurityLevel",
+        "propertyBrowserNetworkErrorHandling",
+        "propertyCountry",
+        "propertyDefaultAudioLanguage",
+        "propertyDefaultAudioLanguageList",
+        "propertyDefaultSubtitleLanguage",
+        "propertyDefaultSubtitleLanguageList",
+        "propertyDefaultSubtitleLanguageListUsAnalog",
+        "propertyDefaultSubtitleLanguageUsAnalog",
+        "propertyFullBrowserStartPageUrl",
+        "propertyInbandDataServiceHbbtv",
+        "propertyInbandDataServiceMheg",
+        "propertyInbandDataServiceMhp",
+        "propertyIpSupport",
+        "propertyKeyDeliveryToSimpLink",
+        "propertyLanguage",
+        "propertyMuteOnTvInput",
+        "propertyNumberOfTuner",
+        "propertyOsdLayerId",
+        "propertyPcrRecovery",
+        "propertyReserved0",
+        "propertyReserved1",
+        "propertyReserved2",
+        "propertyReserved3",
+        "propertyReserved4",
+        "propertyReserved5",
+        "propertySecurityLevel",
+        "propertySingleDecoding",
+        "propertySmartPairing",
+        "propertyStrReserved0",
+        "propertyStrReserved1",
+        "propertyStrReserved2",
+        "propertyStrReserved3",
+        "propertyStrReserved4",
+        "propertyStrReserved5",
+        "propertySupportLanguageList",
+        "propertyTvCaptionUi",
+        "propertyTvChannelControl",
+        "propertyTvChannelLockUi",
+        "propertyTvChannelUi",
+        "propertyTvFloatingUi",
+        "propertyTvMhegUi",
+        "propertyTvPreloadedAppLauncherUi",
+        "propertyTvVolumeUi",
+        "pseudoPwrOff",
+        "ptc_Download_Fail",
+        "quickShutoff",
+        "radioEn",
+        "radioNameDisplay",
+        "rbg1En",
+        "rearYCEn",
+        "remainingBlockHr",
+        "remoteJackPack",
+        "reorderLaunchPoint",
+        "revertCh",
+        "rfUpdateTImeMin",
+        "rfUpdateTimeHr",
+        "rfUpdateTimeHrEn",
+        "rfWakeUpEventEnable",
+        "rfWakeUpEventHour",
+        "rfWakeUpEventMin",
+        "rgb1En",
+        "rjpAvailable",
+        "rmsEn",
+        "roomNumber",
+        "rs232Baudrate",
+        "sapLock",
+        "sapMenuEn",
+        "scanMode",
+        "scartOut",
+        "sclActiveStatus",
+        "sclDisplayMode",
+        "sendToRs232",
+        "serverIpMode",
+        "serverIpPort",
+        "serverStatus",
+        "serviceIp",
+        "signage365CareAccountName",
+        "signage365CareAccountNumber",
+        "signage365CareInstall",
+        "signageMode",
+        "signageName",
+        "signageSetId",
+        "simplinkEn",
+        "sixKeySys",
+        "smartEnergy",
+        "smartParing",
+        "smartShareEn",
+        "smoovie",
+        "smoovieInputSource",
+        "smoovieProgramme",
+        "smoovieRing1",
+        "smoovieRing2",
+        "smoovieStandard",
+        "softapDefault",
+        "softapDefaultSecurityKey",
+        "softapEnable",
+        "softapOnOff",
+        "softapSecurityKey",
+        "softapSsid",
+        "splashTime",
+        "splitscreenEnable",
+        "standByMode",
+        "startAuxSrc",
+        "startChInSm",
+        "startChMajorNum",
+        "startChnumMinor",
+        "startIpAddress",
+        "startIpAddress_a",
+        "startIpAddress_b",
+        "startIpAddress_c",
+        "startIpAddress_d",
+        "startIpType",
+        "startPort",
+        "startProgram",
+        "startSourceIpAddress_a",
+        "startSourceIpAddress_b",
+        "startSourceIpAddress_c",
+        "startSourceIpAddress_d",
+        "startVolume",
+        "staticSaving",
+        "textMode",
+        "tileCol",
+        "tileId",
+        "tileMode",
+        "tileRow",
+        "timeoutEn",
+        "timingPulse",
+        "tuneAudioPid",
+        "tuneAudioType",
+        "tuneIPAddr_a",
+        "tuneIPAddr_b",
+        "tuneIPAddr_c",
+        "tuneIPAddr_d",
+        "tuneIpType",
+        "tunePcrPid",
+        "tunePort",
+        "tuneProgram",
+        "tuneVideoPid",
+        "tuneVideoType",
+        "tvlinkHcecControl",
+        "tvlinkHcecDeviceID",
+        "tvlinkHcecForcedInitialize",
+        "tvlinkHcecHotelmode",
+        "tvlinkHcecIrDecoding",
+        "tvlinkHcecStandby",
+        "uartPowerOutlet",
+        "upnLsb",
+        "upnMsb",
+        "upnMsb1",
+        "upnMsb2",
+        "usbAutoPlayBack",
+        "usbAutoPlayback",
+        "usbAutoPlaybackPath",
+        "vMuteTime",
+        "vidOutFormat",
+        "videoInterface",
+        "videoPtsOffset",
+        "wifiScreenShareEn",
+        "wifiZone",
+        "wolEnable",
+        "wolMagicPacket",
+        "ycLoopOut",
+        "zone"
+      ]
+    },
+    "commercialTv": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "hcapStartChSSID0",
+        "hcapStartChSSID1",
+        "hcapStartChSSID2",
+        "hcapStartChSSID3",
+        "hcapStartChSSID4",
+        "hcapStartRfChBandType",
+        "hcapStartRfChType",
+        "hcapStartRfFreqHz",
+        "hcapStartRfProgNumber",
+        "hcapTuneCmIpProtocol",
+        "hcapalarmStartChType",
+        "hcapalarmStartFreq",
+        "hcapalarmStartHour",
+        "hcapalarmStartIp",
+        "hcapalarmStartIpPort",
+        "hcapalarmStartIpProgram",
+        "hcapalarmStartIpProtocol",
+        "hcapalarmStartLogical",
+        "hcapalarmStartMajor",
+        "hcapalarmStartMinor",
+        "hcapalarmStartMinute",
+        "hcapalarmStartProgramNumber",
+        "hcapalarmStartRfBandType",
+        "hcapalarmStartSSID0",
+        "hcapalarmStartSSID1",
+        "hcapalarmStartSSID2",
+        "hcapalarmStartSSID3",
+        "hcapalarmStartSSID4",
+        "hcapalarmStartVolume",
+        "propertyAppUpdateShutDown",
+        "propertyAppUpdateStartUp",
+        "propertyApplicationChannelControl",
+        "propertyBootSequenceOption",
+        "propertyBrowserHttpsSecurityLevel",
+        "propertyBrowserNetworkErrorHandling",
+        "propertyCountry",
+        "propertyDefaultAudioLanguage",
+        "propertyDefaultAudioLanguageList",
+        "propertyDefaultSubtitleLanguage",
+        "propertyDefaultSubtitleLanguageList",
+        "propertyDefaultSubtitleLanguageListUsAnalog",
+        "propertyDefaultSubtitleLanguageUsAnalog",
+        "propertyFullBrowserStartPageUrl",
+        "propertyInbandDataServiceHbbtv",
+        "propertyInbandDataServiceMheg",
+        "propertyInbandDataServiceMhp",
+        "propertyIpSupport",
+        "propertyKeyDeliveryToSimpLink",
+        "propertyLanguage",
+        "propertyMuteOnTvInput",
+        "propertyNumberOfTuner",
+        "propertyOsdLayerId",
+        "propertyPcrRecovery",
+        "propertyReserved0",
+        "propertyReserved1",
+        "propertyReserved2",
+        "propertyReserved3",
+        "propertyReserved4",
+        "propertyReserved5",
+        "propertySecurityLevel",
+        "propertySingleDecoding",
+        "propertySmartPairing",
+        "propertyStrReserved0",
+        "propertyStrReserved1",
+        "propertyStrReserved2",
+        "propertyStrReserved3",
+        "propertyStrReserved4",
+        "propertyStrReserved5",
+        "propertySupportLanguageList",
+        "propertyTvCaptionUi",
+        "propertyTvChannelControl",
+        "propertyTvChannelLockUi",
+        "propertyTvChannelUi",
+        "propertyTvFloatingUi",
+        "propertyTvMhegUi",
+        "propertyTvPreloadedAppLauncherUi",
+        "propertyTvVolumeUi"
+      ]
+    },
+    "general": {
+      "descripteurs": {
+        "SCA3SystemCountry": {
+          "account": false,
+          "category": "general",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "SCA3SystemCountry",
+          "ui": {
+            "active": true,
+            "displayName": "SCA3SystemCountry",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "BRB",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "BLZ",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "CRI",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "ECU",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "SLV",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "GTM",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "GUY",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "HTI",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "HND",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "JAM",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "NIC",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "TTO",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "VEN",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "PRI",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "PAN",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "___",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvInstallMethod": {
+          "account": false,
+          "category": "general",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvInstallMethod",
+          "ui": {
+            "active": true,
+            "displayName": "tvInstallMethod",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "tv",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "mobile",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvOnScreen": {
+          "account": false,
+          "category": "general",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvOnScreen",
+          "ui": {
+            "active": true,
+            "displayName": "tvOnScreen",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "effect",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "liveTV",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        }
+      },
+      "erreurs": [],
+      "lisibles": {
+        "SCA3SystemCountry": "HND",
+        "alwaysOn": "off",
+        "homeAutoLaunch": "on",
+        "homePromotion": "off",
+        "lifeOnScreenMode": "off",
+        "powerOffBySCA3SystemChanged": false,
+        "tvInstallMethod": "tv",
+        "tvOnScreen": "effect"
+      },
+      "rejetees_desc": [
+        "alwaysOn",
+        "homeAutoLaunch",
+        "homePromotion",
+        "lifeOnScreenMode",
+        "powerOffBySCA3SystemChanged"
+      ],
+      "rejetees_lecture": [
+        "absenceRecognition",
+        "adCookie",
+        "aiChannel",
+        "aiNudge",
+        "aiSettingsNudge",
+        "alwaysOnDisableEndHour",
+        "alwaysOnDisableEndMinute",
+        "alwaysOnDisableStartHour",
+        "alwaysOnDisableStartMinute",
+        "avmsd",
+        "bendableSound",
+        "blueToothSpeakerMode",
+        "checkForcedInputPowerOn",
+        "checkHomeAutoLaunchValue",
+        "customizedAd",
+        "doNotSellMyPersonalInformation",
+        "gameAlarm",
+        "globalConditions",
+        "homeEffect",
+        "lastAppHandlerPolicy",
+        "lastInputApp",
+        "lastInputAppType",
+        "launchEulaByHome",
+        "lifeAlarm",
+        "lmt",
+        "mySportAppList",
+        "mySportTeamList",
+        "nativeConsentAd",
+        "noSignalGuideArea",
+        "noSignalScreenSaver",
+        "opapp",
+        "opappReplaceUI",
+        "personalRecommend",
+        "physicalLastInputApp",
+        "physicalLastInputType",
+        "powerOnScreen",
+        "remotePointer",
+        "remoteserverType",
+        "screenRemotePlacement",
+        "screenSaverAd",
+        "screenSaverEnabled",
+        "screenSaverSensibility",
+        "selectedInputApp",
+        "sportsAlarm",
+        "sportsPicker",
+        "tnativeShadescreen",
+        "tnativeSound",
+        "touchLock",
+        "tvOnSound",
+        "voiceLongDistance",
+        "wavBoxPosition",
+        "wavUpperLedFlag",
+        "welcomeFeature"
+      ]
+    },
+    "hotelMode": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "autoBrowser",
+        "autoBrowserUrl",
+        "auxSettings",
+        "auxSettingsEnabled",
+        "avSettings",
+        "blankOnRadioProgram",
+        "displayRadioName",
+        "enableAutoBrowser",
+        "enableAuxSetting_av1",
+        "enableAuxSetting_av2",
+        "enableAuxSetting_av3",
+        "enableAuxSetting_comp1",
+        "enableAuxSetting_comp2",
+        "enableAuxSetting_comp3",
+        "enableAuxSetting_hdmi1",
+        "enableAuxSetting_hdmi2",
+        "enableAuxSetting_hdmi3",
+        "enableAuxSetting_hdmi4",
+        "enableAuxSetting_rgb",
+        "enableChannelUpdate",
+        "enableFullscreen",
+        "enableFunctionStatus",
+        "enableHIDDevice",
+        "enableHotelMode",
+        "enableInputSourceChange",
+        "enableIrRemote",
+        "enableKeylock",
+        "enableLimitedInputSrcChange",
+        "enableLimitedMode",
+        "enableLocalKey",
+        "enableMenuKey",
+        "enableMrcu",
+        "enableOsdDisplay",
+        "enableOsdVisibility",
+        "enablePowerOnDefault",
+        "enablePowerOnDefaultVolume",
+        "enableProgramChange",
+        "enableSetIdMenu",
+        "enableStartVolume",
+        "enableSystemProviderMode",
+        "enterStationMenu",
+        "keyManagement",
+        "maximumVolume",
+        "minimumVolume",
+        "noActivityPowerOffHours",
+        "password",
+        "powerOnAspectRatio",
+        "powerOnDefaultAv",
+        "powerOnDefaultInput",
+        "powerOnDefaultMajor",
+        "powerOnDefaultMinor",
+        "powerOnDefaultProgramme",
+        "powerOnDefaultTuneMode",
+        "powerOnDefaultVolume",
+        "powerOnStatus",
+        "radioProgramCount",
+        "radioProgramStart",
+        "swUpdateEnable",
+        "swUpdateNotice",
+        "tvlinkHid",
+        "tvlinkKeylock",
+        "tvlinkMrcu",
+        "tvlinkOsdDisplay"
+      ]
+    },
+    "lock": {
+      "descripteurs": {
+        "dailyRepeatFlag": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "dailyRepeatFlag",
+          "ui": {
+            "active": true,
+            "displayName": "dailyRepeatFlag",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "on",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "inputBlock": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "inputBlock",
+          "ui": {
+            "active": true,
+            "displayName": "inputBlock",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 4294967295,
+              "min": 0
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        },
+        "movieRating": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "movieRating",
+          "ui": {
+            "active": true,
+            "displayName": "movieRating",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "g",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg13",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "r",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "nc-17",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "x",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "offHearingProtectFlag": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "offHearingProtectFlag",
+          "ui": {
+            "active": true,
+            "displayName": "offHearingProtectFlag",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "on",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "offHearingProtectMaxVolume": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "offHearingProtectMaxVolume",
+          "ui": {
+            "active": true,
+            "displayName": "offHearingProtectMaxVolume",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 60,
+              "min": 10
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        },
+        "offUsageTimeFlag": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "offUsageTimeFlag",
+          "ui": {
+            "active": true,
+            "displayName": "offUsageTimeFlag",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "on",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "parentalControl": {
+          "account": false,
+          "category": "lock",
+          "country": "FRA",
+          "dbtype": "G",
+          "dimension": [],
+          "hasCountryVar": true,
+          "key": "parentalControl",
+          "ui": {
+            "active": false,
+            "displayName": "parentalControl",
+            "visible": false,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": true,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": true,
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": false,
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "parentalGuidance": {
+          "account": false,
+          "category": "lock",
+          "country": "FRA",
+          "dbtype": "G",
+          "dimension": [],
+          "hasCountryVar": true,
+          "key": "parentalGuidance",
+          "ui": {
+            "active": true,
+            "displayName": "parentalGuidance",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "4+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "5+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "6+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "7+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "8+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "9+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "10+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "11+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "12+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "13+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "15+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "16+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "17+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "18+",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingChildrenAge": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingChildrenAge",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingChildrenAge",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "y",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "y7",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingChildrenFantasy": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingChildrenFantasy",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingChildrenFantasy",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "y7",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingGeneralAge": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingGeneralAge",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingGeneralAge",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "g",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "ma",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingGeneralDialog": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingGeneralDialog",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingGeneralDialog",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingGeneralLanguage": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingGeneralLanguage",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingGeneralLanguage",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "ma",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingGeneralSex": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingGeneralSex",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingGeneralSex",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "ma",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "tvRatingGeneralViolence": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "tvRatingGeneralViolence",
+          "ui": {
+            "active": true,
+            "displayName": "tvRatingGeneralViolence",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "pg",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "ma",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "unlockDate": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "unlockDate",
+          "ui": {
+            "active": true,
+            "displayName": "unlockDate",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": []
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "usageTimeEnd": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "usageTimeEnd",
+          "ui": {
+            "active": true,
+            "displayName": "usageTimeEnd",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": []
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "usageTimeStart": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "usageTimeStart",
+          "ui": {
+            "active": true,
+            "displayName": "usageTimeStart",
+            "visible": true,
+            "widget": "none"
+          },
+          "valueCheck": false,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": []
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "ziggoRaiting": {
+          "account": false,
+          "category": "lock",
+          "dbtype": "G",
+          "dimension": [],
+          "hasCountryVar": true,
+          "key": "ziggoRaiting",
+          "ui": {
+            "active": false,
+            "displayName": "ziggoRaiting",
+            "visible": false,
+            "widget": "none"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "all",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "4+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "5+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "6+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "7+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "8+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "9+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "10+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "11+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "12+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "13+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "14+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "15+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "16+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "17+",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "18+",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        }
+      },
+      "erreurs": [],
+      "lisibles": {
+        "dailyRepeatFlag": "off",
+        "inputBlock": "0",
+        "movieRating": "off",
+        "offHearingProtectFlag": "off",
+        "offHearingProtectMaxVolume": 60,
+        "offUsageTimeFlag": "off",
+        "parentalControl": false,
+        "parentalGuidance": "18+",
+        "tvRatingChildrenAge": "off",
+        "tvRatingChildrenFantasy": "off",
+        "tvRatingGeneralAge": "off",
+        "tvRatingGeneralDialog": "off",
+        "tvRatingGeneralLanguage": "off",
+        "tvRatingGeneralSex": "off",
+        "tvRatingGeneralViolence": "off",
+        "unlockDate": "",
+        "usageTimeEnd": "",
+        "usageTimeStart": "",
+        "ziggoRaiting": "off"
+      },
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "applockByAge",
+        "camPinCode",
+        "downloadableRrt",
+        "initialPinCode",
+        "installedApplockByAge",
+        "lockByAge",
+        "parentalGuidanceAu",
+        "parentalGuidanceJp",
+        "parentalGuidanceNz",
+        "parentalGuidanceSg",
+        "pineValueChangePCS",
+        "applockPerApp",
+        "ratingBR",
+        "ratingPH",
+        "ratingSA",
+        "secretMode",
+        "systemPin",
+        "systemPinCode",
+        "tvRatingEnglish",
+        "tvRatingFrench",
+        "vooRating"
+      ]
+    },
+    "musicCatch": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "isLegalNoticeShown",
+        "musicCatchStorageInfo"
+      ]
+    },
+    "network": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {
+        "bleAdvertisingOnOff": "on",
+        "deviceName": "[LG] webOS TV OLED65G56LS",
+        "wolwowlOnOff": "true"
+      },
+      "rejetees_desc": [
+        "bleAdvertisingOnOff",
+        "deviceName",
+        "wolwowlOnOff"
+      ],
+      "rejetees_lecture": [
+        "allowMobileDeviceAccess",
+        "ipv6Enable",
+        "miracastTxPlaying",
+        "sscNetworkKey"
+      ]
+    },
+    "option": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {
+        "addressInfo": [
+          "not_defined",
+          "not_defined",
+          "not_defined",
+          "not_defined"
+        ],
+        "audioGuidance": "off",
+        "country": "FRA",
+        "firstTvSignalStatus": "undefined",
+        "japanCitySelection": "Tokyo",
+        "livePlus": "off",
+        "localeCountryGroup": "langSelEU",
+        "phlCitySelection": "0",
+        "quickStartMode": "on",
+        "smartServiceCountryCode3": "FRA",
+        "storeMode": "home",
+        "syncMode": "off",
+        "wallPaperSettings": {
+          "artisticDisplayTheme": "clock_flip",
+          "artisticDisplayThemeVersion": 0,
+          "homeImageVersion": 0,
+          "imageLimit": 0,
+          "isFullView": false,
+          "isHomeFullView": true
+        },
+        "yourMomentsVersion": "0",
+        "zipcode": "(masqué)"
+      },
+      "rejetees_desc": [
+        "addressInfo",
+        "audioGuidance",
+        "country",
+        "firstTvSignalStatus",
+        "japanCitySelection",
+        "livePlus",
+        "localeCountryGroup",
+        "phlCitySelection",
+        "quickStartMode",
+        "smartServiceCountryCode3",
+        "storeMode",
+        "syncMode",
+        "wallPaperSettings",
+        "yourMomentsVersion",
+        "zipcode"
+      ],
+      "rejetees_lecture": [
+        "IPControlSecureKey",
+        "a11yQuickList",
+        "additionalAudioSelection",
+        "adjustments",
+        "animationGuide",
+        "aodThemeHistory",
+        "appInstallDevice",
+        "appUpdateMode",
+        "artisticDisplayTimer",
+        "audioGuidancePitch",
+        "audioGuidanceSpeed",
+        "audioGuidanceVolume",
+        "autoComplete",
+        "autoSmartServiceCountry",
+        "avatar",
+        "backupPsm",
+        "backupPsmDolby",
+        "baloonHelp",
+        "bannerPosition",
+        "broadcastInfoNoti",
+        "cameraResourcePermission",
+        "channelplus",
+        "channelplusPopup",
+        "checkChangedScreenSaverTimerByUser",
+        "cicNumber",
+        "countryGroup",
+        "countryRegion",
+        "curDemoFile",
+        "curvature",
+        "dataService",
+        "dbgLogUpload",
+        "demoFileList",
+        "demoMode",
+        "displayMusicWidget",
+        "eStreamerPosition",
+        "emergencyAlert",
+        "countryBroadcastSystem",
+        "emergencyInformationAtsc30",
+        "emergencyInformationLanguageAtsc30",
+        "enableIpControl",
+        "enableSDDP",
+        "enableToastPopup",
+        "epgPipMode",
+        "estreamerMinimalMode",
+        "estreamerStatus",
+        "faultLogUpload",
+        "favRecommendResetTime",
+        "fileapiResourcePermission",
+        "focusEmphasis",
+        "focusedItemEnlarged",
+        "freeviewMode",
+        "freeviewplay",
+        "googleAssistantTTS",
+        "graphicSharpnessLevel",
+        "hbbTV",
+        "hbbTvDeviceId",
+        "hbbTvDnt",
+        "hddEcoMode",
+        "helpOnSettings",
+        "highContrast",
+        "homeWallPaper",
+        "hybridCast",
+        "inputDevicesSupportStatus",
+        "interactive-service",
+        "interactive-service-hdmi",
+        "interactive-service-id",
+        "interactivity",
+        "irBlaster",
+        "ismMethod",
+        "lifeOnScreenEnergySaving",
+        "lifeOnScreenNotification",
+        "lifeOnScreenOnTimer",
+        "lifeOnScreenUsingMotionSensor",
+        "lineView",
+        "liveMenuLaunched",
+        "livePromotion",
+        "logoLight",
+        "longPressInterval",
+        "magicNum1",
+        "magicNum2",
+        "magicNum3",
+        "magicNum4",
+        "magicNum5",
+        "magicNum6",
+        "magicNum7",
+        "magicNum8",
+        "magicNum9",
+        "magicNumFvp",
+        "magicNumHelpShow",
+        "magnificationValue",
+        "medicationInfoAgreement",
+        "menuLanguage",
+        "menuTransparency",
+        "mhegGuide",
+        "miracastOverlayAdRecovery",
+        "miracastOverlayStatus",
+        "modeSelectFlag",
+        "motionRecognition",
+        "motionSensorSensitivity",
+        "motionSensorSensitivityForAOD",
+        "multiChannelAudio",
+        "multiViewStatus",
+        "mySketchSettings",
+        "nearbyDevicePermission",
+        "ohtv",
+        "orbit",
+        "password_ipcontrol",
+        "personalizedDemoImgList",
+        "personalizedDemoString",
+        "personalizedImgList",
+        "personalizedString",
+        "pointerAlignment",
+        "pointerShape",
+        "pointerSize",
+        "pointerSpeed",
+        "powerOnLight",
+        "pqPlus",
+        "promotionOriginEnd",
+        "promotionOriginStart",
+        "promotionPeriodEnd",
+        "promotionPeriodStart",
+        "promotionStreamer",
+        "pstreamerUser",
+        "remoteSlowInput",
+        "repeatInterval",
+        "restoreCurve",
+        "screenMagnification",
+        "screenOff",
+        "screenOffTime",
+        "screenRotation",
+        "screenSaverArtEnabled",
+        "screenSaverTimer",
+        "searchAppTTS",
+        "seniorMode",
+        "serviceCountryForMagicNum",
+        "setId",
+        "showCursorAlert",
+        "signLanguageGuidance",
+        "signLanguageGuidanceAvatarType",
+        "signLanguageGuidancePosition",
+        "signLanguageGuidanceSize",
+        "signLanguageGuidanceSpeed",
+        "smartServiceCountryCode2",
+        "smartSoundDemo",
+        "soundPlus",
+        "speakToTv",
+        "specialRemote",
+        "standByLight",
+        "storeHDR",
+        "storeLogo",
+        "storeMode2",
+        "storeModeVideo",
+        "storeUsbAlarm",
+        "subdivisionCodeOfServiceCountry",
+        "subtitleLanguageFirst",
+        "subtitleLanguageSecond",
+        "supplementaryAudio",
+        "syncModeTvCondition",
+        "teletextLanguageFirst",
+        "teletextLanguageSecond",
+        "thirdPartyCookie",
+        "turnOnByVoice",
+        "usageCare",
+        "usbBuiltInVideo",
+        "virtualKeyboardLanguage",
+        "virtualSetTop",
+        "voiceRecognitionLanguage",
+        "vsn",
+        "wakeUpword",
+        "wallPaperHistory",
+        "watchedListCollection",
+        "webOSPromotionVideo"
+      ]
+    },
+    "other": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {
+        "simplinkEnable": "on",
+        "ueiEnable": "on",
+        "uhdDeepColorHDMI1": "off",
+        "uhdDeepColorHDMI2": "off",
+        "uhdDeepColorHDMI3": "off",
+        "uhdDeepColorHDMI4": "off"
+      },
+      "rejetees_desc": [
+        "simplinkEnable",
+        "ueiEnable",
+        "uhdDeepColorHDMI1",
+        "uhdDeepColorHDMI2",
+        "uhdDeepColorHDMI3",
+        "uhdDeepColorHDMI4"
+      ],
+      "rejetees_lecture": [
+        "444BypassHDMI1",
+        "444BypassHDMI2",
+        "444BypassHDMI3",
+        "444BypassHDMI4",
+        "444BypassHDMINone",
+        "activeArtisticDisplayScreenSaver",
+        "amazonHotkeyIsActive",
+        "aodPictureSyncMode",
+        "appReturn",
+        "autoSLZoomWithObjectDetection",
+        "battery25PercentMode",
+        "batteryInstopProtect",
+        "blackStabilizer",
+        "blueLight",
+        "care365",
+        "colorimetry",
+        "colorimetryHDMI1",
+        "colorimetryHDMI2",
+        "colorimetryHDMI3",
+        "colorimetryHDMI4",
+        "contentRecommendation",
+        "cursorAutoRemover",
+        "darkMode",
+        "dolbyVSVDBVer",
+        "dolbyVSVDBVerHDMI1",
+        "dolbyVSVDBVerHDMI2",
+        "dolbyVSVDBVerHDMI3",
+        "dolbyVSVDBVerHDMI4",
+        "dpPcMode",
+        "enable144HzBooster",
+        "enableALLM",
+        "enableDolbyVisionPC",
+        "enableQFT",
+        "enableQuickGame",
+        "eotf",
+        "eotfHDMI1",
+        "eotfHDMI2",
+        "eotfHDMI3",
+        "eotfHDMI4",
+        "epgRowCount",
+        "fitLogUsbDump",
+        "flickerPatternCtrl",
+        "freesync",
+        "freesyncLCDHDMI1",
+        "freesyncLCDHDMI2",
+        "freesyncLCDHDMI3",
+        "freesyncLCDHDMI4",
+        "freesyncOLEDHDMI1",
+        "freesyncOLEDHDMI2",
+        "freesyncOLEDHDMI3",
+        "freesyncOLEDHDMI4",
+        "freesyncSupport",
+        "freeviewTnCPopup",
+        "gameAdjustContrast",
+        "gameBlackLevel",
+        "gameColorDepth",
+        "gameDashboardStatusList",
+        "gameGenre",
+        "gameMode",
+        "gameOptimization",
+        "gameOptimizationDP1",
+        "gameOptimizationDP2",
+        "gameOptimizationHDMI1",
+        "gameOptimizationHDMI2",
+        "gameOptimizationHDMI3",
+        "gameOptimizationHDMI4",
+        "gameOptimizationUSBC1",
+        "gameOptimizationUSBC2",
+        "gameScreenPosition",
+        "gameScreenRatio",
+        "gameScreenSize",
+        "gameSettingModified",
+        "gameSharpness",
+        "gameUIColor",
+        "hdmiPcMode",
+        "homeAppLaunched",
+        "homeEffectVersion",
+        "homeQuickGuideLaunched",
+        "homeShelfEdit",
+        "gameWallpaper",
+        "homelegalPopup",
+        "hueSyncAutoEnable",
+        "hueSyncManualEnable",
+        "illuminanceThreshold",
+        "inputOptimization",
+        "isFirstCapture",
+        "isFirstShowSbmSpeaker",
+        "isHdpOpAppPopupDone",
+        "isSLZoomExecutable",
+        "isSLZoomOn",
+        "isSLZoomOperable",
+        "isfUpdated",
+        "lastSbmSpeakerState",
+        "lgLogoDisplay",
+        "lightingAutoBrightness",
+        "lightingBrightness",
+        "lightingColorMode",
+        "lightingEnable",
+        "lightingMode",
+        "lightingTnativeBrightness",
+        "lightingTnativeMode",
+        "lowLevelAdjustment",
+        "lowPowerMode",
+        "mapping_info",
+        "masterLuminanceLevel",
+        "masteringColor",
+        "masteringColorHDMI1",
+        "masteringColorHDMI2",
+        "masteringColorHDMI3",
+        "masteringColorHDMI4",
+        "masteringPeak",
+        "masteringPeakHDMI1",
+        "masteringPeakHDMI2",
+        "masteringPeakHDMI3",
+        "masteringPeakHDMI4",
+        "maxCLL",
+        "maxCLLHDMI1",
+        "maxCLLHDMI2",
+        "maxCLLHDMI3",
+        "maxCLLHDMI4",
+        "maxFALL",
+        "maxFALLHDMI1",
+        "maxFALLHDMI2",
+        "maxFALLHDMI3",
+        "maxFALLHDMI4",
+        "multiViewLaunchMode",
+        "netflixHotkeyIsActive",
+        "newKey",
+        "oledCareMode",
+        "oledCareRecommendation",
+        "othersColorMode",
+        "playbackThreshold",
+        "pseudoTouchMode",
+        "qmsVrr",
+        "quickSettingsMenuList",
+        "quickSettingsRecentMenu",
+        "screenRemoteAutoShow",
+        "screenRemoteExpanded",
+        "screenRemotePosition",
+        "simplinkAutoPowerOn",
+        "slzoomTargetAreaHeight",
+        "slzoomTargetAreaLevel",
+        "slzoomTargetAreaWidth",
+        "slzoomTargetAreaX",
+        "slzoomTargetAreaY",
+        "soundSyncModeColor",
+        "soundSyncModeDisplayMode",
+        "soundSyncModeFrequency",
+        "soundSyncModeStaticColor",
+        "staticModeColor1",
+        "staticModeColor2",
+        "staticModeColor3",
+        "staticModeColor4",
+        "supportAirplay",
+        "supportBnoModel",
+        "svcMenuFlag",
+        "touchRemoteLaunchMode",
+        "uhdDeepColor",
+        "uhdDeepColor8kHDMI1",
+        "uhdDeepColor8kHDMI2",
+        "uhdDeepColor8kHDMI3",
+        "uhdDeepColor8kHDMI4",
+        "uhdDeepColorAutoStatusHDMI1",
+        "uhdDeepColorAutoStatusHDMI2",
+        "uhdDeepColorAutoStatusHDMI3",
+        "uhdDeepColorAutoStatusHDMI4",
+        "usbcPcMode",
+        "weatherAllowed",
+        "whiteColorMode",
+        "whiteStabilizer"
+      ]
+    },
+    "picture": {
+      "descripteurs": {
+        "backlight": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [
+            "input",
+            "pictureMode"
+          ],
+          "hasCountryVar": true,
+          "key": "backlight",
+          "ui": {
+            "active": true,
+            "displayName": "backlight",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 100,
+              "min": 0
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        },
+        "brightness": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [
+            "input",
+            "pictureMode"
+          ],
+          "key": "brightness",
+          "ui": {
+            "active": true,
+            "displayName": "brightness",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 100,
+              "min": 0
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        },
+        "color": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [
+            "input",
+            "pictureMode"
+          ],
+          "key": "color",
+          "ui": {
+            "active": true,
+            "displayName": "color",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 100,
+              "min": 0
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        },
+        "contrast": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [
+            "input",
+            "pictureMode"
+          ],
+          "key": "contrast",
+          "ui": {
+            "active": true,
+            "displayName": "contrast",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 100,
+              "min": 0
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        },
+        "eyeComfortMode": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [],
+          "key": "eyeComfortMode",
+          "ui": {
+            "active": true,
+            "displayName": "eyeComfortMode",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "on",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "pictureMode": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [
+            "input",
+            "dynamicRange"
+          ],
+          "hasCountryVar": true,
+          "key": "pictureMode",
+          "ui": {
+            "active": true,
+            "displayName": "pictureMode",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "personalized",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "hdrPersonalized",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrPersonalized",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "vivid",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "hdrVivid",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "normal",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "eco",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "cinema",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "hdrStandard",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "hdrEco",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "hdrCinemaBright",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "hdrCinema",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "sports",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "game",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "photo",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "hdrGame",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "filmMaker",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "hdrFilmMaker",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrVivid",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrStandard",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrCinemaBright",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrCinema",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrGame",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "expert1",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "expert2",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "sharpness": {
+          "account": false,
+          "category": "picture",
+          "dbtype": "G",
+          "dimension": [
+            "input",
+            "pictureMode"
+          ],
+          "key": "sharpness",
+          "ui": {
+            "active": true,
+            "displayName": "sharpness",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "range": {
+              "interval": 1,
+              "max": 50,
+              "min": 0
+            }
+          },
+          "volatile": false,
+          "vtype": "Range"
+        }
+      },
+      "erreurs": [],
+      "lisibles": {
+        "adjustingLuminance": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "adjustingLuminance10pt": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "backlight": 0,
+        "blackLevel": {
+          "ntsc": "auto",
+          "ntsc443": "auto",
+          "pal": "auto",
+          "pal60": "auto",
+          "palm": "auto",
+          "paln": "auto",
+          "secam": "auto",
+          "unknown": "auto"
+        },
+        "brightness": 50,
+        "color": 50,
+        "colorGamut": "auto",
+        "colorManagementColorSystem": "red",
+        "colorManagementHueBlue": 0,
+        "colorManagementHueCyan": 0,
+        "colorManagementHueGreen": 0,
+        "colorManagementHueMagenta": 0,
+        "colorManagementHueRed": 0,
+        "colorManagementHueYellow": 0,
+        "colorManagementLuminanceBlue": 0,
+        "colorManagementLuminanceCyan": 0,
+        "colorManagementLuminanceGreen": 0,
+        "colorManagementLuminanceMagenta": 0,
+        "colorManagementLuminanceRed": 0,
+        "colorManagementLuminanceYellow": 0,
+        "colorManagementSaturationBlue": 0,
+        "colorManagementSaturationCyan": 0,
+        "colorManagementSaturationGreen": 0,
+        "colorManagementSaturationMagenta": 0,
+        "colorManagementSaturationRed": 0,
+        "colorManagementSaturationYellow": 0,
+        "colorTemperature": -40,
+        "contrast": 100,
+        "dynamicColor": "off",
+        "dynamicContrast": "off",
+        "energySaving": "off",
+        "eyeComfortMode": "off",
+        "gamma": "high2",
+        "hdrDynamicToneMapping": "on",
+        "motionEyeCare": "off",
+        "mpegNoiseReduction": "off",
+        "noiseReduction": "off",
+        "peakBrightness": "off",
+        "pictureMode": "expert2",
+        "realCinema": "on",
+        "sharpness": 0,
+        "smoothGradation": "off",
+        "superResolution": "off",
+        "tint": 0,
+        "whiteBalanceBlue": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "whiteBalanceBlue10pt": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "whiteBalanceBlueGain": 0,
+        "whiteBalanceBlueOffset": 0,
+        "whiteBalanceGreen": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "whiteBalanceGreen10pt": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "whiteBalanceGreenGain": 0,
+        "whiteBalanceGreenOffset": 0,
+        "whiteBalanceIre": "100",
+        "whiteBalanceIre10pt": "100",
+        "whiteBalanceLuminance": "130",
+        "whiteBalanceMethod": "2",
+        "whiteBalancePoint": "high",
+        "whiteBalanceRed": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "whiteBalanceRed10pt": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "whiteBalanceRedGain": 0,
+        "whiteBalanceRedOffset": 0
+      },
+      "rejetees_desc": [
+        "adjustingLuminance",
+        "adjustingLuminance10pt",
+        "blackLevel",
+        "colorGamut",
+        "colorManagementColorSystem",
+        "colorManagementHueBlue",
+        "colorManagementHueCyan",
+        "colorManagementHueGreen",
+        "colorManagementHueMagenta",
+        "colorManagementHueRed",
+        "colorManagementHueYellow",
+        "colorManagementLuminanceBlue",
+        "colorManagementLuminanceCyan",
+        "colorManagementLuminanceGreen",
+        "colorManagementLuminanceMagenta",
+        "colorManagementLuminanceRed",
+        "colorManagementLuminanceYellow",
+        "colorManagementSaturationBlue",
+        "colorManagementSaturationCyan",
+        "colorManagementSaturationGreen",
+        "colorManagementSaturationMagenta",
+        "colorManagementSaturationRed",
+        "colorManagementSaturationYellow",
+        "colorTemperature",
+        "dynamicColor",
+        "dynamicContrast",
+        "energySaving",
+        "gamma",
+        "hdrDynamicToneMapping",
+        "motionEyeCare",
+        "mpegNoiseReduction",
+        "noiseReduction",
+        "peakBrightness",
+        "realCinema",
+        "smoothGradation",
+        "superResolution",
+        "tint",
+        "whiteBalanceBlue",
+        "whiteBalanceBlue10pt",
+        "whiteBalanceBlueGain",
+        "whiteBalanceBlueOffset",
+        "whiteBalanceGreen",
+        "whiteBalanceGreen10pt",
+        "whiteBalanceGreenGain",
+        "whiteBalanceGreenOffset",
+        "whiteBalanceIre",
+        "whiteBalanceIre10pt",
+        "whiteBalanceLuminance",
+        "whiteBalanceMethod",
+        "whiteBalancePoint",
+        "whiteBalanceRed",
+        "whiteBalanceRed10pt",
+        "whiteBalanceRedGain",
+        "whiteBalanceRedOffset"
+      ],
+      "rejetees_lecture": [
+        "DtmMastering10k",
+        "DtmMastering1k",
+        "DtmMastering4k",
+        "DtmProfessional",
+        "RGBWDotPatternMax",
+        "RGBWDotPatternMin",
+        "RGBWDotPatternOnOff",
+        "ScreenOff",
+        "_14_9VPosition",
+        "ambientLightCompensation",
+        "applyToAllInput",
+        "aspectRatio",
+        "aspectRatioActive",
+        "aspectRatioActivePerApp",
+        "aspectRatioHdmiCinema",
+        "aspectRatioPerApp",
+        "aspectRatioSettingActivePerApp",
+        "aspectRatioTv",
+        "avMode",
+        "brightnessActive",
+        "captionZoomRatio",
+        "captionZoomVPosition",
+        "cinemaVPosition",
+        "cinemaZoomRatio",
+        "clarityActive",
+        "colorActive",
+        "colorFilter",
+        "demandResponse",
+        "displayType",
+        "doNotShowAbcNotification",
+        "doNotShowMecNotification",
+        "dolbyPrecisionDetail",
+        "edgeEnhancer",
+        "energySavingAutoMin",
+        "energySavingModified",
+        "erpUserConfirm",
+        "expertPattern",
+        "expressionEnhancer",
+        "externalPqlDbType",
+        "filmMakerMode",
+        "filmmakerAmbientLight",
+        "gammaLevel",
+        "grassColor",
+        "hPosition",
+        "hSharpness",
+        "hSize",
+        "hgig",
+        "inputListForCopyCms",
+        "inputListForCopyPsm",
+        "inputListForCopyWb",
+        "isfMode",
+        "keyListForCopyCms",
+        "keyListForCopyPsm",
+        "keyListForCopyWb",
+        "localDimming",
+        "logoLuminanceAdjust",
+        "mediaZoomRatio",
+        "mediaZoomVPosition",
+        "memcDelayLevel",
+        "motionPro",
+        "motionProOLED",
+        "nearBlackDetail",
+        "oledPanelSettings",
+        "pcMode",
+        "pcScreenSaver",
+        "pictureControlLimitation",
+        "pictureModeSettingsActive",
+        "pictureModeSettingsActivePerApp",
+        "pictureSettingModified",
+        "pictureSettingsActivePerApp",
+        "pictureTempKey",
+        "precisionHdrMasterPro",
+        "psmListForExpert",
+        "scheduledPixelCleaning",
+        "screenShift",
+        "skinColor",
+        "skyColor",
+        "sourceRatio",
+        "truMotionBlur",
+        "truMotionJudder",
+        "vPosition",
+        "vSharpness",
+        "vSize",
+        "videoSource",
+        "wb10PointsGammaValue",
+        "wb22PointsGammaValue",
+        "whiteBalanceActive",
+        "whiteBalanceApplyAllInputs",
+        "whiteBalanceCodeValue",
+        "whiteBalanceCodeValue10pt",
+        "whiteBalanceColorTemperature",
+        "truMotionMode",
+        "whiteBalancePattern",
+        "wssZoomVPosition",
+        "xvycc",
+        "zoomRatio",
+        "zoomVPosition"
+      ]
+    },
+    "push": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "com.webos.app.homeconnect",
+        "com.webos.app.sportsteamsettings",
+        "hidden",
+        "list",
+        "notification"
+      ]
+    },
+    "sound": {
+      "descripteurs": {
+        "eArcSupport": {
+          "account": false,
+          "app_id": "",
+          "category": "sound",
+          "condition": {
+            "hdmiSwitchIC": "none"
+          },
+          "dbtype": "G",
+          "dimension": [],
+          "key": "eArcSupport",
+          "ui": {
+            "active": true,
+            "displayName": "eArcSupport",
+            "visible": false,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "on",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "off",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "soundOutput": {
+          "account": false,
+          "category": "sound",
+          "dbtype": "G",
+          "dimension": [
+            "audioOutput"
+          ],
+          "key": "soundOutput",
+          "ui": {
+            "active": true,
+            "displayName": "soundOutput",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "tv_speaker",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_speakerbar",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "external_optical",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "external_arc",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "bt_soundbar",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "wisa_speaker",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "mobile_phone",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "lineout",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "builtin_soundbar",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "headphone",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "bt_audio",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_external_speaker",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_speaker_headphone",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_speaker_bluetooth",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_speakerbar_headphone",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_speaker_external_arc",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "usb_speaker",
+                "visible": true
+              },
+              {
+                "active": false,
+                "value": "tv_speaker_optical_arc",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "wow_cast",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "tv_speaker_wow_cast",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "flex_connector",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        },
+        "soundOutputDigital": {
+          "account": false,
+          "app_id": "",
+          "category": "sound",
+          "dbtype": "G",
+          "dimension": [
+            "audioInput"
+          ],
+          "hasCountryVar": true,
+          "key": "soundOutputDigital",
+          "ui": {
+            "active": true,
+            "displayName": "soundOutputDigital",
+            "visible": true,
+            "widget": "None"
+          },
+          "valueCheck": true,
+          "valueTypeCheck": false,
+          "values": {
+            "arrayExt": [
+              {
+                "active": true,
+                "value": "pcm",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "auto",
+                "visible": true
+              },
+              {
+                "active": true,
+                "value": "passThrough",
+                "visible": true
+              }
+            ]
+          },
+          "volatile": false,
+          "vtype": "ArrayExt"
+        }
+      },
+      "erreurs": [],
+      "lisibles": {
+        "avSync": "on",
+        "avSyncBypassInput": "off",
+        "avSyncSpdif": "0",
+        "eArcSupport": "on",
+        "soundMode": "standard",
+        "soundOutput": "external_arc",
+        "soundOutputDigital": "passThrough",
+        "tvSetupConfiguration": "stand"
+      },
+      "rejetees_desc": [
+        "avSync",
+        "avSyncBypassInput",
+        "avSyncSpdif",
+        "soundMode",
+        "tvSetupConfiguration"
+      ],
+      "rejetees_lecture": [
+        "TTSMixingRatio",
+        "aiSound",
+        "aigamesound",
+        "analogOut",
+        "applyToAllInputSSM",
+        "audioBalance",
+        "audioDescription",
+        "audioDescriptionAtsc30",
+        "audioDescriptionVolume",
+        "audioLanguageFirst",
+        "audioLanguageSecond",
+        "auracast",
+        "autoVolume",
+        "autopower",
+        "avSyncBtSurround",
+        "avSyncBypass",
+        "avSyncSpeaker",
+        "avSyncWisa",
+        "bass",
+        "blegattSoundbar",
+        "bluetoothMode",
+        "btSpeakerMode",
+        "centerlevel",
+        "clearVoice",
+        "coSoundOutput",
+        "coSoundOutputState",
+        "deviceCntOfBtGeneral",
+        "dialogEnhancementAtsc30",
+        "dialogEnhancementVolumeAtsc30",
+        "digitalAudioPriority",
+        "display",
+        "equalizerStatus",
+        "forceOutputDDPLUS",
+        "function",
+        "gameTVEqualizer",
+        "gameTVEqualizer10band",
+        "hdmiArcMode",
+        "headphoneDetection",
+        "hearingAid",
+        "inputAudioFormatDP1",
+        "inputAudioFormatDP2",
+        "inputAudioFormatHDMI1",
+        "inputAudioFormatHDMI2",
+        "inputAudioFormatHDMI3",
+        "inputAudioFormatHDMI4",
+        "inputAudioFormatUSBC1",
+        "inputAudioFormatUSBC2",
+        "lgSoundSync",
+        "magicSoundModified",
+        "magicSoundTime",
+        "magicSpaceSound",
+        "midlevel",
+        "multiAudioOutputWithBt",
+        "night",
+        "prevSoundOutput",
+        "rearlevel",
+        "sidelevel",
+        "slidingSpeaker",
+        "slidingSpeakerMelody",
+        "smartSoundMode",
+        "sound",
+        "soundAlive",
+        "soundEffect",
+        "soundEngineStatus",
+        "soundModeModified",
+        "soundModeSync",
+        "soundOptimizer",
+        "soundOutputList",
+        "soundOutputs",
+        "startupSound",
+        "supportATMOS",
+        "surround",
+        "toplevel",
+        "treble",
+        "tvPowerSound",
+        "userEqualizer",
+        "userEqualizerValues",
+        "virtualSurround",
+        "visualImpaired",
+        "volumeControl",
+        "volumeStep",
+        "wisaSpeakerChannelType",
+        "wooferLevel",
+        "wooferlevel"
+      ]
+    },
+    "soundbar": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "autopower",
+        "bass",
+        "centerlevel",
+        "display",
+        "function",
+        "midlevel",
+        "night",
+        "rearlevel",
+        "sidelevel",
+        "surround",
+        "toplevel",
+        "treble",
+        "wooferlevel"
+      ]
+    },
+    "support": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {
+        "automaticUpdate": "on"
+      },
+      "rejetees_desc": [
+        "automaticUpdate"
+      ],
+      "rejetees_lecture": [
+        "launchPUGuideApp",
+        "softwareUpdateEnable"
+      ]
+    },
+    "time": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {
+        "onTimerVolume": "10",
+        "timeZone": {
+          "City": "Paris",
+          "Country": "France",
+          "CountryCode": "FR",
+          "Description": "Central European Time",
+          "ZoneID": "Europe/Paris",
+          "offsetFromUTC": 60,
+          "preferred": true,
+          "supportsDST": 1
+        }
+      },
+      "rejetees_desc": [
+        "onTimerVolume",
+        "timeZone"
+      ],
+      "rejetees_lecture": [
+        "absenceTimemachineMode",
+        "autoClock",
+        "autoDeleteMode",
+        "autoOff15Min",
+        "autoOff2HourOnTimer",
+        "autoPowerOff",
+        "autoPowerOff2Hour",
+        "autoPowerOff2HourMute",
+        "autoRecStorageValue",
+        "autoRecordMode",
+        "autoUploadMode",
+        "automaticStandBy",
+        "continuePlayMode",
+        "daylightSaving",
+        "dpmsAutoOff",
+        "dualRecordMode",
+        "myStarterInfo",
+        "noMenuAutoOff15Min",
+        "noOperationAutoOff",
+        "noSignalAutoOff",
+        "offTimerEnable",
+        "offTimerFlag",
+        "offTimerHour",
+        "offTimerMinute",
+        "offTimerWeekday",
+        "onTimerAppId",
+        "onTimerAppId2",
+        "onTimerAppId3",
+        "onTimerAppId4",
+        "onTimerAppId5",
+        "onTimerChannel",
+        "onTimerChannel2",
+        "onTimerChannel3",
+        "onTimerChannel4",
+        "onTimerChannel5",
+        "onTimerEnable",
+        "onTimerEnable2",
+        "onTimerEnable3",
+        "onTimerEnable4",
+        "onTimerEnable5",
+        "onTimerHour",
+        "onTimerHour2",
+        "onTimerHour3",
+        "onTimerHour4",
+        "onTimerHour5",
+        "onTimerMinute",
+        "onTimerMinute2",
+        "onTimerMinute3",
+        "onTimerMinute4",
+        "onTimerMinute5",
+        "onTimerSource",
+        "onTimerSource2",
+        "onTimerSource3",
+        "onTimerSource4",
+        "onTimerSource5",
+        "onTimerVolume2",
+        "onTimerVolume3",
+        "onTimerVolume4",
+        "onTimerVolume5",
+        "onTimerWeekday",
+        "onTimerWeekday2",
+        "onTimerWeekday3",
+        "onTimerWeekday4",
+        "onTimerWeekday5",
+        "performanceTestStorageValue",
+        "recordQualityMode",
+        "recordStorageValue",
+        "remindAppId",
+        "remindChannel",
+        "remindEnable",
+        "remindVolume",
+        "saveLivePlaybackMode",
+        "setMyStarter",
+        "sleepTimer",
+        "starttime",
+        "stopRecordValue",
+        "timeOffset",
+        "timemachineMode",
+        "tsStorageValue",
+        "warmTimerEnable",
+        "warmTimerWeekday1Enable",
+        "warmTimerWeekday2Enable",
+        "warmTimerWeekday3Enable",
+        "warmTimerWeekday4Enable",
+        "warmTimerWeekday5Enable",
+        "warmTimerWeekday6Enable",
+        "warmTimerWeekday7Enable",
+        "warmTimerWeekday8Enable",
+        "warmTimerWeekend1Enable",
+        "warmTimerWeekend2Enable",
+        "warmTimerWeekend3Enable",
+        "warmTimerWeekend4Enable",
+        "warmTimerWeekend5Enable",
+        "warmTimerWeekend6Enable",
+        "warmTimerWeekend7Enable",
+        "warmTimerWeekend8Enable"
+      ]
+    },
+    "timemachine": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "absenceTimemachineMode",
+        "autoDeleteMode",
+        "autoRecStorageValue",
+        "autoRecordMode",
+        "autoUploadMode",
+        "continuePlayMode",
+        "dualRecordMode",
+        "performanceTestStorageValue",
+        "recordQualityMode",
+        "recordStorageValue",
+        "saveLivePlaybackMode",
+        "stopRecordValue",
+        "timemachineMode",
+        "tsStorageValue"
+      ]
+    },
+    "timer": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "autoPowerOff",
+        "autoPowerOff2Hour",
+        "autoPowerOff2HourMute",
+        "myStarterInfo",
+        "noMenuAutoOff15Min",
+        "setMyStarter"
+      ]
+    },
+    "twinTv": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {
+        "role": "undefined",
+        "status": "undefined",
+        "systemMode": "undefined"
+      },
+      "rejetees_desc": [
+        "role",
+        "status",
+        "systemMode"
+      ],
+      "rejetees_lecture": [
+        "audioMode",
+        "backlightOffset",
+        "bezelOffsetBottom",
+        "bezelOffsetLeft",
+        "bezelOffsetRight",
+        "bezelOffsetTop",
+        "dimensionCol",
+        "dimensionRow",
+        "masterInfo",
+        "originalPictureMode",
+        "originalVividValue",
+        "originalWhiteBalance",
+        "pictureModeSettingsDone",
+        "positionCol",
+        "positionRow",
+        "slaveInfo",
+        "videoMode",
+        "wideZoomToast"
+      ]
+    },
+    "voiceframework": {
+      "descripteurs": {},
+      "erreurs": [],
+      "lisibles": {},
+      "rejetees_desc": [],
+      "rejetees_lecture": [
+        "amazonAlexaLocale",
+        "audioFeedback",
+        "channelZapping",
+        "countPowerOn",
+        "disclosureAccepted",
+        "disclosureAcceptedVsn",
+        "epgLastUpdated",
+        "googleAssistantLocale",
+        "googleAssistantStateToken",
+        "supportGoogleAssistant",
+        "supportNlp",
+        "supportStt",
+        "supportThinQtvNlp",
+        "vidStatus",
+        "voiceModel",
+        "voice_mic"
+      ]
+    }
+  },
+  "contexte": {
+    "pictureMode": "expert2"
+  },
+  "firmware": {
+    "major_ver": "33",
+    "minor_ver": "31.68",
+    "product_name": "webOSTV 25"
+  }
+}
