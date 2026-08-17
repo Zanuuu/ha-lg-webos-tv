@@ -1,13 +1,20 @@
 {
   "id": "general.accessibilite",
-  "chemin": ["Général"],
+  "chemin": [
+    "Général"
+  ],
   "libelle": "Accessibilité",
   "controle": "sous-menu",
-  "source": { "guide": "6.4" },
+  "source": {
+    "guide": "6.4"
+  },
   "enfants": [
     {
       "id": "general.accessibilite.guide-audio",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Guide audio",
       "description": "Cela fournit un guidage vocal dans diverses situations, telles que le changement de chaîne, le réglage du volume, les paramètres et les modifications du signal d'entrée.",
       "notes": [
@@ -18,106 +25,221 @@
         "La définition de Guide audio sur Activé bascule automatiquement Son à la mise en marche du périphérique sur Activé aussi."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.4.1" },
+      "source": {
+        "guide": "6.4.1"
+      },
       "enfants": [
         {
           "id": "general.accessibilite.guide-audio.activer-la-fonction",
-          "chemin": ["Général", "Accessibilité", "Guide audio"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Guide audio"
+          ],
           "libelle": "Activer la fonction",
           "description": "",
           "controle": "interrupteur",
-          "source": { "guide": "6.4.1" },
-          "a_verifier": ["libelle", "description"]
+          "source": {
+            "guide": "6.4.1"
+          },
+          "a_verifier": [
+            "libelle",
+            "description"
+          ],
+          "api": {
+            "categorie": "option",
+            "cle": "audioGuidance",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.accessibilite.guide-audio.vitesse",
-          "chemin": ["Général", "Accessibilité", "Guide audio"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Guide audio"
+          ],
           "libelle": "Vitesse",
           "description": "Régler la vitesse du guide vocal.",
           "controle": "liste",
-          "source": { "guide": "6.4.1" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.4.1"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.accessibilite.guide-audio.volume",
-          "chemin": ["Général", "Accessibilité", "Guide audio"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Guide audio"
+          ],
           "libelle": "Volume",
           "description": "Régler le volume du guide vocal.",
           "controle": "liste",
-          "source": { "guide": "6.4.1" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.4.1"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.accessibilite.guide-audio.ton",
-          "chemin": ["Général", "Accessibilité", "Guide audio"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Guide audio"
+          ],
           "libelle": "Ton",
           "description": "Régler le ton du guide vocal.",
           "controle": "liste",
-          "source": { "guide": "6.4.1" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.4.1"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.accessibilite.guide-audio.pack-langues-haute-qualite",
-          "chemin": ["Général", "Accessibilité", "Guide audio"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Guide audio"
+          ],
           "libelle": "Pack de langues de haute qualité",
           "description": "Le Guide audio sera désormais proposé avec une voix plus naturelle.Le Guide audio sera disponible en qualité standard, même si le Pack de langues de haute qualité est supprimé.",
           "controle": "action",
-          "source": { "guide": "6.4.1" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.4.1"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.accessibilite.utilisation-telecommande",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Utilisation de la télécommande",
       "description": "Suivez les instructions à l'écran et appuyez sur une touche de la télécommande pour afficher sa fonction.",
       "notes": [
         "Lorsque vous appuyez sur le bouton BACK deux fois de suite, Utilisation de la télécommande s'arrête."
       ],
       "controle": "action",
-      "source": { "guide": "6.4.2" }
+      "source": {
+        "guide": "6.4.2"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.augmenter-temps-pression",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Augmenter le temps de pression sur la télécommande",
       "description": "Si vous avez du mal à maintenir les touches de la télécommande enfoncées, vous pouvez définir une durée d'appui personnalisée pour faciliter l'utilisation.",
       "controle": "sous-menu",
-      "source": { "guide": "6.4.3" },
+      "source": {
+        "guide": "6.4.3"
+      },
       "enfants": [
         {
           "id": "general.accessibilite.augmenter-temps-pression.activer-la-fonction",
-          "chemin": ["Général", "Accessibilité", "Augmenter le temps de pression sur la télécommande"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Augmenter le temps de pression sur la télécommande"
+          ],
           "libelle": "Activer la fonction",
           "description": "",
           "controle": "interrupteur",
-          "source": { "guide": "6.4.3" },
-          "a_verifier": ["libelle", "description"]
+          "source": {
+            "guide": "6.4.3"
+          },
+          "a_verifier": [
+            "libelle",
+            "description"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.accessibilite.augmenter-temps-pression.temps-pression-longue",
-          "chemin": ["Général", "Accessibilité", "Augmenter le temps de pression sur la télécommande"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Augmenter le temps de pression sur la télécommande"
+          ],
           "libelle": "Activer le temps pour une pression longue",
           "description": "Pour les fonctions qui nécessitent de maintenir enfoncée une touche de la télécommande, vous pouvez définir la durée requise de l'appui.",
           "controle": "liste",
-          "source": { "guide": "6.4.3" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.4.3"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.accessibilite.augmenter-temps-pression.intervalle-actions-repetees",
-          "chemin": ["Général", "Accessibilité", "Augmenter le temps de pression sur la télécommande"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Augmenter le temps de pression sur la télécommande"
+          ],
           "libelle": "Intervalle pour les actions répétées",
           "description": "Pour les touches qui exécutent une fonction de manière répétée lorsqu'elles sont maintenues enfoncées, tels que les touches de volume ou de chaîne, vous pouvez régler la vitesse de répétition de l'action.",
           "controle": "liste",
-          "source": { "guide": "6.4.3" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.4.3"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.accessibilite.son-mise-en-marche",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Son à la mise en marche du périphérique",
       "description": "Cette fonctionnalité vous permet d'activer/de désactiver les effets sonores que vous entendez lorsque votre périphérique est allumé ou éteint.",
       "notes": [
@@ -125,11 +247,19 @@
         "La définition de Guide audio sur Activé bascule automatiquement Son à la mise en marche du périphérique sur Activé aussi."
       ],
       "controle": "interrupteur",
-      "source": { "guide": "6.4.4" }
+      "source": {
+        "guide": "6.4.4"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.zoom-ecran",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Zoom d'écran",
       "description": "Vous pouvez zoomer et visualiser la partie souhaitée de l'écran.",
       "notes": [
@@ -137,12 +267,22 @@
         "Un appui long sur la touche ACCUEIL de la Télécommande pendant la visualisation en mode zoom active le mode de contrôle du zoom."
       ],
       "controle": "action",
-      "source": { "guide": "6.4.5" },
-      "a_verifier": ["position"]
+      "source": {
+        "guide": "6.4.5"
+      },
+      "a_verifier": [
+        "position"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.ecouter-avec-aide-auditive",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Écouter en même temps avec une aide auditive",
       "description": "Vous pouvez diffuser simultanément le son via des haut-parleurs internes et des aides auditives.",
       "notes": [
@@ -153,16 +293,36 @@
       ],
       "controle": "liste",
       "choix": [
-        { "libelle": "Désactivé", "description": "Désactive l'option Écouter en même temps avec une aide auditive." },
-        { "libelle": "Périphérique Bluetooth", "description": "L'option Sortie son bascule sur Périphérique Bluetooth + Haut-parleur TV.L'historique des connexions Bluetooth existant sera alors supprimé." },
-        { "libelle": "Auracast™", "description": "L'option Sortie son bascule sur Utiliser le haut-parleur TV." },
-        { "libelle": "Périphérique HDMI(ARC)", "description": "L'option Sortie son bascule sur Périphérique HDMI(ARC) + Haut-parleur du téléviseur." }
+        {
+          "libelle": "Désactivé",
+          "description": "Désactive l'option Écouter en même temps avec une aide auditive."
+        },
+        {
+          "libelle": "Périphérique Bluetooth",
+          "description": "L'option Sortie son bascule sur Périphérique Bluetooth + Haut-parleur TV.L'historique des connexions Bluetooth existant sera alors supprimé."
+        },
+        {
+          "libelle": "Auracast™",
+          "description": "L'option Sortie son bascule sur Utiliser le haut-parleur TV."
+        },
+        {
+          "libelle": "Périphérique HDMI(ARC)",
+          "description": "L'option Sortie son bascule sur Périphérique HDMI(ARC) + Haut-parleur du téléviseur."
+        }
       ],
-      "source": { "guide": "6.4.6" }
+      "source": {
+        "guide": "6.4.6"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.agrandir-langue-signes",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Agrandir la langue des signes",
       "description": "Vous pouvez visualiser la partie de l'écran dédiée à l'interprétation en langue des signes fournie par le diffuseur et zoomer dessus.",
       "notes": [
@@ -170,31 +330,59 @@
         "Localise l'écran d'interprétation en langue des signes et zoome automatiquement dessus.Si le zoom n'est pas automatique, des ajustements manuels sont nécessaires."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.4.7" },
+      "source": {
+        "guide": "6.4.7"
+      },
       "enfants": [
         {
           "id": "general.accessibilite.agrandir-langue-signes.activer-la-fonction",
-          "chemin": ["Général", "Accessibilité", "Agrandir la langue des signes"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Agrandir la langue des signes"
+          ],
           "libelle": "Activer la fonction",
           "description": "",
           "controle": "interrupteur",
-          "source": { "guide": "6.4.7" },
-          "a_verifier": ["libelle", "description"]
+          "source": {
+            "guide": "6.4.7"
+          },
+          "a_verifier": [
+            "libelle",
+            "description"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.accessibilite.agrandir-langue-signes.zoom-manuel",
-          "chemin": ["Général", "Accessibilité", "Agrandir la langue des signes"],
+          "chemin": [
+            "Général",
+            "Accessibilité",
+            "Agrandir la langue des signes"
+          ],
           "libelle": "Zoom manuel",
           "description": "Vous pouvez sélectionner l'emplacement ou la taille de l'image sur laquelle vous souhaitez effectuer un zoom avant.\nPour sélectionner la position du zoom avant, utilisez le pointeur sur l'écran ou les touches Haut/Bas/Gauche/Droite de la télécommande.\nUtilisez les touches de chaîne de la télécommande pour sélectionner la zone sur laquelle vous souhaitez zoomer.",
           "controle": "action",
-          "source": { "guide": "6.4.7" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.4.7"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.accessibilite.sous-titres",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Sous-titres",
       "description": "Si un diffuseur propose du contenu avec des sous-titres, vous pouvez les lire.Pour définir la langue des sous-titresUtilisez la fonction Sous-titres lorsque plusieurs langues de sous-titres sont affichées.",
       "notes": [
@@ -205,24 +393,45 @@
         "Remplacez Sous-titres par Activé et sélectionnez le paramètre de sous-titrage."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.4.8" },
-      "a_verifier": ["controle", "choix"]
+      "source": {
+        "guide": "6.4.8"
+      },
+      "a_verifier": [
+        "controle",
+        "choix"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.description-audio",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Description audio",
       "description": "Le contenu de l'écran sera retranscrit vocalement pour les personnes malvoyantes.\nVous pouvez utiliser cette fonction si la société de diffusion prend en charge la fonction Description audio pour les malvoyants.",
       "notes": [
         "Certains modèles ne sont pas pris en charge."
       ],
       "controle": "interrupteur",
-      "source": { "guide": "6.4.9" },
-      "a_verifier": ["controle"]
+      "source": {
+        "guide": "6.4.9"
+      },
+      "a_verifier": [
+        "controle"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.type-audio",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Type d'audio",
       "description": "Les commentaires audio ou les sous-titres sont proposés aux malentendants ou aux malvoyants.",
       "notes": [
@@ -230,16 +439,36 @@
       ],
       "controle": "liste",
       "choix": [
-        { "libelle": "Normal", "description": "Permet de sélectionner la source Audio par défaut." },
-        { "libelle": "Description audio", "description": "Pour les personnes malvoyantes, sélectionnez la source audio personnalisée par défaut et Audio pour malvoyants." },
-        { "libelle": "Sous-titre parlé", "description": "Pour les personnes malvoyantes, sélectionnez l’option personnalisée Audio pour malvoyants uniquement." },
-        { "libelle": "Tout contenu audio supplémentaire", "description": "Permet d'afficher tout support audio supplémentaire." }
+        {
+          "libelle": "Normal",
+          "description": "Permet de sélectionner la source Audio par défaut."
+        },
+        {
+          "libelle": "Description audio",
+          "description": "Pour les personnes malvoyantes, sélectionnez la source audio personnalisée par défaut et Audio pour malvoyants."
+        },
+        {
+          "libelle": "Sous-titre parlé",
+          "description": "Pour les personnes malvoyantes, sélectionnez l’option personnalisée Audio pour malvoyants uniquement."
+        },
+        {
+          "libelle": "Tout contenu audio supplémentaire",
+          "description": "Permet d'afficher tout support audio supplémentaire."
+        }
       ],
-      "source": { "guide": "6.4.10" }
+      "source": {
+        "guide": "6.4.10"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.malentendant",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Malentendant",
       "description": "Des sous-titres seront affichés pour les malentendants.",
       "notes": [
@@ -248,43 +477,82 @@
         "Certains modèles ne sont pas pris en charge."
       ],
       "controle": "interrupteur",
-      "visibilite": { "condition_texte": "Sous-titres définis sur Activé." },
-      "source": { "guide": "6.4.11" }
+      "visibilite": {
+        "condition_texte": "Sous-titres définis sur Activé."
+      },
+      "source": {
+        "guide": "6.4.11"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.mise-au-point-contraste-eleve",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Mise au point avec contraste élevé",
       "description": "L'utilisation de cette fonctionnalité permet de mettre davantage en évidence la zone actuellement sélectionnée.",
       "controle": "interrupteur",
-      "source": { "guide": "6.4.12" }
+      "source": {
+        "guide": "6.4.12"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.texte-contraste-eleve",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Texte à contraste élevé",
       "description": "Elle augmente le contraste entre les zones claires et sombres en ajustant les couleurs de l'arrière-plan et du texte de certains menus à l'écran.",
       "controle": "interrupteur",
-      "source": { "guide": "6.4.13" }
+      "source": {
+        "guide": "6.4.13"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.echelle-de-gris",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Échelle de gris",
       "description": "Modifiez la couleur du menu sur la vidéo et à l'écran en noir et blanc pour plus de clarté.",
       "controle": "interrupteur",
-      "source": { "guide": "6.4.14" }
+      "source": {
+        "guide": "6.4.14"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.accessibilite.inverser-couleurs",
-      "chemin": ["Général", "Accessibilité"],
+      "chemin": [
+        "Général",
+        "Accessibilité"
+      ],
       "libelle": "Inverser les couleurs",
       "description": "Pour améliorer la visibilité des menus à l'écran, inversez et calibrez certaines couleurs dans certains menus.",
       "notes": [
         "Il est possible que cette fonctionnalité ne s'applique pas à certains contenus."
       ],
       "controle": "interrupteur",
-      "source": { "guide": "6.4.15" }
+      "source": {
+        "guide": "6.4.15"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     }
   ]
 }

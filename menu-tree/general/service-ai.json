@@ -1,13 +1,20 @@
 {
   "id": "general.service-ai",
-  "chemin": ["Général"],
+  "chemin": [
+    "Général"
+  ],
   "libelle": "Service d'AI",
   "controle": "sous-menu",
-  "source": { "guide": "6.6" },
+  "source": {
+    "guide": "6.6"
+  },
   "enfants": [
     {
       "id": "general.service-ai.image-ai-pro",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Image AI Pro",
       "description": "L'intelligence artificielle, qui a été entraînée avec les techniques d'apprentissage approfondi du fabricant, trouve la résolution la plus appropriée en fonction du type d'image pour afficher des couleurs vives, réalistes et riches.",
       "notes": [
@@ -16,23 +23,41 @@
         "Certains modèles ne fonctionnent pas avec le contenu protégé par des droits d'auteur."
       ],
       "controle": "interrupteur",
-      "visibilite": { "condition_texte": "Indisponible quand Mode Image est défini sur Optimiseur de jeu." },
-      "source": { "guide": "6.6.1" }
+      "visibilite": {
+        "condition_texte": "Indisponible quand Mode Image est défini sur Optimiseur de jeu."
+      },
+      "source": {
+        "guide": "6.6.1"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.parametres-luminosite-ai",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Paramètres de luminosité AI",
       "description": "L'intelligence artificielle (IA) exprime efficacement les zones plus sombres en fonction de l'environnement et des caractéristiques du contenu de l'appareil.",
       "notes": [
         "Certains modèles ne sont pas pris en charge."
       ],
       "controle": "interrupteur",
-      "source": { "guide": "6.6.2" }
+      "source": {
+        "guide": "6.6.2"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.selection-genre-ai",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Sélection du genre d'AI",
       "description": "La qualité de l'image est automatiquement optimisée pour le genre du contenu par l'intelligence artificielle.",
       "notes": [
@@ -40,12 +65,22 @@
         "Si l'option Mode Image est définie sur Optimiseur de jeu, vous ne pouvez pas configurer cette fonction."
       ],
       "controle": "interrupteur",
-      "visibilite": { "condition_texte": "Indisponible quand Mode Image est défini sur Optimiseur de jeu." },
-      "source": { "guide": "6.6.3" }
+      "visibilite": {
+        "condition_texte": "Indisponible quand Mode Image est défini sur Optimiseur de jeu."
+      },
+      "source": {
+        "guide": "6.6.3"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.son-ai",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Son AI",
       "description": "L'intelligence artificielle, analyse les caractéristiques du contenu en temps réel pour fournir des effets sonores optimaux et une voix nette, et produit un son 3D réaliste avec la dernière technologie de son.",
       "notes": [
@@ -54,12 +89,22 @@
         "Lorsque cette fonction est définie sur Activé, le paramètre Mode du son est remplacé par Son AI/Son AI Pro."
       ],
       "controle": "interrupteur",
-      "source": { "guide": "6.6.4" },
-      "a_verifier": ["libelle"]
+      "source": {
+        "guide": "6.6.4"
+      },
+      "a_verifier": [
+        "libelle"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.reglage-acoustique-ai",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Réglage acoustique AI",
       "description": "Avec la fonction Réglage acoustique AI, vous pouvez détecter l'espace où votre périphérique est installé à l'aide du microphone de votre télécommande Magic Remote pour optimiser le son de votre périphérique en fonction de votre environnement.\nSélectionnez Démarrer un nouveau réglage de son pour mesurer l'espace dans lequel le périphérique est installé.\nUne fois la détection initiale terminée, vous pouvez sélectionner le mode audio de votre choix.",
       "notes": [
@@ -68,58 +113,121 @@
       ],
       "controle": "liste",
       "choix": [
-        { "libelle": "Désactivé", "description": "Cette option permet de désactiver l’ajustement du son Réglage acoustique AI.\nSi vous sélectionnez cette option, votre périphérique émettra le son par défaut sans procéder à des ajustements." },
-        { "libelle": "Standard", "description": "Si vous sélectionnez cette option, votre téléviseur émettra le son ajusté Réglage acoustique AI en mode Standard.\nCe mode offre un son propre et naturel." },
-        { "libelle": "Renforçateur de graves", "description": "Si vous sélectionnez cette option, votre téléviseur émettra le son ajusté Réglage acoustique AI en mettant l’accent sur les graves." },
-        { "libelle": "Renforçateur d'aigus", "description": "Si vous sélectionnez cette option, votre téléviseur émettra le son ajusté Réglage acoustique AI en mettant l’accent sur les aigus." }
+        {
+          "libelle": "Désactivé",
+          "description": "Cette option permet de désactiver l’ajustement du son Réglage acoustique AI.\nSi vous sélectionnez cette option, votre périphérique émettra le son par défaut sans procéder à des ajustements."
+        },
+        {
+          "libelle": "Standard",
+          "description": "Si vous sélectionnez cette option, votre téléviseur émettra le son ajusté Réglage acoustique AI en mode Standard.\nCe mode offre un son propre et naturel."
+        },
+        {
+          "libelle": "Renforçateur de graves",
+          "description": "Si vous sélectionnez cette option, votre téléviseur émettra le son ajusté Réglage acoustique AI en mettant l’accent sur les graves."
+        },
+        {
+          "libelle": "Renforçateur d'aigus",
+          "description": "Si vous sélectionnez cette option, votre téléviseur émettra le son ajusté Réglage acoustique AI en mettant l’accent sur les aigus."
+        }
       ],
-      "source": { "guide": "6.6.5" }
+      "source": {
+        "guide": "6.6.5"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.aide-reconnaissance-vocale",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Aide pour la reconnaissance vocale",
       "description": "Une liste des commandes vocales que l'appareil peut exécuter est affichée.",
       "controle": "action",
-      "source": { "guide": "6.6.6" }
+      "source": {
+        "guide": "6.6.6"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.parametres-reconnaissance-vocale",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Paramètres de reconnaissance vocale",
       "description": "Vous pouvez appliquer des paramètres pour les fonctionnalités de reconnaissance vocale.",
       "controle": "sous-menu",
-      "source": { "guide": "6.6.7" },
-      "a_verifier": ["choix", "controle"]
+      "source": {
+        "guide": "6.6.7"
+      },
+      "a_verifier": [
+        "choix",
+        "controle"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.service-ai.recommandations-ai",
-      "chemin": ["Général", "Service d'AI"],
+      "chemin": [
+        "Général",
+        "Service d'AI"
+      ],
       "libelle": "Recommandations d'AI",
       "description": "Vous pouvez obtenir des messages de recommandation de contenu en fonction de votre historique de visionnage et de votre historique d'utilisation de l'application.",
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.6.8" },
+      "source": {
+        "guide": "6.6.8"
+      },
       "enfants": [
         {
           "id": "general.service-ai.recommandations-ai.astuces",
-          "chemin": ["Général", "Service d'AI", "Recommandations d'AI"],
+          "chemin": [
+            "Général",
+            "Service d'AI",
+            "Recommandations d'AI"
+          ],
           "libelle": "Astuces",
           "description": "Vous pouvez découvrir les fonctionnalités intelligentes disponibles lorsque vous regardez une émission ou que vous utilisez une application.",
           "controle": "interrupteur",
-          "source": { "guide": "6.6.8" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.6.8"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.service-ai.recommandations-ai.astuces-parametres",
-          "chemin": ["Général", "Service d'AI", "Recommandations d'AI"],
+          "chemin": [
+            "Général",
+            "Service d'AI",
+            "Recommandations d'AI"
+          ],
           "libelle": "Astuces dans les paramètres",
           "description": "Lors de la configuration des paramètres détaillés, vous pouvez également recevoir des recommandations sur les fonctionnalités associées.",
           "controle": "interrupteur",
-          "source": { "guide": "6.6.8" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.6.8"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     }

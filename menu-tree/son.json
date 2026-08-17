@@ -2,88 +2,199 @@
   "id": "son",
   "libelle": "Son",
   "controle": "sous-menu",
-  "source": { "guide": "6.3" },
+  "source": {
+    "guide": "6.3"
+  },
   "enfants": [
     {
       "id": "son.mode-selection",
-      "chemin": ["Son"],
+      "chemin": [
+        "Son"
+      ],
       "libelle": "Mode Sélection",
       "description": "Vous pouvez sélectionner le mode son le plus adapté à chaque genre.",
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles.",
-        "Si vous connectez une barre de son LG prenant en charge Partage du mode son du téléviseur au port HDMI, vous pouvez sélectionner le Mode du son fourni par la barre de son LG sur le périphérique."
+        "Si vous connectez une barre de son LG prenant en charge Partage du mode son du téléviseur au port HDMI, vous pouvez sélectionner le Mode du son fourni par la barre de son LG sur le périphérique.",
+        "[API] Lisible mais absent de la liste communautaire d'écriture publique : écriture à tester prudemment en phase 3. Voix nette/Son personnalisé restent à rapprocher (news/bassBlast ?)."
       ],
       "controle": "liste",
       "choix": [
-        { "libelle": "Son personnalisé", "description": "Grâce à la technologie d'apprentissage approfondi de l'intelligence artificielle, la qualité sonore optimale est analysée et définie en fonction des préférences de l'utilisateur." },
-        { "libelle": "Son AI/Son AI Pro", "description": "Selon le contenu que vous regardez, vous pouvez profiter du son optimisé et du son Virtual Surround en temps réel." },
-        { "libelle": "Standard", "description": "Permet d’optimiser le son pour tout type de contenu." },
-        { "libelle": "Cinéma", "description": "Permet d’optimiser le son pour les films." },
-        { "libelle": "Voix nette/Voix nette Pro", "description": "Permet d’optimiser la clarté des voix." },
-        { "libelle": "Sport", "description": "Permet d’optimiser le son pour les événements sportifs." },
-        { "libelle": "Musique", "description": "Permet d’optimiser le son pour la musique." },
-        { "libelle": "Optimiseur de jeu", "description": "Permet d’optimiser le son pour les jeux." }
+        {
+          "libelle": "Son personnalisé",
+          "description": "Grâce à la technologie d'apprentissage approfondi de l'intelligence artificielle, la qualité sonore optimale est analysée et définie en fonction des préférences de l'utilisateur."
+        },
+        {
+          "libelle": "Son AI/Son AI Pro",
+          "description": "Selon le contenu que vous regardez, vous pouvez profiter du son optimisé et du son Virtual Surround en temps réel.",
+          "valeur_api": "aiSoundPlus"
+        },
+        {
+          "libelle": "Standard",
+          "description": "Permet d’optimiser le son pour tout type de contenu.",
+          "valeur_api": "standard"
+        },
+        {
+          "libelle": "Cinéma",
+          "description": "Permet d’optimiser le son pour les films.",
+          "valeur_api": "movie"
+        },
+        {
+          "libelle": "Voix nette/Voix nette Pro",
+          "description": "Permet d’optimiser la clarté des voix."
+        },
+        {
+          "libelle": "Sport",
+          "description": "Permet d’optimiser le son pour les événements sportifs.",
+          "valeur_api": "sports"
+        },
+        {
+          "libelle": "Musique",
+          "description": "Permet d’optimiser le son pour la musique.",
+          "valeur_api": "music"
+        },
+        {
+          "libelle": "Optimiseur de jeu",
+          "description": "Permet d’optimiser le son pour les jeux.",
+          "valeur_api": "game"
+        }
       ],
-      "source": { "guide": "6.3.1" },
-      "a_verifier": ["choix"]
+      "source": {
+        "guide": "6.3.1"
+      },
+      "a_verifier": [
+        "choix"
+      ],
+      "api": {
+        "categorie": "sound",
+        "cle": "soundMode",
+        "acces": "lecture_seule"
+      }
     },
     {
       "id": "son.assistant-son-personnalise",
-      "chemin": ["Son"],
+      "chemin": [
+        "Son"
+      ],
       "libelle": "Assistant de son personnalisé",
       "description": "Analysez l'audio source sélectionnée par l'utilisateur avec la technologie d'apprentissage approfondi de l'intelligence artificielle et définissez le son optimal qu'il préfère.",
       "notes": [
         "Une fois que vous vous êtes connecté avec votre Compte LG et que vous avez exécuté l'Assistant de son personnalisé, les paramètres sont enregistrés pour chaque compte."
       ],
       "controle": "action",
-      "source": { "guide": "6.3.2" }
+      "source": {
+        "guide": "6.3.2"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "son.sortie-son",
-      "chemin": ["Son"],
+      "chemin": [
+        "Son"
+      ],
       "libelle": "Sortie son",
       "controle": "sous-menu",
-      "source": { "guide": "6.3.3" },
+      "source": {
+        "guide": "6.3.3"
+      },
       "enfants": [
         {
           "id": "son.sortie-son.haut-parleur-tv",
-          "chemin": ["Son", "Sortie son"],
+          "chemin": [
+            "Son",
+            "Sortie son"
+          ],
           "libelle": "Utiliser le haut-parleur TV",
           "description": "Le son est diffusé par les haut-parleurs internes du périphérique.",
           "controle": "action",
-          "source": { "guide": "6.3.3" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.3.3"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.sortie-son.haut-parleur-sans-fil",
-          "chemin": ["Son", "Sortie son"],
+          "chemin": [
+            "Son",
+            "Sortie son"
+          ],
           "libelle": "Utiliser un haut-parleur sans fil",
           "controle": "liste",
           "choix": [
-            { "libelle": "Périphérique Bluetooth", "description": "Connectez un périphérique audio Bluetooth sans fil pour profiter plus facilement du son.\nConsultez le manuel d'utilisation du périphérique audio Bluetooth pour obtenir plus de détails sur la connexion et l'utilisation du périphérique." },
-            { "libelle": "Périphérique LG WOWCAST", "description": "Vous pouvez profiter d'un son riche sans dégradation de la qualité, même lorsque vous établissez une connexion sans fil à la barre de son qui prend en charge LG WOWCAST." },
-            { "libelle": "Haut-parleurs WiSA", "description": "Vous pouvez connecter le périphérique sans fil aux Haut-parleurs WiSA pour profiter d'un son de haute qualité." },
-            { "libelle": "Périphérique mobile", "description": "Si vous installez l'application LG ThinQ sur un appareil mobile et associez ce dernier à l'appareil, vous pouvez utiliser le premier comme haut-parleur pour le second." }
+            {
+              "libelle": "Périphérique Bluetooth",
+              "description": "Connectez un périphérique audio Bluetooth sans fil pour profiter plus facilement du son.\nConsultez le manuel d'utilisation du périphérique audio Bluetooth pour obtenir plus de détails sur la connexion et l'utilisation du périphérique."
+            },
+            {
+              "libelle": "Périphérique LG WOWCAST",
+              "description": "Vous pouvez profiter d'un son riche sans dégradation de la qualité, même lorsque vous établissez une connexion sans fil à la barre de son qui prend en charge LG WOWCAST."
+            },
+            {
+              "libelle": "Haut-parleurs WiSA",
+              "description": "Vous pouvez connecter le périphérique sans fil aux Haut-parleurs WiSA pour profiter d'un son de haute qualité."
+            },
+            {
+              "libelle": "Périphérique mobile",
+              "description": "Si vous installez l'application LG ThinQ sur un appareil mobile et associez ce dernier à l'appareil, vous pouvez utiliser le premier comme haut-parleur pour le second."
+            }
           ],
-          "source": { "guide": "6.3.4" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.3.4"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.sortie-son.haut-parleur-filaire",
-          "chemin": ["Son", "Sortie son"],
+          "chemin": [
+            "Son",
+            "Sortie son"
+          ],
           "libelle": "Utiliser un haut-parleur filaire",
           "controle": "liste",
           "choix": [
-            { "libelle": "Périphérique de sortie optique", "description": "Vous pouvez connecter un périphérique audio compatible Optique au port de sortie audio numérique optique du périphérique pour bénéficier d'un son de meilleure qualité." },
-            { "libelle": "Périphérique HDMI(ARC)", "description": "Le son peut être diffusé par un périphérique audio externe connecté via un port HDMI (eARC/ARC)." },
-            { "libelle": "Périphérique de sortie audio/Casque avec fil", "description": "" }
+            {
+              "libelle": "Périphérique de sortie optique",
+              "description": "Vous pouvez connecter un périphérique audio compatible Optique au port de sortie audio numérique optique du périphérique pour bénéficier d'un son de meilleure qualité."
+            },
+            {
+              "libelle": "Périphérique HDMI(ARC)",
+              "description": "Le son peut être diffusé par un périphérique audio externe connecté via un port HDMI (eARC/ARC)."
+            },
+            {
+              "libelle": "Périphérique de sortie audio/Casque avec fil",
+              "description": ""
+            }
           ],
-          "source": { "guide": "6.3.5" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.3.5"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.sortie-son.haut-parleurs-externes-et-tv",
-          "chemin": ["Son", "Sortie son"],
+          "chemin": [
+            "Son",
+            "Sortie son"
+          ],
           "libelle": "Utiliser des haut-parleurs externes avec les hauts-parleurs du téléviseur",
           "description": "Le son peut être diffusé simultanément par plusieurs périphériques.",
           "notes": [
@@ -91,64 +202,134 @@
           ],
           "controle": "liste",
           "choix": [
-            { "libelle": "Périphérique Bluetooth + Haut-parleur TV", "description": "Vous pouvez utiliser le haut-parleur interne du périphérique et le haut-parleur Bluetooth afin de reproduire le son simultanément, ou utiliser le son surround.\nVous pouvez connecter jusqu'à deux périphériques Bluetooth du même modèle." },
-            { "libelle": "Dolby Atmos FlexConnect", "description": "Plusieurs haut-parleurs Dolby Atmos FlexConnect compatibles fonctionnent conjointement avec les haut-parleurs internes pour offrir une expérience audio spatiale de haute qualité." },
-            { "libelle": "Périphérique LG WOWCAST + Haut-parleur TV", "description": "Émet simultanément le son via les haut-parleurs internes de l'appareil et une barre de son prenant en charge LG WOWCAST.\nVous pouvez sélectionner cette option si vous connectez une barre de son prenant en charge LG WOWCAST." },
-            { "libelle": "Périphérique de sortie optique + Haut-parleur TV", "description": "Le son est diffusé simultanément par les haut-parleurs internes du périphérique et le périphérique audio connecté au port de sortie audio optique numérique." },
-            { "libelle": "Périphérique HDMI(ARC) + Haut-parleur du téléviseur", "description": "Les haut-parleurs et la barre de son internes peuvent émettre simultanément du son afin de vous faire vivre une expérience audio plus riche (WOW Orchestra). Permet aussi la connexion d'une aide auditive via l'émetteur branché au port HDMI (eARC/ARC)." },
-            { "libelle": "Casque avec fil + Haut-parleur TV", "description": "Le son est diffusé simultanément par les haut-parleurs internes et le Casque avec fil." }
+            {
+              "libelle": "Périphérique Bluetooth + Haut-parleur TV",
+              "description": "Vous pouvez utiliser le haut-parleur interne du périphérique et le haut-parleur Bluetooth afin de reproduire le son simultanément, ou utiliser le son surround.\nVous pouvez connecter jusqu'à deux périphériques Bluetooth du même modèle."
+            },
+            {
+              "libelle": "Dolby Atmos FlexConnect",
+              "description": "Plusieurs haut-parleurs Dolby Atmos FlexConnect compatibles fonctionnent conjointement avec les haut-parleurs internes pour offrir une expérience audio spatiale de haute qualité."
+            },
+            {
+              "libelle": "Périphérique LG WOWCAST + Haut-parleur TV",
+              "description": "Émet simultanément le son via les haut-parleurs internes de l'appareil et une barre de son prenant en charge LG WOWCAST.\nVous pouvez sélectionner cette option si vous connectez une barre de son prenant en charge LG WOWCAST."
+            },
+            {
+              "libelle": "Périphérique de sortie optique + Haut-parleur TV",
+              "description": "Le son est diffusé simultanément par les haut-parleurs internes du périphérique et le périphérique audio connecté au port de sortie audio optique numérique."
+            },
+            {
+              "libelle": "Périphérique HDMI(ARC) + Haut-parleur du téléviseur",
+              "description": "Les haut-parleurs et la barre de son internes peuvent émettre simultanément du son afin de vous faire vivre une expérience audio plus riche (WOW Orchestra). Permet aussi la connexion d'une aide auditive via l'émetteur branché au port HDMI (eARC/ARC)."
+            },
+            {
+              "libelle": "Casque avec fil + Haut-parleur TV",
+              "description": "Le son est diffusé simultanément par les haut-parleurs internes et le Casque avec fil."
+            }
           ],
-          "source": { "guide": "6.3.6" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.3.6"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
+      ],
+      "api": {
+        "categorie": "sound",
+        "cle": "soundOutput",
+        "acces": "lecture_ecriture"
+      },
+      "notes": [
+        "[API] Valeur relevée : external_arc. Valeurs API documentées : tv_speaker, external_optical, external_arc, bt_soundbar, wisa_speaker, mobile_phone, headphone, tv_external_speaker, tv_speaker_bluetooth, etc."
       ]
     },
     {
       "id": "son.application-barre-de-son",
-      "chemin": ["Son"],
+      "chemin": [
+        "Son"
+      ],
       "libelle": "Application de la barre de son",
       "description": "L'application de la barre de son s'exécutera.",
       "notes": [
         "Vous ne pouvez le sélectionner que lorsqu'une barre de son prenant en charge l'application de la barre de son est connectée."
       ],
       "controle": "action",
-      "visibilite": { "condition_texte": "Barre de son compatible connectée." },
-      "source": { "guide": "6.3.7" }
+      "visibilite": {
+        "condition_texte": "Barre de son compatible connectée."
+      },
+      "source": {
+        "guide": "6.3.7"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "son.parametres-avances",
-      "chemin": ["Son"],
+      "chemin": [
+        "Son"
+      ],
       "libelle": "Paramètres avancés",
       "controle": "sous-menu",
-      "source": { "guide": "6.3.8" },
+      "source": {
+        "guide": "6.3.8"
+      },
       "enfants": [
         {
           "id": "son.parametres-avances.dolby-atmos",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Dolby Atmos",
           "description": "Dolby Atmos est basé sur le concept d’objets audio.Des sons peuvent être combinés en un seul élément audio, à savoir un objet indépendamment placé dans un espace tridimensionnel.\nÀ l'aide des haut-parleurs internes, Dolby Atmos crée une expérience sonore immersive.\nLe menu fait fonction de bouton Activé/Désactivé. Par défaut, il est configuré sur Activé.",
           "notes": [
             "Certains contenus Dolby Atmos peuvent ne pas être lus."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.3.8" }
+          "source": {
+            "guide": "6.3.8"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.balance",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Balance",
           "description": "Vous pouvez régler le volume des haut-parleurs gauche et droit.",
           "notes": [
             "Ce paramètre est uniquement disponible avec le haut-parleur interne du périphérique."
           ],
           "controle": "curseur",
-          "visibilite": { "condition_texte": "Sortie son sur le haut-parleur interne." },
-          "source": { "guide": "6.3.9" },
-          "a_verifier": ["bornes"]
+          "visibilite": {
+            "condition_texte": "Sortie son sur le haut-parleur interne."
+          },
+          "source": {
+            "guide": "6.3.9"
+          },
+          "a_verifier": [
+            "bornes"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.equaliseur",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Équaliseur",
           "description": "Pour régler le son, augmentez ou diminuez la sortie de la plage de fréquences spécifique du signal vocal.",
           "notes": [
@@ -156,32 +337,61 @@
             "Ce paramètre s'applique uniquement aux haut-parleurs internes de l'appareil ou aux barres de son LG prenant en charge Partage du mode son du téléviseur."
           ],
           "controle": "curseur",
-          "visibilite": { "condition_texte": "Mode Sélection (son) défini sur Standard ; haut-parleurs internes ou barre de son LG compatible." },
-          "source": { "guide": "6.3.10" },
-          "a_verifier": ["controle", "bornes"]
+          "visibilite": {
+            "condition_texte": "Mode Sélection (son) défini sur Standard ; haut-parleurs internes ou barre de son LG compatible."
+          },
+          "source": {
+            "guide": "6.3.10"
+          },
+          "a_verifier": [
+            "controle",
+            "bornes"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.appliquer-toutes-entrees",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Appliquer à toutes les entrées",
           "description": "Les paramètres que vous définissez ne s’appliquent qu’au mode d’entrée actuellement sélectionné.\nPour appliquer vos paramètres audio actuels à tous les modes d'entrée, sélectionnez Appliquer à toutes les entrées.",
           "controle": "action",
-          "source": { "guide": "6.3.11" }
+          "source": {
+            "guide": "6.3.11"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.reinitialisation",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Réinitialisation",
           "description": "Rétablissez l'état par défaut des paramètres de l'effet Mode du son actuel.",
           "notes": [
             "Ce paramètre s'applique uniquement aux haut-parleurs internes de l'appareil ou aux barres de son LG prenant en charge Partage du mode son du téléviseur."
           ],
           "controle": "action",
-          "source": { "guide": "6.3.12" }
+          "source": {
+            "guide": "6.3.12"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.diffusion-auracast",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Diffusion sur Auracast™",
           "description": "Vous pouvez connecter plusieurs appareils Bluetooth prenant en charge Auracast™ pour écouter le son de cet appareil.",
           "notes": [
@@ -191,38 +401,72 @@
             "L'audio peut ne pas être parfaitement synchronisé pour les appareils Bluetooth connectés via Auracast™."
           ],
           "controle": "sous-menu",
-          "source": { "guide": "6.3.13" },
+          "source": {
+            "guide": "6.3.13"
+          },
           "enfants": [
             {
               "id": "son.parametres-avances.diffusion-auracast.code-authentification",
-              "chemin": ["Son", "Paramètres avancés", "Diffusion sur Auracast™"],
+              "chemin": [
+                "Son",
+                "Paramètres avancés",
+                "Diffusion sur Auracast™"
+              ],
               "libelle": "Utiliser le code d'authentification",
               "description": "Réglez sur Activé.Vous pouvez définir un Code d'authentification.\nEn raison de problèmes potentiels de droits d'auteur concernant la musique ou le contenu diffusé, il est recommandé d'utiliser un Code d'authentification pour réserver l'accès à un cercle restreint d'utilisateurs.",
               "controle": "interrupteur",
-              "source": { "guide": "6.3.13" }
+              "source": {
+                "guide": "6.3.13"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "son.parametres-avances.diffusion-auracast.modifier-code",
-              "chemin": ["Son", "Paramètres avancés", "Diffusion sur Auracast™"],
+              "chemin": [
+                "Son",
+                "Paramètres avancés",
+                "Diffusion sur Auracast™"
+              ],
               "libelle": "Modifier le code d'authentification",
               "description": "Vous pouvez modifier le Code d'authentification défini.",
               "controle": "action",
-              "source": { "guide": "6.3.13" }
+              "source": {
+                "guide": "6.3.13"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "son.parametres-avances.diffusion-auracast.qualite-audio",
-              "chemin": ["Son", "Paramètres avancés", "Diffusion sur Auracast™"],
+              "chemin": [
+                "Son",
+                "Paramètres avancés",
+                "Diffusion sur Auracast™"
+              ],
               "libelle": "Qualité audio",
               "description": "Vous pouvez définir la qualité du son.\nLa définition sur Élevé peut empêcher certains appareils Auracast™ d'émettre du son.",
               "controle": "liste",
-              "source": { "guide": "6.3.13" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.3.13"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "son.parametres-avances.type-installation",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Type d'installation",
           "description": "Ce mode permet d'optimiser le son en fonction de la configuration de l'appareil.",
           "notes": [
@@ -230,26 +474,54 @@
           ],
           "controle": "liste",
           "choix": [
-            { "libelle": "Support", "description": "Sélectionnez ce paramètre si l'appareil est installé sur un meuble." },
-            { "libelle": "Installation murale", "description": "Sélectionnez cette fonction si l'appareil est installé sur le mur." }
+            {
+              "libelle": "Support",
+              "description": "Sélectionnez ce paramètre si l'appareil est installé sur un meuble.",
+              "valeur_api": "stand"
+            },
+            {
+              "libelle": "Installation murale",
+              "description": "Sélectionnez cette fonction si l'appareil est installé sur le mur.",
+              "valeur_api": "wall_mount"
+            }
           ],
-          "visibilite": { "condition_texte": "Sortie son sur le haut-parleur interne." },
-          "source": { "guide": "6.3.14" }
+          "visibilite": {
+            "condition_texte": "Sortie son sur le haut-parleur interne."
+          },
+          "source": {
+            "guide": "6.3.14"
+          },
+          "api": {
+            "categorie": "sound",
+            "cle": "tvSetupConfiguration",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "son.parametres-avances.reglage-auto-volume",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Réglage automatique du volume",
           "description": "Le volume est automatiquement ajusté à un niveau approprié pour chaque contenu visionné afin de vous garantir une lecture beaucoup plus agréable.",
           "notes": [
             "Ce paramètre s'applique uniquement aux haut-parleurs internes de l'appareil ou aux barres de son LG prenant en charge Partage du mode son du téléviseur."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.3.15" }
+          "source": {
+            "guide": "6.3.15"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.parametre-audio-dtv",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Paramètre audio DTV",
           "description": "Quand différents types de son existent dans un signal de source d’entrée, cette fonction vous permet de sélectionner le type désiré.",
           "notes": [
@@ -258,60 +530,116 @@
             "Si le format audio sélectionné n’est pas pris en charge, un autre format audio sera utilisé pour la sortie."
           ],
           "controle": "liste",
-          "source": { "guide": "6.3.16" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.3.16"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.synchroniser-image-son",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Synchroniser l'image et le son",
           "description": "Permet de régler la synchronisation du son du haut-parleur utilisé.\nÀ mesure que la valeur du paramètre augmente, la sortie vocale devient plus lente que la valeur par défaut.\nSi vous sélectionnez Bypass, les signaux de diffusion ou le son des périphériques externes sont diffusés sans retard audio. Le son peut être produit avant l'image en raison du délai nécessaire au traitement de l'entrée vidéo par ce périphérique.",
           "notes": [
-            "Les options disponibles varient selon le paramètre Sortie son."
+            "Les options disponibles varient selon le paramètre Sortie son.",
+            "[API] Clés liées : avSyncSpdif (curseur 0–60) et avSyncBypassInput (Bypass)."
           ],
           "controle": "curseur",
-          "source": { "guide": "6.3.17" },
-          "a_verifier": ["controle", "bornes"]
+          "source": {
+            "guide": "6.3.17"
+          },
+          "a_verifier": [
+            "controle",
+            "bornes"
+          ],
+          "api": {
+            "categorie": "sound",
+            "cle": "avSync",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "son.parametres-avances.format-audio-entree-hdmi",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Sélectionner le format audio d'entrée HDMI",
           "description": "Vous pouvez définir le format audio pour chaque entrée HDMI.\nLorsqu'il est connecté à des périphériques ou à du contenu prenant en charge la dernière technologie de son surround, Bitstream vous permettra d'écouter un son de la qualité souhaitée.\nQuand la voix transmise par le port HDMI n'est pas synchronisée, réglez-la sur PCM.",
           "controle": "liste",
           "choix": [
-            { "libelle": "Bitstream" },
-            { "libelle": "PCM" }
+            {
+              "libelle": "Bitstream"
+            },
+            {
+              "libelle": "PCM"
+            }
           ],
-          "source": { "guide": "6.3.18" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.3.18"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.partage-mode-son",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Partage du mode son du téléviseur",
           "description": "Jouez le mode son appliqué aux haut-parleurs internes de l'appareil sur la barre de son LG.",
           "notes": [
             "Connectez une barre de son LG prenant en charge le Partage du mode son du téléviseur pour activer ce paramètre."
           ],
           "controle": "interrupteur",
-          "visibilite": { "condition_texte": "Barre de son LG compatible connectée." },
-          "source": { "guide": "6.3.19" }
+          "visibilite": {
+            "condition_texte": "Barre de son LG compatible connectée."
+          },
+          "source": {
+            "guide": "6.3.19"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.lg-sound-sync",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "LG Sound Sync",
           "description": "Connectez un appareil LG Sound Sync au port de sortie numérique optique et définissez le paramètre Sortie son sur Périphérique de sortie optique.\nEn définissant cette fonctionnalité sur Activé, vous pouvez régler le volume de l'appareil LG Sound Sync connecté à l'aide d'une télécommande de périphérique.",
           "notes": [
             "Si la fonction d'alimentation automatique de la barre de son qui prend en charge LG Sound Sync est définie sur Activé, la barre de son s'allume ou s'éteint simultanément lorsque l'appareil est allumé ou éteint."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.3.20" }
+          "source": {
+            "guide": "6.3.20"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "son.parametres-avances.sortie-audio-numerique",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Sortie audio numérique",
           "description": "Vous pouvez configurer les paramètres Sortie audio numérique.",
           "notes": [
@@ -321,30 +649,70 @@
           ],
           "controle": "liste",
           "choix": [
-            { "libelle": "PCM" },
-            { "libelle": "Auto" },
-            { "libelle": "Interconnexion" }
+            {
+              "libelle": "PCM",
+              "valeur_api": "pcm"
+            },
+            {
+              "libelle": "Auto",
+              "valeur_api": "auto"
+            },
+            {
+              "libelle": "Interconnexion",
+              "valeur_api": "passThrough"
+            }
           ],
-          "visibilite": { "condition_texte": "Sortie son définie sur Périphérique de sortie optique ou Périphérique HDMI(ARC)." },
-          "source": { "guide": "6.3.21" },
-          "a_verifier": ["choix"]
+          "visibilite": {
+            "condition_texte": "Sortie son définie sur Périphérique de sortie optique ou Périphérique HDMI(ARC)."
+          },
+          "source": {
+            "guide": "6.3.21"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "categorie": "sound",
+            "cle": "soundOutputDigital",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "son.parametres-avances.compatibilite-earc",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Compatibilité eARC",
           "description": "eARC est une technologie qui peut envoyer et recevoir plus rapidement des informations sonores grâce à sa bande passante plus large que celle de l'ARC classique.Vous pouvez profiter du son de l'appareil avec une qualité supérieure à celle du mode ARC via un appareil audio connecté.",
           "controle": "interrupteur",
-          "source": { "guide": "6.3.22" }
+          "source": {
+            "guide": "6.3.22"
+          },
+          "api": {
+            "categorie": "sound",
+            "cle": "eArcSupport",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "son.parametres-avances.amelioration-dialogue-ac4",
-          "chemin": ["Son", "Paramètres avancés"],
+          "chemin": [
+            "Son",
+            "Paramètres avancés"
+          ],
           "libelle": "Amélioration du dialogue AC-4",
           "description": "Rend les dialogues plus clairs dans la vidéo grâce à l'audio AC-4.Cette fonction est utile lorsque vous regardez du contenu et que vous n'entendez pas bien les dialogues.",
           "controle": "interrupteur",
-          "source": { "guide": "6.3.23" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.3.23"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     }

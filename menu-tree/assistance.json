@@ -2,11 +2,15 @@
   "id": "assistance",
   "libelle": "Assistance",
   "controle": "sous-menu",
-  "source": { "guide": "6.15" },
+  "source": {
+    "guide": "6.15"
+  },
   "enfants": [
     {
       "id": "assistance.mise-a-jour-logiciel",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Mise à jour du logiciel",
       "description": "Cette option permet d’utiliser la fonction Mise à jour du logiciel pour vérifier et obtenir la version la plus récente.",
       "notes": [
@@ -16,223 +20,433 @@
         "Dans certains pays, Mise à jour automatique ne s'affiche pas si vous n'êtes pas connecté à Internet."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.15.1" },
+      "source": {
+        "guide": "6.15.1"
+      },
       "enfants": [
         {
           "id": "assistance.mise-a-jour-logiciel.mise-a-jour-automatique",
-          "chemin": ["Assistance", "Mise à jour du logiciel"],
+          "chemin": [
+            "Assistance",
+            "Mise à jour du logiciel"
+          ],
           "libelle": "Mise à jour automatique",
           "description": "Lorsque le paramètre est défini sur Activé, les mises à jour sont effectuées automatiquement sans procédure de confirmation distincte, à l'exception de certaines mises à jour importantes.",
           "controle": "interrupteur",
-          "source": { "guide": "6.15.1" }
+          "source": {
+            "guide": "6.15.1"
+          },
+          "api": {
+            "categorie": "support",
+            "cle": "automaticUpdate",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "assistance.mise-a-jour-logiciel.rechercher-mises-a-jour",
-          "chemin": ["Assistance", "Mise à jour du logiciel"],
+          "chemin": [
+            "Assistance",
+            "Mise à jour du logiciel"
+          ],
           "libelle": "Rechercher les mises à jour",
           "description": "Lorsque vous recherchez les dernières versions des mises à jour, vous pouvez uniquement effectuer une mise à jour si un fichier de mise à jour ou une version plus récente est disponible.Le périphérique contrôle automatiquement votre version logicielle, mais, si nécessaire, vous pouvez effectuer une vérification manuelle.",
           "controle": "action",
-          "source": { "guide": "6.15.1" }
+          "source": {
+            "guide": "6.15.1"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "assistance.guide-utilisateur",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Guide de l'utilisateur",
       "description": "Pour plus d'informations sur chaque fonctionnalité de webOS, consultez le Guide de l'utilisateur disponible sur le périphérique.",
       "controle": "action",
-      "source": { "guide": "6.15.2" },
-      "a_verifier": ["position"]
+      "source": {
+        "guide": "6.15.2"
+      },
+      "a_verifier": [
+        "position"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "assistance.autodiagnostic-ecran",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Autodiagnostic de l'écran",
       "description": "Après avoir effectué un test pour vérifier que le signal d'image est émis normalement, vous pouvez indiquer s'il est anormal à l'écran.\nSi le test ne fait apparaître aucun problème, vérifiez le périphérique externe connecté ou le signal de diffusion.",
       "controle": "action",
-      "source": { "guide": "6.15.3" }
+      "source": {
+        "guide": "6.15.3"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "assistance.autodiagnostic-son",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Autodiagnostic du son",
       "description": "Démarrez un test du son pour vérifier que la sortie du signal audio est normale.\nSi le test ne fait apparaître aucun problème, vérifiez le périphérique externe connecté ou le signal de diffusion.",
       "controle": "action",
-      "source": { "guide": "6.15.4" }
+      "source": {
+        "guide": "6.15.4"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "assistance.optimiseur-memoire",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Optimiseur de mémoire",
       "description": "Nettoyez les applications inutilisées ou la mémoire inutile afin d'optimiser votre appareil.",
       "controle": "action",
-      "source": { "guide": "6.15.5" }
+      "source": {
+        "guide": "6.15.5"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "assistance.mode-domicile-magasin",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Mode Domicile/Magasin",
       "description": "Vous pouvez choisir entre Mode Domicile et Mode Magasin.\nPour utiliser le périphérique chez vous, sélectionnez Mode Domicile.\nSélectionnez le Mode Magasin uniquement lorsque l'appareil est exposé en magasin.",
       "controle": "liste",
       "choix": [
-        { "libelle": "Mode Domicile" },
-        { "libelle": "Mode Magasin" }
+        {
+          "libelle": "Mode Domicile",
+          "valeur_api": "home"
+        },
+        {
+          "libelle": "Mode Magasin",
+          "valeur_api": "store"
+        }
       ],
-      "source": { "guide": "6.15.6" }
+      "source": {
+        "guide": "6.15.6"
+      },
+      "api": {
+        "categorie": "option",
+        "cle": "storeMode",
+        "acces": "lecture_ecriture"
+      }
     },
     {
       "id": "assistance.informations-televiseur",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Informations sur le téléviseur",
       "description": "Vous pouvez afficher des informations telles que le Modèle, le Numéro de série et le Nom du périphérique.",
       "controle": "texte",
-      "source": { "guide": "6.15.7" }
+      "source": {
+        "guide": "6.15.7"
+      },
+      "api": {
+        "categorie": "network",
+        "cle": "deviceName",
+        "acces": "lecture_seule"
+      },
+      "notes": [
+        "[API] Seul le nom du périphérique est exposé ; modèle et numéro de série viennent de getSystemInfo."
+      ]
     },
     {
       "id": "assistance.parametres-controle-ip",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Paramètres du contrôle IP",
       "description": "Utilise le périphérique de contrôle IP pour contrôler le périphérique connecté au réseau.",
       "controle": "sous-menu",
-      "source": { "guide": "6.15.8" },
-      "a_verifier": ["controle", "choix"]
+      "source": {
+        "guide": "6.15.8"
+      },
+      "a_verifier": [
+        "controle",
+        "choix"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "assistance.confidentialite-et-conditions",
-      "chemin": ["Assistance"],
+      "chemin": [
+        "Assistance"
+      ],
       "libelle": "Confidentialité et Conditions",
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.15.9" },
+      "source": {
+        "guide": "6.15.9"
+      },
       "enfants": [
         {
           "id": "assistance.confidentialite-et-conditions.accords-utilisateur",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Accords de l'utilisateur",
           "description": "Voici les termes et conditions liés à l'utilisation des services liés à la fonction intelligente et à la protection de la vie privée.",
           "controle": "action",
-          "source": { "guide": "6.15.9" }
+          "source": {
+            "guide": "6.15.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "assistance.confidentialite-et-conditions.mention-legale",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Mention légale",
           "description": "Il s'agit des mentions légales pour les services fournis via le périphérique.",
           "controle": "action",
-          "source": { "guide": "6.15.9" }
+          "source": {
+            "guide": "6.15.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "assistance.confidentialite-et-conditions.logiciels-open-source",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Remarque sur les logiciels Open Source",
           "description": "Vous pouvez afficher les instructions pour chaque élément.",
           "controle": "action",
-          "source": { "guide": "6.15.9" }
+          "source": {
+            "guide": "6.15.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "assistance.confidentialite-et-conditions.publicite",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Publicité",
           "description": "Vous pouvez réinitialiser les informations collectées dans le but de proposer une publicité personnalisée ou refuser la collecte d'informations liées à la publicité.",
           "controle": "sous-menu",
-          "source": { "guide": "6.15.9" },
+          "source": {
+            "guide": "6.15.9"
+          },
           "enfants": [
             {
               "id": "assistance.confidentialite-et-conditions.publicite.restreindre-suivi",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Publicité"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Publicité"
+              ],
               "libelle": "Restreindre le suivi publicitaire",
               "description": "Si Activé est sélectionné, il se peut qu'aucune publicité personnalisée reposant sur les centres d'intérêt de l'utilisateur ne soit proposée.",
               "controle": "interrupteur",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "assistance.confidentialite-et-conditions.publicite.reinitialiser-ad-id",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Publicité"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Publicité"
+              ],
               "libelle": "Réinitialiser AD ID",
               "description": "Les informations sur les intérêts de l'utilisateur sont maintenant collectées et les publicités sont fournies en fonction de ces informations.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "assistance.confidentialite-et-conditions.autorisations-application",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Autorisations d'application",
           "description": "",
           "controle": "sous-menu",
-          "source": { "guide": "6.15.9" },
+          "source": {
+            "guide": "6.15.9"
+          },
           "enfants": [
             {
               "id": "assistance.confidentialite-et-conditions.autorisations-application.camera",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Autorisations d'application"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Autorisations d'application"
+              ],
               "libelle": "Caméra",
               "description": "Pour chaque application, vous pouvez définir des autorisations d'accès à la caméra.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "assistance.confidentialite-et-conditions.autorisations-application.micro",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Autorisations d'application"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Autorisations d'application"
+              ],
               "libelle": "Micro",
               "description": "Pour chaque application, vous pouvez définir des autorisations d'accès au microphone.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "assistance.confidentialite-et-conditions.autorisations-application.peripheriques-proximite",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Autorisations d'application"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Autorisations d'application"
+              ],
               "libelle": "Périphériques à proximité",
               "description": "L'accès aux périphériques à proximité sera personnalisé pour chaque application.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "assistance.confidentialite-et-conditions.autorisations-application.acceder-au-fichier",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Autorisations d'application"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Autorisations d'application"
+              ],
               "libelle": "Accéder au fichier",
               "description": "Vous pouvez définir des autorisations d'accès aux fichiers spécifiques d'une application.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "assistance.confidentialite-et-conditions.supprimer-informations-personnelles",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Supprimer mes informations personnelles",
           "description": "",
           "controle": "sous-menu",
-          "source": { "guide": "6.15.9" },
+          "source": {
+            "guide": "6.15.9"
+          },
           "enfants": [
             {
               "id": "assistance.confidentialite-et-conditions.supprimer-informations-personnelles.visionnage",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Supprimer mes informations personnelles"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Supprimer mes informations personnelles"
+              ],
               "libelle": "Supprimer les informations de visionnage",
               "description": "Vous pouvez supprimer les informations de visionnage collectées de l'appareil vers le serveur.\nLa suppression de ces informations peut avoir une incidence sur les services de recommandation fournis qui reposent sur votre historique de visionnage ou d'utilisation de l'appareil.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "assistance.confidentialite-et-conditions.supprimer-informations-personnelles.vocales",
-              "chemin": ["Assistance", "Confidentialité et Conditions", "Supprimer mes informations personnelles"],
+              "chemin": [
+                "Assistance",
+                "Confidentialité et Conditions",
+                "Supprimer mes informations personnelles"
+              ],
               "libelle": "Supprimer les informations vocales",
               "description": "Vous pouvez supprimer les informations vocales collectées de l'appareil vers le serveur.\nLa suppression de ces informations peut avoir une incidence sur les services de recommandation fournis qui reposent sur votre historique vocal.",
               "controle": "action",
-              "source": { "guide": "6.15.9" }
+              "source": {
+                "guide": "6.15.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "assistance.confidentialite-et-conditions.parametres-cmp",
-          "chemin": ["Assistance", "Confidentialité et Conditions"],
+          "chemin": [
+            "Assistance",
+            "Confidentialité et Conditions"
+          ],
           "libelle": "Paramètres CMP",
           "description": "Le CMP TCF représente les recommandations de l'IAB de l'UE pour une utilisation transparente des données clients sur le marché de la publicité numérique conforme au RGPD.",
           "controle": "action",
-          "source": { "guide": "6.15.9" }
+          "source": {
+            "guide": "6.15.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     }

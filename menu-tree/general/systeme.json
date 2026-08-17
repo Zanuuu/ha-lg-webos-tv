@@ -1,71 +1,130 @@
 {
   "id": "general.systeme",
-  "chemin": ["Général"],
+  "chemin": [
+    "Général"
+  ],
   "libelle": "Système",
   "controle": "sous-menu",
-  "source": { "guide": "6.13" },
+  "source": {
+    "guide": "6.13"
+  },
   "enfants": [
     {
       "id": "general.systeme.langue",
-      "chemin": ["Général", "Système"],
+      "chemin": [
+        "Général",
+        "Système"
+      ],
       "libelle": "Langue (Language)",
       "description": "Vous pouvez choisir la langue du menu affiché à l’écran et la langue audio de la diffusion numérique.",
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.13.1" },
+      "source": {
+        "guide": "6.13.1"
+      },
       "enfants": [
         {
           "id": "general.systeme.langue.langue-du-menu",
-          "chemin": ["Général", "Système", "Langue (Language)"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Langue (Language)"
+          ],
           "libelle": "Langue du menu(Menu Language)",
           "description": "Vous pouvez sélectionner l’une des langues pour le menu affiché à l’écran.La langue de la reconnaissance vocale est automatiquement définie en fonction de la langue sélectionnée pour le menu.",
           "notes": [
-            "La reconnaissance vocale n'est disponible que sur certains modèles."
+            "La reconnaissance vocale n'est disponible que sur certains modèles.",
+            "[API] localeInfo est un objet (locales.UI etc.) ; l'écriture publique existe (setSystemSettings catégorie vide) mais reste à tester."
           ],
           "controle": "liste",
-          "source": { "guide": "6.13.1" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.1"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "categorie": "",
+            "cle": "localeInfo",
+            "acces": "lecture_seule"
+          }
         },
         {
           "id": "general.systeme.langue.langue-audio-principale",
-          "chemin": ["Général", "Système", "Langue (Language)"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Langue (Language)"
+          ],
           "libelle": "Langue audio principale",
           "description": "Vous pouvez choisir la langue que vous voulez quand vous regardez un contenu numérique qui comprend plusieurs langues audio.\nPour les programmes qui ne prennent pas en charge plusieurs langues, la valeur par défaut sera utilisée.",
           "notes": [
             "S'applique à la diffusion numérique."
           ],
           "controle": "liste",
-          "source": { "guide": "6.13.1" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.1"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.langue.langue-audio-secondaire",
-          "chemin": ["Général", "Système", "Langue (Language)"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Langue (Language)"
+          ],
           "libelle": "Langue audio secondaire",
           "description": "Vous pouvez choisir la langue que vous voulez quand vous regardez un contenu numérique qui comprend plusieurs langues audio.\nPour les programmes qui ne prennent pas en charge plusieurs langues, la valeur par défaut sera utilisée.",
           "notes": [
             "S'applique à la diffusion numérique."
           ],
           "controle": "liste",
-          "source": { "guide": "6.13.1" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.1"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.langue.langues-du-clavier",
-          "chemin": ["Général", "Système", "Langue (Language)"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Langue (Language)"
+          ],
           "libelle": "Langues du clavier",
           "description": "Sélectionne une langue pour le clavier virtuel.",
           "controle": "liste",
-          "source": { "guide": "6.13.1" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.1"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.systeme.lieu",
-      "chemin": ["Général", "Système"],
+      "chemin": [
+        "Général",
+        "Système"
+      ],
       "libelle": "Lieu",
       "description": "Vous pouvez modifier le paramètre de localisation du périphérique.",
       "notes": [
@@ -74,144 +133,301 @@
         "Les éléments pouvant être configurés varient selon les modèles."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.13.2" },
+      "source": {
+        "guide": "6.13.2"
+      },
       "enfants": [
         {
           "id": "general.systeme.lieu.parametre-adresse",
-          "chemin": ["Général", "Système", "Lieu"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Lieu"
+          ],
           "libelle": "Paramètre d'adresse",
           "description": "Vous pouvez définir l'emplacement en détail.",
           "controle": "action",
-          "source": { "guide": "6.13.2" }
+          "source": {
+            "guide": "6.13.2"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.lieu.pays-de-diffusion",
-          "chemin": ["Général", "Système", "Lieu"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Lieu"
+          ],
           "libelle": "Pays de diffusion",
           "description": "Vous pouvez définir le pays de diffusion de votre périphérique.",
           "controle": "liste",
-          "source": { "guide": "6.13.2" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.2"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.lieu.pays",
-          "chemin": ["Général", "Système", "Lieu"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Lieu"
+          ],
           "libelle": "Pays",
           "description": "Sélectionnez votre pays pour les services spéciaux.",
           "controle": "liste",
-          "source": { "guide": "6.13.2" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.2"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "categorie": "option",
+            "cle": "country",
+            "acces": "lecture_ecriture"
+          },
+          "notes": [
+            "[API] Valeur relevée : FRA. Écriture risquée (reconfiguration des services) : à ne tester qu'avec prudence."
+          ]
         },
         {
           "id": "general.systeme.lieu.code-postal",
-          "chemin": ["Général", "Système", "Lieu"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Lieu"
+          ],
           "libelle": "Code postal",
           "description": "Cette fonction est utilisée pour définir le lieu où le périphérique est utilisé en indiquant votre code postal.",
           "controle": "texte",
-          "source": { "guide": "6.13.2" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.13.2"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "categorie": "option",
+            "cle": "zipcode",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.systeme.lieu.pays-services-lg",
-          "chemin": ["Général", "Système", "Lieu"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Lieu"
+          ],
           "libelle": "Pays des services LG",
           "description": "Sélectionnez le pays d'accès aux services LG. Les services peuvent varier selon le lieu.\nSi vous ne définissez pas Définir automatiquement, vous pouvez sélectionner le pays manuellement.",
           "controle": "liste",
-          "source": { "guide": "6.13.2" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.13.2"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.lieu.localisation-meteo",
-          "chemin": ["Général", "Système", "Lieu"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Lieu"
+          ],
           "libelle": "Paramètre de localisation pour la météo",
           "description": "Définissez la région d'affichage des informations météorologiques.",
           "controle": "action",
-          "source": { "guide": "6.13.2" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.13.2"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.systeme.heure-et-minuterie",
-      "chemin": ["Général", "Système"],
+      "chemin": [
+        "Général",
+        "Système"
+      ],
       "libelle": "Heure et minuterie",
       "description": "Vous pouvez vérifier l'heure ou configurer les paramètres associés.",
       "notes": [
         "Pour utiliser la fonction Minuterie de mise sous tension/Minuterie d'arrêt automatique, vous devez régler l’heure sur l’appareil."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.13.3" },
+      "source": {
+        "guide": "6.13.3"
+      },
       "enfants": [
         {
           "id": "general.systeme.heure-et-minuterie.definir-automatiquement",
-          "chemin": ["Général", "Système", "Heure et minuterie"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Heure et minuterie"
+          ],
           "libelle": "Définir automatiquement",
           "description": "L'heure de l'appareil est automatiquement définie sur l'heure des informations de diffusion numérique envoyées par la station de radiodiffusion ou sur l'heure envoyée par le serveur.",
           "controle": "interrupteur",
-          "source": { "guide": "6.13.3" }
+          "source": {
+            "guide": "6.13.3"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.heure-et-minuterie.heure-date-fuseau",
-          "chemin": ["Général", "Système", "Heure et minuterie"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Heure et minuterie"
+          ],
           "libelle": "Heure/Date/Fuseau horaire",
           "description": "Permet de régler l’heure et la date manuellement si la configuration automatique ne correspond pas à l’heure actuelle.",
           "notes": [
-            "Si vous réglez l'heure manuellement avec l'antenne connectée, les informations de programmation, le guide de programme, etc. risquent de ne pas fonctionner correctement."
+            "Si vous réglez l'heure manuellement avec l'antenne connectée, les informations de programmation, le guide de programme, etc. risquent de ne pas fonctionner correctement.",
+            "[API] Seul le fuseau horaire est exposé par l'API publique ; heure/date non exposées."
           ],
           "controle": "action",
-          "source": { "guide": "6.13.3" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.13.3"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "categorie": "time",
+            "cle": "timeZone",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.systeme.heure-et-minuterie.fuseau-horaire-personnalise",
-          "chemin": ["Général", "Système", "Heure et minuterie"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Heure et minuterie"
+          ],
           "libelle": "Fuseau horaire personnalisé",
           "description": "Lorsque vous sélectionnez Personnalisé dans Fuseau horaire, le menu Fuseau horaire personnalisé est activé.",
           "controle": "action",
-          "visibilite": { "condition_texte": "Fuseau horaire défini sur Personnalisé." },
-          "source": { "guide": "6.13.3" },
-          "a_verifier": ["controle"]
+          "visibilite": {
+            "condition_texte": "Fuseau horaire défini sur Personnalisé."
+          },
+          "source": {
+            "guide": "6.13.3"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.heure-et-minuterie.minuteurs",
-          "chemin": ["Général", "Système", "Heure et minuterie"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Heure et minuterie"
+          ],
           "libelle": "Minuteurs",
           "description": "",
           "controle": "sous-menu",
-          "source": { "guide": "6.13.3" },
+          "source": {
+            "guide": "6.13.3"
+          },
           "enfants": [
             {
               "id": "general.systeme.heure-et-minuterie.minuteurs.minuterie-de-veille",
-              "chemin": ["Général", "Système", "Heure et minuterie", "Minuteurs"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Heure et minuterie",
+                "Minuteurs"
+              ],
               "libelle": "Minuterie de Veille",
               "description": "Règle le périphérique pour s'éteindre à l'heure définie.\nSi vous ne souhaitez pas utiliser Minuterie de Veille, sélectionnez Désactivé.",
               "controle": "liste",
-              "source": { "guide": "6.13.3" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.13.3"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.systeme.heure-et-minuterie.minuteurs.minuterie-mise-sous-tension",
-              "chemin": ["Général", "Système", "Heure et minuterie", "Minuteurs"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Heure et minuterie",
+                "Minuteurs"
+              ],
               "libelle": "Minuterie de mise sous tension",
               "description": "Définissez la fonction Activer la fonction sur Activé.\nLe périphérique s'allume à l'heure définie.",
               "notes": [
                 "Sous-réglages documentés : Heure (Définissez l'heure à laquelle il convient de l'allumer.), Répétition du minuteur (Définissez le jour de la semaine.Définissez l'option sur Aucun pour utiliser la fonction une seule fois.), Entrée (Définissez une entrée externe à afficher lors de la mise sous tension.), Minuteur de chaîne (Définissez une chaîne à afficher lors de la mise sous tension.Cette option ne peut être définie que lorsque le paramètre Entrée est défini sur TV.), Volume (Définissez le volume audio à utiliser lors de la mise sous tension.)"
               ],
               "controle": "sous-menu",
-              "source": { "guide": "6.13.3" },
-              "a_verifier": ["controle"]
+              "source": {
+                "guide": "6.13.3"
+              },
+              "a_verifier": [
+                "controle"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.systeme.heure-et-minuterie.minuteurs.minuterie-arret-automatique",
-              "chemin": ["Général", "Système", "Heure et minuterie", "Minuteurs"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Heure et minuterie",
+                "Minuteurs"
+              ],
               "libelle": "Minuterie d'arrêt automatique",
               "description": "Définissez la fonction Activer la fonction sur Activé.\nLe périphérique s'éteint à l'heure définie.",
               "notes": [
                 "Sous-réglages documentés : Heure, Répétition du minuteur."
               ],
               "controle": "sous-menu",
-              "source": { "guide": "6.13.3" },
-              "a_verifier": ["controle", "description"]
+              "source": {
+                "guide": "6.13.3"
+              },
+              "a_verifier": [
+                "controle",
+                "description"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         }
@@ -219,7 +435,10 @@
     },
     {
       "id": "general.systeme.securite",
-      "chemin": ["Général", "Système"],
+      "chemin": [
+        "Général",
+        "Système"
+      ],
       "libelle": "Sécurité",
       "description": "Vous pouvez bloquer les émissions ou les applications.",
       "notes": [
@@ -227,81 +446,164 @@
         "Réinitialisation d'un mot de passe perdu : saisir « 0313 » dans la fenêtre de saisie du mot de passe principal."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.13.4" },
+      "source": {
+        "guide": "6.13.4"
+      },
       "enfants": [
         {
           "id": "general.systeme.securite.activer-la-fonction",
-          "chemin": ["Général", "Système", "Sécurité"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Sécurité"
+          ],
           "libelle": "Activer la fonction",
           "description": "",
           "controle": "interrupteur",
-          "source": { "guide": "6.13.4" },
-          "a_verifier": ["libelle", "description"]
+          "source": {
+            "guide": "6.13.4"
+          },
+          "a_verifier": [
+            "libelle",
+            "description"
+          ],
+          "api": {
+            "categorie": "lock",
+            "cle": "parentalControl",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.systeme.securite.verrouillages-programmes-tv",
-          "chemin": ["Général", "Système", "Sécurité"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Sécurité"
+          ],
           "libelle": "Verrouillages de programmes TV",
           "description": "Restreint le visionnage par les enfants de contenus spécifiques diffusés pour adultes en fonction des paramètres de restrictions de classification. Pour regarder le contenu bloqué, saisissez le mot de passe. Les classifications de visionnage varient selon les pays.",
           "notes": [
             "Cette option fonctionne selon les informations provenant de la station de diffusion. Si une information du signal est incorrecte, cette option ne fonctionne pas.",
             "Pris en charge uniquement en mode numérique.",
-            "Certains modèles ne sont pas pris en charge."
+            "Certains modèles ne sont pas pris en charge.",
+            "[API] Clés liées selon le pays : tvRating*, movieRating, ziggoRaiting. Rapprochement à affiner."
           ],
           "controle": "liste",
-          "source": { "guide": "6.13.4" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.13.4"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "categorie": "lock",
+            "cle": "parentalGuidance",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.systeme.securite.verrouillages-de-chaine",
-          "chemin": ["Général", "Système", "Sécurité"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Sécurité"
+          ],
           "libelle": "Verrouillages de chaîne",
           "description": "Bloque les chaînes dont le contenu ne convient pas aux enfants. Les chaînes peuvent être sélectionnées, mais l'écran est vide et le son est coupé. Pour regarder une chaîne verrouillée, saisissez le mot de passe.",
           "controle": "action",
-          "source": { "guide": "6.13.4" }
+          "source": {
+            "guide": "6.13.4"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.securite.verrouillages-application",
-          "chemin": ["Général", "Système", "Sécurité"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Sécurité"
+          ],
           "libelle": "Verrouillages d'application",
           "description": "Vous pouvez verrouiller ou déverrouiller l’application.",
           "notes": [
             "La fonction de verrouillage n’est pas immédiatement disponible pour l’application qui est actuellement en cours d’exécution."
           ],
           "controle": "action",
-          "source": { "guide": "6.13.4" }
+          "source": {
+            "guide": "6.13.4"
+          },
+          "api": {
+            "categorie": "lock",
+            "cle": "applockPerApp",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.systeme.securite.verrouillages-entree",
-          "chemin": ["Général", "Système", "Sécurité"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Sécurité"
+          ],
           "libelle": "Verrouillages d'entrée",
           "description": "Vous pouvez verrouiller ou déverrouiller les entrées.",
           "controle": "action",
-          "source": { "guide": "6.13.4" }
+          "source": {
+            "guide": "6.13.4"
+          },
+          "api": {
+            "categorie": "lock",
+            "cle": "inputBlock",
+            "acces": "lecture_ecriture"
+          },
+          "notes": [
+            "[API] Valeur numérique (masque de bits probable) ; format à établir par test."
+          ]
         },
         {
           "id": "general.systeme.securite.reinitialiser-mot-de-passe",
-          "chemin": ["Général", "Système", "Sécurité"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Sécurité"
+          ],
           "libelle": "Réinitialiser le mot de passe",
           "description": "Définissez ou modifiez le mot de passe du périphérique.",
           "notes": [
             "Le mot de passe par défaut est « 0000 ».\nSi le pays sélectionné est la France, la Norvège ou la Belgique, le mot de passe n'est pas « 0000 » mais « 1234 »."
           ],
           "controle": "action",
-          "source": { "guide": "6.13.4" }
+          "source": {
+            "guide": "6.13.4"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.systeme.parametres-supplementaires",
-      "chemin": ["Général", "Système"],
+      "chemin": [
+        "Général",
+        "Système"
+      ],
       "libelle": "Paramètres supplémentaires",
       "controle": "sous-menu",
-      "source": { "guide": "6.13.5" },
+      "source": {
+        "guide": "6.13.5"
+      },
       "enfants": [
         {
           "id": "general.systeme.parametres-supplementaires.demarrage-rapide-plus",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Démarrage Rapide +",
           "description": "Ce paramètre met votre périphérique en mode veille lorsqu'il est désactivé, afin qu'il démarre plus rapidement la fois suivante.",
           "notes": [
@@ -309,156 +611,328 @@
             "L’activation de cette option peut augmenter la consommation d’énergie."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.13.5" }
+          "source": {
+            "guide": "6.13.5"
+          },
+          "api": {
+            "categorie": "option",
+            "cle": "quickStartMode",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.systeme.parametres-supplementaires.parametres-accueil",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Paramètres d'accueil",
           "notes": [
             "Les éléments pouvant être configurés varient selon les modèles."
           ],
           "controle": "sous-menu",
-          "source": { "guide": "6.13.6" },
+          "source": {
+            "guide": "6.13.6"
+          },
           "enfants": [
             {
               "id": "general.systeme.parametres-supplementaires.parametres-accueil.ecran-mise-sous-tension",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Paramètres d'accueil"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Paramètres d'accueil"
+              ],
               "libelle": "Écran de mise sous tension",
               "description": "Vous pouvez sélectionner l'écran à afficher lorsque le périphérique est allumé.",
               "controle": "liste",
-              "source": { "guide": "6.13.6" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.13.6"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "categorie": "general",
+                "cle": "homeAutoLaunch",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Rapprochement présumé (lancement auto de l'accueil) ; à confirmer par test."
+              ]
             },
             {
               "id": "general.systeme.parametres-supplementaires.parametres-accueil.publicite-accueil",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Paramètres d'accueil"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Paramètres d'accueil"
+              ],
               "libelle": "Publicité sur la page d'accueil",
               "description": "Vous pouvez activer ou désactiver les publicités sur l'écran d'accueil.",
               "controle": "interrupteur",
-              "source": { "guide": "6.13.6" }
+              "source": {
+                "guide": "6.13.6"
+              },
+              "api": {
+                "categorie": "general",
+                "cle": "homePromotion",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Rapprochement présumé ; à confirmer par test."
+              ]
             },
             {
               "id": "general.systeme.parametres-supplementaires.parametres-accueil.recommandation-contenu",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Paramètres d'accueil"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Paramètres d'accueil"
+              ],
               "libelle": "Recommandation de contenu",
               "description": "Vous pouvez recevoir des recommandations de contenu sur l'écran d'accueil.",
               "controle": "interrupteur",
-              "source": { "guide": "6.13.6" }
+              "source": {
+                "guide": "6.13.6"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.systeme.parametres-supplementaires.parametres-accueil.fond-ecran",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Paramètres d'accueil"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Paramètres d'accueil"
+              ],
               "libelle": "Fond d'écran",
               "description": "Le fond d'écran Accueil que vous avez sélectionné s'affiche en mode Noir.",
               "controle": "liste",
-              "source": { "guide": "6.13.6" },
-              "a_verifier": ["controle", "choix", "description"]
+              "source": {
+                "guide": "6.13.6"
+              },
+              "a_verifier": [
+                "controle",
+                "choix",
+                "description"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "general.systeme.parametres-supplementaires.parametres-ecran-veille",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Paramètres de l'écran de veille",
           "controle": "sous-menu",
-          "source": { "guide": "6.13.7" },
+          "source": {
+            "guide": "6.13.7"
+          },
           "enfants": [
             {
               "id": "general.systeme.parametres-supplementaires.parametres-ecran-veille.publicite",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Paramètres de l'écran de veille"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Paramètres de l'écran de veille"
+              ],
               "libelle": "Publicité sur l'écran de veille",
               "description": "Pour désactiver les publicités affichées sur l'économiseur d'écran, définissez l'option sur Désactivé.",
               "controle": "interrupteur",
-              "source": { "guide": "6.13.7" }
+              "source": {
+                "guide": "6.13.7"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.systeme.parametres-supplementaires.parametres-ecran-veille.duree",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Paramètres de l'écran de veille"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Paramètres de l'écran de veille"
+              ],
               "libelle": "Durée de veille de l'écran de veille",
               "description": "Vous pouvez définir l'heure à laquelle l'économiseur d'écran doit être activé.",
               "controle": "liste",
-              "source": { "guide": "6.13.7" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.13.7"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "general.systeme.parametres-supplementaires.temoin-de-veille",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Témoin de veille",
           "description": "Vous pouvez activer ou désactiver le témoin de veille.",
           "notes": [
             "Certains modèles ne sont pas pris en charge."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.13.8" }
+          "source": {
+            "guide": "6.13.8"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.parametres-supplementaires.options-de-pointeur",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Options de pointeur",
           "description": "Vous pouvez régler la vitesse et la taille du pointeur y compris lorsqu'il est affiché à l'écran.",
           "controle": "sous-menu",
-          "source": { "guide": "6.13.9" },
+          "source": {
+            "guide": "6.13.9"
+          },
           "enfants": [
             {
               "id": "general.systeme.parametres-supplementaires.options-de-pointeur.vitesse-de-suivi",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Options de pointeur"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Options de pointeur"
+              ],
               "libelle": "Vitesse de suivi",
               "description": "Permet de régler la vitesse du pointeur.",
               "controle": "liste",
-              "source": { "guide": "6.13.9" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.13.9"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.systeme.parametres-supplementaires.options-de-pointeur.taille-du-pointeur",
-              "chemin": ["Général", "Système", "Paramètres supplémentaires", "Options de pointeur"],
+              "chemin": [
+                "Général",
+                "Système",
+                "Paramètres supplémentaires",
+                "Options de pointeur"
+              ],
               "libelle": "Taille du pointeur",
               "description": "Sélectionne la taille du pointeur.",
               "controle": "liste",
-              "source": { "guide": "6.13.9" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.13.9"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "general.systeme.parametres-supplementaires.live-plus",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Live Plus",
           "description": "Live Plus est un service qui offre diverses informations à propos des programmes que vous regardez.",
           "notes": [
             "Certains modèles ne sont pas pris en charge."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.13.10" },
-          "a_verifier": ["position", "controle"]
+          "source": {
+            "guide": "6.13.10"
+          },
+          "a_verifier": [
+            "position",
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.parametres-supplementaires.aide-pour-les-reglages",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Aide pour les réglages",
           "description": "Vous pouvez obtenir des informations d'aide pour les éléments sélectionnés pendant votre navigation dans le menu des paramètres.",
           "controle": "interrupteur",
-          "source": { "guide": "6.13.11" }
+          "source": {
+            "guide": "6.13.11"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.parametres-supplementaires.definir-id",
-          "chemin": ["Général", "Système", "Paramètres supplémentaires"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Paramètres supplémentaires"
+          ],
           "libelle": "Définir l'ID",
           "description": "Vous pouvez définir un numéro (ID) pour gérer plusieurs appareils.",
           "notes": [
             "Cette fonctionnalité est destinée aux administrateurs.Son utilisation n'est pas recommandée dans un environnement domestique typique."
           ],
           "controle": "liste",
-          "source": { "guide": "6.13.12" },
-          "a_verifier": ["controle", "choix"]
+          "source": {
+            "guide": "6.13.12"
+          },
+          "a_verifier": [
+            "controle",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.systeme.restaurer-parametres-initiaux",
-      "chemin": ["Général", "Système"],
+      "chemin": [
+        "Général",
+        "Système"
+      ],
       "libelle": "Restaurer les paramètres initiaux",
       "description": "Permet de restaurer les paramètres initiaux du périphérique.",
       "notes": [
@@ -468,23 +942,43 @@
         "Nous vous recommandons d'activer l'option Restaurer les paramètres initiaux et de réinitialiser le périphérique avant de le vendre ou de le donner à un tiers."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.13.13" },
+      "source": {
+        "guide": "6.13.13"
+      },
       "enfants": [
         {
           "id": "general.systeme.restaurer-parametres-initiaux.reinitialiser-tout",
-          "chemin": ["Général", "Système", "Restaurer les paramètres initiaux"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Restaurer les paramètres initiaux"
+          ],
           "libelle": "Réinitialiser tout",
           "description": "La valeur par défaut de l'ensemble des paramètres est rétablie.",
           "controle": "action",
-          "source": { "guide": "6.13.13" }
+          "source": {
+            "guide": "6.13.13"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.systeme.restaurer-parametres-initiaux.reinitialiser-sauf-reseau",
-          "chemin": ["Général", "Système", "Restaurer les paramètres initiaux"],
+          "chemin": [
+            "Général",
+            "Système",
+            "Restaurer les paramètres initiaux"
+          ],
           "libelle": "Réinitialiser tout sauf les paramètres réseau",
           "description": "Tous les éléments, à l'exception des paramètres réseau, sont remplacés par leurs paramètres par défaut.",
           "controle": "action",
-          "source": { "guide": "6.13.13" }
+          "source": {
+            "guide": "6.13.13"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     }

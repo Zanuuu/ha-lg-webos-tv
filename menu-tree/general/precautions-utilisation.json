@@ -1,6 +1,8 @@
 {
   "id": "general.precautions-utilisation",
-  "chemin": ["Général"],
+  "chemin": [
+    "Général"
+  ],
   "libelle": "Précautions d'utilisation",
   "description": "Vous pouvez gérer et configurer l'expérience d'utilisation de votre appareil.",
   "notes": [
@@ -8,116 +10,226 @@
     "Le guide mentionne un passage par Compte LG dans le chemin ; à vérifier sur photo."
   ],
   "controle": "sous-menu",
-  "source": { "guide": "6.9" },
-  "a_verifier": ["position"],
+  "source": {
+    "guide": "6.9"
+  },
+  "a_verifier": [
+    "position"
+  ],
   "enfants": [
     {
       "id": "general.precautions-utilisation.mon-utilisation",
-      "chemin": ["Général", "Précautions d'utilisation"],
+      "chemin": [
+        "Général",
+        "Précautions d'utilisation"
+      ],
       "libelle": "Mon utilisation",
       "description": "Le graphique affiché varie en fonction du mode sélectionné.\nVous pouvez vérifier les données des 2 derniers mois.",
       "controle": "sous-menu",
-      "source": { "guide": "6.9" },
+      "source": {
+        "guide": "6.9"
+      },
       "enfants": [
         {
           "id": "general.precautions-utilisation.mon-utilisation.mode-normal",
-          "chemin": ["Général", "Précautions d'utilisation", "Mon utilisation"],
+          "chemin": [
+            "Général",
+            "Précautions d'utilisation",
+            "Mon utilisation"
+          ],
           "libelle": "Mode Normal",
           "description": "Vous pouvez afficher le temps d'utilisation de l'appareil et les 3 applications les plus fréquemment utilisées par le compte connecté.",
           "controle": "texte",
-          "source": { "guide": "6.9" }
+          "source": {
+            "guide": "6.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.precautions-utilisation.mon-utilisation.mode-controle-parental",
-          "chemin": ["Général", "Précautions d'utilisation", "Mon utilisation"],
+          "chemin": [
+            "Général",
+            "Précautions d'utilisation",
+            "Mon utilisation"
+          ],
           "libelle": "Mode du contrôle parental",
           "description": "Vous pouvez afficher le temps d'utilisation de l'appareil et les trois applications les plus fréquemment utilisées lorsque la fonctionnalité Contrôle des verrouillages est activée.",
           "controle": "texte",
-          "source": { "guide": "6.9" }
+          "source": {
+            "guide": "6.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.precautions-utilisation.mon-utilisation.optimiseur-memoire",
-          "chemin": ["Général", "Précautions d'utilisation", "Mon utilisation"],
+          "chemin": [
+            "Général",
+            "Précautions d'utilisation",
+            "Mon utilisation"
+          ],
           "libelle": "Optimiseur de mémoire",
           "description": "Vous pouvez optimiser la mémoire en appuyant sur Démarrer en bas du graphique.",
           "controle": "action",
-          "source": { "guide": "6.9" }
+          "source": {
+            "guide": "6.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.precautions-utilisation.reglages-famille",
-      "chemin": ["Général", "Précautions d'utilisation"],
+      "chemin": [
+        "Général",
+        "Précautions d'utilisation"
+      ],
       "libelle": "Réglages pour la famille",
       "description": "",
       "controle": "sous-menu",
-      "source": { "guide": "6.9" },
+      "source": {
+        "guide": "6.9"
+      },
       "enfants": [
         {
           "id": "general.precautions-utilisation.reglages-famille.controle-parental",
-          "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille"],
+          "chemin": [
+            "Général",
+            "Précautions d'utilisation",
+            "Réglages pour la famille"
+          ],
           "libelle": "Contrôle parental",
           "description": "Vous pouvez configurer les paramètres de l'appareil de manière à garantir un environnement d'utilisation sûr pour les enfants.",
           "controle": "sous-menu",
-          "source": { "guide": "6.9" },
+          "source": {
+            "guide": "6.9"
+          },
           "enfants": [
             {
               "id": "general.precautions-utilisation.reglages-famille.controle-parental.controle-verrouillages",
-              "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille", "Contrôle parental"],
+              "chemin": [
+                "Général",
+                "Précautions d'utilisation",
+                "Réglages pour la famille",
+                "Contrôle parental"
+              ],
               "libelle": "Contrôle des verrouillages",
               "description": "Vous pouvez définir des restrictions telles que le blocage du contenu inapproprié et la limitation du temps d'écran pour les enfants.",
               "controle": "interrupteur",
-              "source": { "guide": "6.9" }
+              "source": {
+                "guide": "6.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.precautions-utilisation.reglages-famille.controle-parental.publicite-accueil",
-              "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille", "Contrôle parental"],
+              "chemin": [
+                "Général",
+                "Précautions d'utilisation",
+                "Réglages pour la famille",
+                "Contrôle parental"
+              ],
               "libelle": "Publicité sur la page d'accueil",
               "description": "Vous pouvez désactiver les publicités sur l'écran d'accueil pour protéger les enfants de l'exposition à des contenus inappropriés.",
               "controle": "interrupteur",
-              "source": { "guide": "6.9" },
-              "a_verifier": ["controle"]
+              "source": {
+                "guide": "6.9"
+              },
+              "a_verifier": [
+                "controle"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.precautions-utilisation.reglages-famille.controle-parental.recommandation-contenu",
-              "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille", "Contrôle parental"],
+              "chemin": [
+                "Général",
+                "Précautions d'utilisation",
+                "Réglages pour la famille",
+                "Contrôle parental"
+              ],
               "libelle": "Recommandation de contenu",
               "description": "Vous pouvez désactiver la fonctionnalité de contenu recommandé pour protéger les enfants de l'exposition à des recommandations inappropriées.",
               "controle": "interrupteur",
-              "source": { "guide": "6.9" },
-              "a_verifier": ["controle"]
+              "source": {
+                "guide": "6.9"
+              },
+              "a_verifier": [
+                "controle"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             }
           ]
         },
         {
           "id": "general.precautions-utilisation.reglages-famille.parametres-supplementaires",
-          "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille"],
+          "chemin": [
+            "Général",
+            "Précautions d'utilisation",
+            "Réglages pour la famille"
+          ],
           "libelle": "Paramètres supplémentaires",
           "description": "Vous pouvez créer un environnement d'utilisation des appareils plus sain.",
           "controle": "sous-menu",
-          "source": { "guide": "6.9" },
+          "source": {
+            "guide": "6.9"
+          },
           "enfants": [
             {
               "id": "general.precautions-utilisation.reglages-famille.parametres-supplementaires.mode-protection-yeux",
-              "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille", "Paramètres supplémentaires"],
+              "chemin": [
+                "Général",
+                "Précautions d'utilisation",
+                "Réglages pour la famille",
+                "Paramètres supplémentaires"
+              ],
               "libelle": "Mode Protection des yeux",
               "description": "Un écran avec lumière bleue réduite s'affiche pour protéger vos yeux.",
               "notes": [
                 "L'utilisation de la fonction Mode Protection des yeux définit Image → Paramètres avancés → Réduire la lumière bleue sur Activé."
               ],
               "controle": "interrupteur",
-              "source": { "guide": "6.9" }
+              "source": {
+                "guide": "6.9"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "general.precautions-utilisation.reglages-famille.parametres-supplementaires.mode-limite-volume",
-              "chemin": ["Général", "Précautions d'utilisation", "Réglages pour la famille", "Paramètres supplémentaires"],
+              "chemin": [
+                "Général",
+                "Précautions d'utilisation",
+                "Réglages pour la famille",
+                "Paramètres supplémentaires"
+              ],
               "libelle": "Mode limite de volume",
               "description": "Le volume ne peut pas être augmenté au-dessus d'un certain niveau pour la protection de votre audition.",
               "notes": [
-                "La fonction Mode limite de volume peut ne pas fonctionner pour les périphériques audio connectés au port numérique optique/HDMI/pour casque."
+                "La fonction Mode limite de volume peut ne pas fonctionner pour les périphériques audio connectés au port numérique optique/HDMI/pour casque.",
+                "[API] Clé liée : offHearingProtectMaxVolume (10–60)."
               ],
               "controle": "interrupteur",
-              "source": { "guide": "6.9" }
+              "source": {
+                "guide": "6.9"
+              },
+              "api": {
+                "categorie": "lock",
+                "cle": "offHearingProtectFlag",
+                "acces": "lecture_ecriture"
+              }
             }
           ]
         }

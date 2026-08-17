@@ -1,6 +1,8 @@
 {
   "id": "general.toujours-pret",
-  "chemin": ["Général"],
+  "chemin": [
+    "Général"
+  ],
   "libelle": "Toujours prêt",
   "description": "Le fait d'éteindre l'appareil le fait basculer en mode Toujours prêt et affiche le fond d'écran sélectionné. Vous pouvez ensuite utiliser la reconnaissance vocale ou émettre un son à partir de votre appareil mobile vers le haut-parleur interne.",
   "notes": [
@@ -9,17 +11,33 @@
     "Certains modèles ne sont pas pris en charge."
   ],
   "controle": "sous-menu",
-  "source": { "guide": "6.5" },
+  "source": {
+    "guide": "6.5"
+  },
   "enfants": [
     {
       "id": "general.toujours-pret.activer-la-fonction",
-      "chemin": ["Général", "Toujours prêt"],
+      "chemin": [
+        "Général",
+        "Toujours prêt"
+      ],
       "libelle": "Activer la fonction",
       "description": "",
       "controle": "interrupteur",
-      "source": { "guide": "6.5" },
-      "a_verifier": ["libelle", "description"]
+      "source": {
+        "guide": "6.5"
+      },
+      "a_verifier": [
+        "libelle",
+        "description"
+      ],
+      "api": {
+        "acces": "aucun"
+      }
     }
   ],
-  "a_verifier": ["choix", "position"]
+  "a_verifier": [
+    "choix",
+    "position"
+  ]
 }

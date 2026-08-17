@@ -1,13 +1,20 @@
 {
   "id": "general.peripheriques-externes",
-  "chemin": ["Général"],
+  "chemin": [
+    "Général"
+  ],
   "libelle": "Périphériques externes",
   "controle": "sous-menu",
-  "source": { "guide": "6.12" },
+  "source": {
+    "guide": "6.12"
+  },
   "enfants": [
     {
       "id": "general.peripheriques-externes.manette-bluetooth",
-      "chemin": ["Général", "Périphériques externes"],
+      "chemin": [
+        "Général",
+        "Périphériques externes"
+      ],
       "libelle": "Connecter la manette Bluetooth",
       "description": "Vous pouvez connecter et utiliser des périphériques d'entrée tels qu'un clavier, une souris ou une manette de jeu compatible Bluetooth.",
       "notes": [
@@ -17,84 +24,168 @@
         "La connexion de plusieurs périphériques Bluetooth peut entraîner une connexion de mauvaise qualité ou un dysfonctionnement."
       ],
       "controle": "action",
-      "source": { "guide": "6.12.1" }
+      "source": {
+        "guide": "6.12.1"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.peripheriques-externes.commande-universelle",
-      "chemin": ["Général", "Périphériques externes"],
+      "chemin": [
+        "Général",
+        "Périphériques externes"
+      ],
       "libelle": "Paramètres de la commande universelle",
       "description": "Si vous configurez la télécommande universelle, vous pouvez contrôler les périphériques connectés à l'appareil avec la télécommande Magic Remote au lieu d'utiliser leur télécommande dédiée.",
       "controle": "action",
-      "source": { "guide": "6.12.2" }
+      "source": {
+        "guide": "6.12.2"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "general.peripheriques-externes.parametres-hdmi",
-      "chemin": ["Général", "Périphériques externes"],
+      "chemin": [
+        "Général",
+        "Périphériques externes"
+      ],
       "libelle": "Paramètres HDMI",
       "description": "Vous pouvez appliquer des paramètres afin de garantir une image claire et un contrôle facile pour les périphériques connectés par HDMI.",
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.12.3" },
+      "source": {
+        "guide": "6.12.3"
+      },
       "enfants": [
         {
           "id": "general.peripheriques-externes.parametres-hdmi.interconnexion-444",
-          "chemin": ["Général", "Périphériques externes", "Paramètres HDMI"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Paramètres HDMI"
+          ],
           "libelle": "Interconnexion 4:4:4",
           "description": "Envoyez des signaux 4:4:4 au périphérique en dehors du mode PC, mais les fonctionnalités de traitement telles que Réduction du bruit, TruMotion, etc. peuvent être contournées.Ce paramètre est suggéré uniquement pour les créateurs de contenu qui souhaitent envoyer un signal ne nécessitant pas de traitement supplémentaire.",
           "controle": "interrupteur",
-          "source": { "guide": "6.12.3" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.12.3"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.peripheriques-externes.parametres-hdmi.hdmi-deep-color",
-          "chemin": ["Général", "Périphériques externes", "Paramètres HDMI"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Paramètres HDMI"
+          ],
           "libelle": "HDMI Deep Color",
           "description": "Si vous connectez un appareil prenant en charge HDMI Deep Color, vous pouvez profiter d'une image plus nette.Après avoir connecté le périphérique de lecture, définissez HDMI Deep Color sur 4K.\nSi le périphérique connecté ne prend pas en charge cette fonctionnalité, il se peut qu'elle ne fonctionne pas correctement.\nLorsqu'un problème d'écran survient, configurez le paramètre HDMI Deep Color sur Désactivé.",
           "notes": [
             "Réglage par entrée HDMI.",
-            "4K : prend en charge 4K à 120 Hz (4:4:4, 4:2:2, 4:2:0) (modèles 120 Hz uniquement), 4K à 60 Hz (4:4:4, 4:2:2 et 4:2:0) ; Désactivé : prend en charge la 4K à 60 Hz (4:2:0)."
+            "4K : prend en charge 4K à 120 Hz (4:4:4, 4:2:2, 4:2:0) (modèles 120 Hz uniquement), 4K à 60 Hz (4:4:4, 4:2:2 et 4:2:0) ; Désactivé : prend en charge la 4K à 60 Hz (4:2:0).",
+            "[API] Une clé par entrée : uhdDeepColorHDMI1 à uhdDeepColorHDMI4."
           ],
           "controle": "liste",
           "choix": [
-            { "libelle": "4K" },
-            { "libelle": "Désactivé" }
+            {
+              "libelle": "4K"
+            },
+            {
+              "libelle": "Désactivé"
+            }
           ],
-          "source": { "guide": "6.12.3" },
-          "a_verifier": ["choix"]
+          "source": {
+            "guide": "6.12.3"
+          },
+          "a_verifier": [
+            "choix"
+          ],
+          "api": {
+            "categorie": "other",
+            "cle": "uhdDeepColorHDMI<n>",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.peripheriques-externes.parametres-hdmi.changement-instantane-contenu",
-          "chemin": ["Général", "Périphériques externes", "Paramètres HDMI"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Paramètres HDMI"
+          ],
           "libelle": "Changement instantané de contenu",
           "description": "Lors de la lecture d'un contenu dont le nombre d'images par seconde (i/s) est différent sur un périphérique externe qui prend en charge QMS, ce dernier effectue la transition d'écran en douceur sans interruption.",
           "controle": "interrupteur",
-          "source": { "guide": "6.12.3" },
-          "a_verifier": ["controle"]
+          "source": {
+            "guide": "6.12.3"
+          },
+          "a_verifier": [
+            "controle"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "general.peripheriques-externes.parametres-hdmi.simplink",
-          "chemin": ["Général", "Périphériques externes", "Paramètres HDMI"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Paramètres HDMI"
+          ],
           "libelle": "SIMPLINK (HDMI-CEC)",
           "description": "Vous pouvez contrôler et utiliser facilement divers périphériques multimédias connectés via HDMI avec la télécommande de ce périphérique.",
           "controle": "interrupteur",
-          "source": { "guide": "6.12.3" }
+          "source": {
+            "guide": "6.12.3"
+          },
+          "api": {
+            "categorie": "other",
+            "cle": "simplinkEnable",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.peripheriques-externes.parametres-hdmi.pc-dolby-vision",
-          "chemin": ["Général", "Périphériques externes", "Paramètres HDMI"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Paramètres HDMI"
+          ],
           "libelle": "PC Dolby Vision",
           "description": "Vous pouvez profiter de l'écran Dolby Vision en activant la fonction HDR dans les paramètres d'affichage du PC connecté.",
           "controle": "interrupteur",
-          "source": { "guide": "6.12.3" },
-          "a_verifier": ["controle", "presence"]
+          "source": {
+            "guide": "6.12.3"
+          },
+          "a_verifier": [
+            "controle",
+            "presence"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "general.peripheriques-externes.tv-allume-mobile",
-      "chemin": ["Général", "Périphériques externes"],
+      "chemin": [
+        "Général",
+        "Périphériques externes"
+      ],
       "libelle": "Téléviseur allumé avec un appareil mobile",
       "description": "Si le paramètre Activer via Wi-Fi/Activer via Wi-Fi (mode Veille réseau) ou Activer via Bluetooth/Activer via Bluetooth (mode Veille réseau) est défini sur Activé, vous pouvez allumer votre appareil à l'aide d'une application qui prend en charge Téléviseur allumé avec un appareil mobile.",
       "notes": [
@@ -105,41 +196,79 @@
         "L'appareil doit être branché."
       ],
       "controle": "sous-menu",
-      "source": { "guide": "6.12.4" },
+      "source": {
+        "guide": "6.12.4"
+      },
       "enfants": [
         {
           "id": "general.peripheriques-externes.tv-allume-mobile.activer-via-wifi",
-          "chemin": ["Général", "Périphériques externes", "Téléviseur allumé avec un appareil mobile"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Téléviseur allumé avec un appareil mobile"
+          ],
           "libelle": "Activer via Wi-Fi",
           "description": "",
           "notes": [
             "Le guide utilise aussi « Activer via Wi-Fi (mode Veille réseau) » selon les modèles."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.12.4" },
-          "a_verifier": ["libelle", "description"]
+          "source": {
+            "guide": "6.12.4"
+          },
+          "a_verifier": [
+            "libelle",
+            "description"
+          ],
+          "api": {
+            "categorie": "network",
+            "cle": "wolwowlOnOff",
+            "acces": "lecture_ecriture"
+          }
         },
         {
           "id": "general.peripheriques-externes.tv-allume-mobile.activer-via-bluetooth",
-          "chemin": ["Général", "Périphériques externes", "Téléviseur allumé avec un appareil mobile"],
+          "chemin": [
+            "Général",
+            "Périphériques externes",
+            "Téléviseur allumé avec un appareil mobile"
+          ],
           "libelle": "Activer via Bluetooth",
           "description": "",
           "notes": [
             "Le guide utilise aussi « Activer via Bluetooth (mode Veille réseau) » selon les modèles."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.12.4" },
-          "a_verifier": ["libelle", "description"]
+          "source": {
+            "guide": "6.12.4"
+          },
+          "a_verifier": [
+            "libelle",
+            "description"
+          ],
+          "api": {
+            "categorie": "network",
+            "cle": "bleAdvertisingOnOff",
+            "acces": "lecture_ecriture"
+          }
         }
       ]
     },
     {
       "id": "general.peripheriques-externes.supprimer-historique-connexions",
-      "chemin": ["Général", "Périphériques externes"],
+      "chemin": [
+        "Général",
+        "Périphériques externes"
+      ],
       "libelle": "Supprimer l'historique des connexions",
       "description": "Vous pouvez supprimer l'historique des connexions des périphériques connectés à ce périphérique sur le réseau sans fil.",
       "controle": "action",
-      "source": { "guide": "6.12.5" }
+      "source": {
+        "guide": "6.12.5"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     }
   ]
 }

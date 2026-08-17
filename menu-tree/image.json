@@ -2,102 +2,230 @@
   "id": "image",
   "libelle": "Image",
   "controle": "sous-menu",
-  "source": { "guide": "6.2" },
+  "source": {
+    "guide": "6.2"
+  },
   "enfants": [
     {
       "id": "image.mode-selection",
-      "chemin": ["Image"],
+      "chemin": [
+        "Image"
+      ],
       "libelle": "Mode Sélection",
       "description": "Sélectionnez le mode image qui correspond le mieux à votre environnement, à vos préférences ou au type de vidéo que vous regardez.En ajustant et en définissant chaque élément plus en détail en fonction du mode, votre vidéo est mieux optimisée pour ses caractéristiques.",
       "notes": [
         "Le guide désigne aussi cette entrée par « Mode Image » (6.2.9) ; libellé exact à confirmer sur photo.",
         "La liste des modes disponibles dépend du signal (SDR/HDR/Dolby Vision) et de l'entrée.",
-        "Le guide indique « Sport/Football/Cricket » pour le mode Sport : le nom du sport peut varier selon le pays."
+        "Le guide indique « Sport/Football/Cricket » pour le mode Sport : le nom du sport peut varier selon le pays.",
+        "[API] Modes SDR ; en HDR/Dolby Vision l'API expose hdr*/dolbyHdr*. « Basique » et « Accueil cinéma » restent à rapprocher (probablement modes HDR)."
       ],
       "controle": "liste",
       "choix": [
-        { "libelle": "Image personnalisée", "description": "Grâce à la technologie d'apprentissage approfondi de l'intelligence artificielle, la qualité d'image optimale est analysée et définie en fonction des préférences de l'utilisateur." },
-        { "libelle": "Vif", "description": "Permet d’améliorer la qualité de l’image en augmentant le contraste, la luminosité et la netteté." },
-        { "libelle": "Standard", "description": "L'image s'affiche avec un niveau de contraste, de luminosité et de netteté naturel.\nSi vous sélectionnez cette option pendant un signal HDR, un écran capable de montrer fidèlement la richesse et la luminosité des images HDR s'affiche dans un environnement de visionnage normal." },
-        { "libelle": "Economie d'énergie automatique", "description": "Le mode Economie d'énergie automatique réduit la consommation d'énergie en contrôlant le niveau de rétroéclairage." },
-        { "libelle": "Basique", "description": "L'image s'affiche selon le réglage de base du fabricant qui est optimisé pour un visionnement normal." },
-        { "libelle": "Accueil cinéma", "description": "L’écran apparaît plus clair et lumineux que Cinéma." },
-        { "libelle": "Cinéma", "description": "Image adéquate pour les films.\nSi vous sélectionnez cette option pendant un signal HDR, un écran optimisé pour les signaux vidéo HDR s'affiche." },
-        { "libelle": "Sport", "description": "Image adéquate pour les matchs sportifs. Permet d'améliorer la netteté des mouvements rapides, comme les frappes ou les lancers de balle par exemple." },
-        { "libelle": "Optimiseur de jeu", "description": "Image adéquate pour les jeux." },
-        { "libelle": "FILMMAKER MODE", "description": "Ce paramètre fournit une image de qualité cinéma optimisée certifiée par UHD Alliance, l'organisme de normalisation des technologies UHD." },
-        { "libelle": "Expert (pièce lumineuse, journée)", "description": "Ce mode convient aux films, etc. visionnés dans un environnement sombre.\nLe paramètre Expert (pièce sombre, nuit) affiche une température de couleur inférieure à celle du paramètre Expert (pièce lumineuse, journée).\nSélectionnez un mode adapté au film que vous regardez." },
-        { "libelle": "Expert (pièce sombre, nuit)", "description": "Ce mode convient aux films, etc. visionnés dans un environnement sombre.\nLe paramètre Expert (pièce sombre, nuit) affiche une température de couleur inférieure à celle du paramètre Expert (pièce lumineuse, journée).\nSélectionnez un mode adapté au film que vous regardez." }
+        {
+          "libelle": "Image personnalisée",
+          "description": "Grâce à la technologie d'apprentissage approfondi de l'intelligence artificielle, la qualité d'image optimale est analysée et définie en fonction des préférences de l'utilisateur.",
+          "valeur_api": "personalized"
+        },
+        {
+          "libelle": "Vif",
+          "description": "Permet d’améliorer la qualité de l’image en augmentant le contraste, la luminosité et la netteté.",
+          "valeur_api": "vivid"
+        },
+        {
+          "libelle": "Standard",
+          "description": "L'image s'affiche avec un niveau de contraste, de luminosité et de netteté naturel.\nSi vous sélectionnez cette option pendant un signal HDR, un écran capable de montrer fidèlement la richesse et la luminosité des images HDR s'affiche dans un environnement de visionnage normal.",
+          "valeur_api": "normal"
+        },
+        {
+          "libelle": "Economie d'énergie automatique",
+          "description": "Le mode Economie d'énergie automatique réduit la consommation d'énergie en contrôlant le niveau de rétroéclairage.",
+          "valeur_api": "eco"
+        },
+        {
+          "libelle": "Basique",
+          "description": "L'image s'affiche selon le réglage de base du fabricant qui est optimisé pour un visionnement normal."
+        },
+        {
+          "libelle": "Accueil cinéma",
+          "description": "L’écran apparaît plus clair et lumineux que Cinéma."
+        },
+        {
+          "libelle": "Cinéma",
+          "description": "Image adéquate pour les films.\nSi vous sélectionnez cette option pendant un signal HDR, un écran optimisé pour les signaux vidéo HDR s'affiche.",
+          "valeur_api": "cinema"
+        },
+        {
+          "libelle": "Sport",
+          "description": "Image adéquate pour les matchs sportifs. Permet d'améliorer la netteté des mouvements rapides, comme les frappes ou les lancers de balle par exemple.",
+          "valeur_api": "sports"
+        },
+        {
+          "libelle": "Optimiseur de jeu",
+          "description": "Image adéquate pour les jeux.",
+          "valeur_api": "game"
+        },
+        {
+          "libelle": "FILMMAKER MODE",
+          "description": "Ce paramètre fournit une image de qualité cinéma optimisée certifiée par UHD Alliance, l'organisme de normalisation des technologies UHD.",
+          "valeur_api": "filmMaker"
+        },
+        {
+          "libelle": "Expert (pièce lumineuse, journée)",
+          "description": "Ce mode convient aux films, etc. visionnés dans un environnement sombre.\nLe paramètre Expert (pièce sombre, nuit) affiche une température de couleur inférieure à celle du paramètre Expert (pièce lumineuse, journée).\nSélectionnez un mode adapté au film que vous regardez.",
+          "valeur_api": "expert1"
+        },
+        {
+          "libelle": "Expert (pièce sombre, nuit)",
+          "description": "Ce mode convient aux films, etc. visionnés dans un environnement sombre.\nLe paramètre Expert (pièce sombre, nuit) affiche une température de couleur inférieure à celle du paramètre Expert (pièce lumineuse, journée).\nSélectionnez un mode adapté au film que vous regardez.",
+          "valeur_api": "expert2"
+        }
       ],
-      "source": { "guide": "6.2.1" },
-      "a_verifier": ["libelle", "choix"]
+      "source": {
+        "guide": "6.2.1"
+      },
+      "a_verifier": [
+        "libelle",
+        "choix"
+      ],
+      "api": {
+        "categorie": "picture",
+        "cle": "pictureMode",
+        "acces": "lecture_ecriture"
+      }
     },
     {
       "id": "image.assistant-image-personnalisee",
-      "chemin": ["Image"],
+      "chemin": [
+        "Image"
+      ],
       "libelle": "Assistant d'image personnalisée",
       "description": "Analyse l'image sélectionnée par l'utilisateur avec la technologie d'apprentissage approfondi de l'intelligence artificielle et définit la qualité d'image optimale préférée par l'utilisateur.",
       "controle": "action",
-      "source": { "guide": "6.2.2" }
+      "source": {
+        "guide": "6.2.2"
+      },
+      "api": {
+        "acces": "aucun"
+      }
     },
     {
       "id": "image.format-image",
-      "chemin": ["Image"],
+      "chemin": [
+        "Image"
+      ],
       "libelle": "Format de l'image",
       "description": "Vous pouvez modifier la taille de l'écran en fonction du type de contenu que vous regardez.",
       "controle": "sous-menu",
-      "source": { "guide": "6.2.3" },
+      "source": {
+        "guide": "6.2.3"
+      },
       "enfants": [
         {
           "id": "image.format-image.selection-utilisateur",
-          "chemin": ["Image", "Format de l'image"],
+          "chemin": [
+            "Image",
+            "Format de l'image"
+          ],
           "libelle": "Sélection de l'utilisateur",
           "description": "",
           "controle": "liste",
           "choix": [
-            { "libelle": "16:9", "description": "Affiche les images au format 16:9." },
-            { "libelle": "Original", "description": "Le rapport d'écran optimal varie en fonction du signal d'image d'entrée." },
-            { "libelle": "Écran large", "description": "Vous pouvez visionner le contenu en plein écran.\nAttention : l’image peut être déformée en fonction du type de signal." },
-            { "libelle": "4:3", "description": "Affiche les images au format 4:3." },
-            { "libelle": "Zoom vertical", "description": "Vous pouvez régler la dimension verticale de l’écran et aligner l’écran verticalement en utilisant Régler le rapport de zoom et Ajuster la position de l'écran." },
-            { "libelle": "Zoom multidirectionnel", "description": "Vous pouvez régler les dimensions horizontales/verticales/diagonales de l’écran et aligner l’écran verticalement/horizontalement en utilisant Régler le rapport de zoom et Ajuster la position de l'écran." }
+            {
+              "libelle": "16:9",
+              "description": "Affiche les images au format 16:9."
+            },
+            {
+              "libelle": "Original",
+              "description": "Le rapport d'écran optimal varie en fonction du signal d'image d'entrée."
+            },
+            {
+              "libelle": "Écran large",
+              "description": "Vous pouvez visionner le contenu en plein écran.\nAttention : l’image peut être déformée en fonction du type de signal."
+            },
+            {
+              "libelle": "4:3",
+              "description": "Affiche les images au format 4:3."
+            },
+            {
+              "libelle": "Zoom vertical",
+              "description": "Vous pouvez régler la dimension verticale de l’écran et aligner l’écran verticalement en utilisant Régler le rapport de zoom et Ajuster la position de l'écran."
+            },
+            {
+              "libelle": "Zoom multidirectionnel",
+              "description": "Vous pouvez régler les dimensions horizontales/verticales/diagonales de l’écran et aligner l’écran verticalement/horizontalement en utilisant Régler le rapport de zoom et Ajuster la position de l'écran."
+            }
           ],
-          "source": { "guide": "6.2.3" },
-          "a_verifier": ["description", "choix"]
+          "source": {
+            "guide": "6.2.3"
+          },
+          "a_verifier": [
+            "description",
+            "choix"
+          ],
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "image.format-image.analyse-du-signal",
-          "chemin": ["Image", "Format de l'image"],
+          "chemin": [
+            "Image",
+            "Format de l'image"
+          ],
           "libelle": "Analyse du signal",
           "description": "Si vous réglez cette fonction sur Activé, vous pouvez afficher le contenu dans le format de l’image qui se trouve dans le signal de diffusion ou le contenu source.Si le bord de l’écran n’est pas bien défini, réglez-la sur Désactivé.\nSi vous réglez cette fonction sur Auto, elle alterne entre les modes Activé ou Désactivé selon les informations contenues dans le signal vidéo.",
           "controle": "liste",
           "choix": [
-            { "libelle": "Activé" },
-            { "libelle": "Désactivé" },
-            { "libelle": "Auto" }
+            {
+              "libelle": "Activé"
+            },
+            {
+              "libelle": "Désactivé"
+            },
+            {
+              "libelle": "Auto"
+            }
           ],
-          "source": { "guide": "6.2.3" }
+          "source": {
+            "guide": "6.2.3"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         }
       ]
     },
     {
       "id": "image.parametres-avances",
-      "chemin": ["Image"],
+      "chemin": [
+        "Image"
+      ],
       "libelle": "Paramètres avancés",
       "controle": "sous-menu",
-      "source": { "guide": "6.2.4" },
+      "source": {
+        "guide": "6.2.4"
+      },
       "enfants": [
         {
           "id": "image.parametres-avances.luminosite",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Luminosité",
           "description": "Vous pouvez régler la luminosité de tout l'écran.",
           "controle": "sous-menu",
-          "source": { "guide": "6.2.4" },
+          "source": {
+            "guide": "6.2.4"
+          },
           "enfants": [
             {
               "id": "image.parametres-avances.luminosite.luminosite-ecran",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Luminosité de l'écran",
               "description": "Permet de modifier la luminosité de l’écran en réglant le rétroéclairage. Plus la valeur est proche de 100, plus l’écran est lumineux.",
               "notes": [
@@ -106,132 +234,322 @@
                 "Selon le modèle, il se peut qu'il n'y ait aucune option de réglage Luminosité de l'écran."
               ],
               "controle": "curseur",
-              "visibilite": { "condition_texte": "Peut être indisponible selon Économie d'énergie (Auto/Maximum) ; peut être absent sur OLED (remplacé par Luminosité des pixels OLED)." },
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["bornes", "presence"]
+              "visibilite": {
+                "condition_texte": "Peut être indisponible selon Économie d'énergie (Auto/Maximum) ; peut être absent sur OLED (remplacé par Luminosité des pixels OLED)."
+              },
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "bornes",
+                "presence"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.luminosite-pixels-oled",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Luminosité des pixels OLED",
               "description": "Permet de régler la luminosité de l’écran en modifiant la luminosité du panneau OLED.",
               "notes": [
                 "Selon les paramètres Économie d'énergie (Auto/Maximum), vous risquez de ne pas pouvoir régler Luminosité des pixels OLED."
               ],
               "controle": "curseur",
-              "visibilite": { "condition_texte": "Peut être indisponible selon Économie d'énergie (Auto/Maximum)." },
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["bornes"]
+              "visibilite": {
+                "condition_texte": "Peut être indisponible selon Économie d'énergie (Auto/Maximum)."
+              },
+              "source": {
+                "guide": "6.2.4"
+              },
+              "api": {
+                "categorie": "picture",
+                "cle": "backlight",
+                "acces": "lecture_ecriture"
+              },
+              "bornes": {
+                "min": 0,
+                "max": 100,
+                "pas": 1
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.ajuster-le-contraste",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Ajuster le contraste",
               "description": "Permet de régler le contraste entre les zones claires et les zones sombres de l’image. Plus la valeur est proche de 100, plus il y a de contraste.",
               "controle": "curseur",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["bornes"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "api": {
+                "categorie": "picture",
+                "cle": "contrast",
+                "acces": "lecture_ecriture"
+              },
+              "bornes": {
+                "min": 0,
+                "max": 100,
+                "pas": 1
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.niveau-noir",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Niveau noir",
               "description": "Ajuste la luminosité des zones sombres de l'écran.Plus la valeur est proche de 100, plus l'écran devient clair.",
               "controle": "curseur",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["bornes"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "api": {
+                "categorie": "picture",
+                "cle": "brightness",
+                "acces": "lecture_ecriture"
+              },
+              "bornes": {
+                "min": 0,
+                "max": 100,
+                "pas": 1
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.contraste-dynamique-automatique",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Contraste dynamique automatique",
               "description": "Permet de corriger la différence entre les parties claires et sombres de l’écran pour un résultat optimal selon la luminosité de l’image.",
               "controle": "liste",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "dynamicContrast",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : off/low/medium/high ; libellés affichés à relever sur photo."
+              ]
             },
             {
               "id": "image.parametres-avances.luminosite.mappage-tons-dynamiques",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Mappage des tons dynamiques",
               "description": "Réglez sur Activé.Paramètres adéquats de contraste en fonction de la luminosité des images du contenu HDR.\nRéglez sur Désactivé.Pour affiner la richesse du contenu HDR, définissez Professionnel sur Activé.",
               "controle": "liste",
               "choix": [
-                { "libelle": "Activé" },
-                { "libelle": "Désactivé" }
+                {
+                  "libelle": "Activé",
+                  "valeur_api": "on"
+                },
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                }
               ],
-              "visibilite": { "condition_texte": "Contenu HDR." },
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle", "choix", "visibilite"]
+              "visibilite": {
+                "condition_texte": "Contenu HDR."
+              },
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle",
+                "choix",
+                "visibilite"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "hdrDynamicToneMapping",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] L'API accepte aussi HGIG."
+              ]
             },
             {
               "id": "image.parametres-avances.luminosite.amplificateur-expression",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Amplificateur d'expression",
               "description": "Il s'agit d'une technologie permettant d'améliorer le contraste et les détails du premier plan, de l'arrière-plan et des objets en analysant les informations de l'image HDR.",
               "controle": "liste",
-              "visibilite": { "condition_texte": "Contenu HDR." },
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle", "choix", "visibilite"]
+              "visibilite": {
+                "condition_texte": "Contenu HDR."
+              },
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle",
+                "choix",
+                "visibilite"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.luminosite-maximale",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Luminosité maximale",
               "description": "Permet de régler la luminosité maximale de l'écran.",
               "controle": "liste",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "peakBrightness",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : off/high."
+              ]
             },
             {
               "id": "image.parametres-avances.luminosite.gamma",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Gamma (permet de régler la luminosité)",
               "description": "Permet de régler la luminosité moyenne de l’image.",
               "notes": [
-                "Le paramètre BT.1886 exprime le dégradé dans ITU-R BT.1886, une norme internationale."
+                "Le paramètre BT.1886 exprime le dégradé dans ITU-R BT.1886, une norme internationale.",
+                "[API] Valeurs API documentées : low/medium/high1/high2/mediumHavingLevel ; valeur actuelle relevée : high2 (2.2 probable). Libellés affichés à relever sur photo."
               ],
               "controle": "liste",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "gamma",
+                "acces": "lecture_ecriture"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.lumiere-ambiante-filmmaker",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Lumière ambiante du MODE FILMMAKER",
               "description": "Réglez sur Activé.Optimisez la qualité de l'image en fonction de la luminosité détectée par le capteur de lumière ambiante.",
               "notes": [
                 "Pris en charge quand Mode Image est réglé sur FILMMAKER MODE."
               ],
               "controle": "interrupteur",
-              "visibilite": { "condition_texte": "Mode Image réglé sur FILMMAKER MODE." },
-              "source": { "guide": "6.2.4" }
+              "visibilite": {
+                "condition_texte": "Mode Image réglé sur FILMMAKER MODE."
+              },
+              "source": {
+                "guide": "6.2.4"
+              },
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.detail-presque-noir",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Détail presque noir",
               "description": "Permet d'ajuster la richesse des zones sombres de la vidéo.",
               "controle": "liste",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.plage-video",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Plage vidéo",
               "description": "Ajuste l'obscurité de l'écran afin d'afficher un noir parfait.Sélectionnez Plage vidéo pour correspondre à la plage de couleurs du périphérique d'entrée externe.",
               "notes": [
-                "Vous pouvez utiliser cette fonction lorsque vous regardez du contenu via une entrée externe."
+                "Vous pouvez utiliser cette fonction lorsque vous regardez du contenu via une entrée externe.",
+                "[API] L'API renvoie un objet par type de signal (auto/low/high)."
               ],
               "controle": "liste",
-              "visibilite": { "condition_texte": "Contenu via une entrée externe." },
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle", "choix"]
+              "visibilite": {
+                "condition_texte": "Contenu via une entrée externe."
+              },
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "blackLevel",
+                "acces": "lecture_ecriture"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.led-local-dimming",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "LED -Local Dimming",
               "description": "Optimise le taux de contraste en éclaircissant la partie claire et en assombrissant la partie sombre de l’écran.",
               "notes": [
@@ -239,202 +557,514 @@
               ],
               "controle": "liste",
               "choix": [
-                { "libelle": "Désactivé", "description": "Permet de désactiver la fonction LED -Local Dimming." },
-                { "libelle": "Faible", "description": "Permet de modifier le taux de contraste." },
-                { "libelle": "Moyen", "description": "Permet de modifier le taux de contraste." },
-                { "libelle": "Élevé", "description": "Permet de modifier le taux de contraste." }
+                {
+                  "libelle": "Désactivé",
+                  "description": "Permet de désactiver la fonction LED -Local Dimming."
+                },
+                {
+                  "libelle": "Faible",
+                  "description": "Permet de modifier le taux de contraste."
+                },
+                {
+                  "libelle": "Moyen",
+                  "description": "Permet de modifier le taux de contraste."
+                },
+                {
+                  "libelle": "Élevé",
+                  "description": "Permet de modifier le taux de contraste."
+                }
               ],
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["presence", "choix"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "presence",
+                "choix"
+              ],
+              "api": {
+                "acces": "aucun"
+              }
             },
             {
               "id": "image.parametres-avances.luminosite.protection-yeux",
-              "chemin": ["Image", "Paramètres avancés", "Luminosité"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Luminosité"
+              ],
               "libelle": "Protection des yeux",
               "description": "Ajuste automatiquement la luminosité et réduit l’effet de flou en fonction des données d’image afin de réduire la fatigue oculaire.",
               "notes": [
-                "La désactivation de cette option Désactivé peut augmenter la consommation d’énergie."
+                "La désactivation de cette option Désactivé peut augmenter la consommation d’énergie.",
+                "[API] Rapprochement présumé (Motion Eye Care) ; à confirmer par test."
               ],
               "controle": "interrupteur",
-              "source": { "guide": "6.2.4" },
-              "a_verifier": ["controle"]
+              "source": {
+                "guide": "6.2.4"
+              },
+              "a_verifier": [
+                "controle"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "motionEyeCare",
+                "acces": "lecture_ecriture"
+              }
             }
           ]
         },
         {
           "id": "image.parametres-avances.couleur",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Couleur",
           "controle": "sous-menu",
-          "source": { "guide": "6.2.5" },
+          "source": {
+            "guide": "6.2.5"
+          },
           "enfants": [
             {
               "id": "image.parametres-avances.couleur.profondeur-couleur",
-              "chemin": ["Image", "Paramètres avancés", "Couleur"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Couleur"
+              ],
               "libelle": "Profondeur de couleur",
               "description": "Permet d’atténuer ou de renforcer les couleurs qui s’affichent à l’écran. Plus la valeur est proche de 100, plus la couleur est riche.",
               "controle": "curseur",
-              "source": { "guide": "6.2.5" },
-              "a_verifier": ["bornes"]
+              "source": {
+                "guide": "6.2.5"
+              },
+              "api": {
+                "categorie": "picture",
+                "cle": "color",
+                "acces": "lecture_ecriture"
+              },
+              "bornes": {
+                "min": 0,
+                "max": 100,
+                "pas": 1
+              }
             },
             {
               "id": "image.parametres-avances.couleur.teinte",
-              "chemin": ["Image", "Paramètres avancés", "Couleur"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Couleur"
+              ],
               "libelle": "Teinte",
               "description": "Permet de régler l’équilibre entre les niveaux de rouge et de vert. Rouge 50 correspond à la couleur tendant le plus au rouge. Vert 50 correspond à la couleur tendant le plus au vert.",
               "controle": "curseur",
-              "source": { "guide": "6.2.5" },
-              "a_verifier": ["bornes"]
+              "source": {
+                "guide": "6.2.5"
+              },
+              "api": {
+                "categorie": "picture",
+                "cle": "tint",
+                "acces": "lecture_ecriture"
+              },
+              "bornes": {
+                "min": -50,
+                "max": 50,
+                "pas": 1
+              },
+              "notes": [
+                "[API] L'écran affiche Rouge 50 … Vert 50 ; l'API code de -50 (rouge) à +50 (vert), sens à confirmer."
+              ]
             },
             {
               "id": "image.parametres-avances.couleur.gamme-couleurs",
-              "chemin": ["Image", "Paramètres avancés", "Couleur"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Couleur"
+              ],
               "libelle": "Gamme de couleurs",
               "description": "Sélectionne la plage de couleurs à afficher.",
               "controle": "liste",
               "choix": [
-                { "libelle": "Originale", "description": "Affiche des couleurs plus vives et plus riches." },
-                { "libelle": "Détection auto", "description": "La Gamme de couleurs est automatiquement définie pour correspondre au signal." },
-                { "libelle": "Dynamique", "description": "La Gamme de couleurs est élargie pour correspondre à la scène." },
-                { "libelle": "Adobe RGB", "description": "Définit la Gamme de couleurs sur les standards Adobe RGB." },
-                { "libelle": "Cinéma", "description": "Permet de définir la Gamme de couleurs sur les standards DCI-P3." }
+                {
+                  "libelle": "Originale",
+                  "description": "Affiche des couleurs plus vives et plus riches."
+                },
+                {
+                  "libelle": "Détection auto",
+                  "description": "La Gamme de couleurs est automatiquement définie pour correspondre au signal."
+                },
+                {
+                  "libelle": "Dynamique",
+                  "description": "La Gamme de couleurs est élargie pour correspondre à la scène."
+                },
+                {
+                  "libelle": "Adobe RGB",
+                  "description": "Définit la Gamme de couleurs sur les standards Adobe RGB."
+                },
+                {
+                  "libelle": "Cinéma",
+                  "description": "Permet de définir la Gamme de couleurs sur les standards DCI-P3."
+                }
               ],
-              "source": { "guide": "6.2.5" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.2.5"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "colorGamut",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : auto/native/wide/extended/dynamic ; correspondance avec les libellés à confirmer."
+              ]
             },
             {
               "id": "image.parametres-avances.couleur.ajuster",
-              "chemin": ["Image", "Paramètres avancés", "Couleur"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Couleur"
+              ],
               "libelle": "Ajuster",
               "description": "Cette fonction est utilisée par les experts lorsqu'ils procèdent au réglage des couleurs à l'aide d'une mire de test. Vous pouvez effectuer ces réglages en sélectionnant des zones de six couleurs (Rouge/Vert/Bleu/Cyan/Magenta/Jaune).\nPour les images normales, il est possible que les changements de couleur ne soient pas visibles une fois les réglages effectués.",
               "controle": "sous-menu",
-              "source": { "guide": "6.2.5" },
+              "source": {
+                "guide": "6.2.5"
+              },
               "enfants": [
                 {
                   "id": "image.parametres-avances.couleur.ajuster.reglage-couleurs",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Ajuster"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Ajuster"
+                  ],
                   "libelle": "Réglage des couleurs",
                   "description": "Permet de régler la couleur et la saturation de l’image pour la rendre plus colorée et vivante.",
                   "controle": "interrupteur",
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["controle"]
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "controle"
+                  ],
+                  "api": {
+                    "acces": "aucun"
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.ajuster.selectionner-couleur",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Ajuster"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Ajuster"
+                  ],
                   "libelle": "Sélectionner une couleur",
                   "description": "Parmi les tons Rouge/Vert/Bleu/Cyan/Magenta/Jaune, sélectionnez un ton à ajuster.",
                   "controle": "liste",
                   "choix": [
-                    { "libelle": "Rouge" },
-                    { "libelle": "Vert" },
-                    { "libelle": "Bleu" },
-                    { "libelle": "Cyan" },
-                    { "libelle": "Magenta" },
-                    { "libelle": "Jaune" }
+                    {
+                      "libelle": "Rouge",
+                      "valeur_api": "red"
+                    },
+                    {
+                      "libelle": "Vert",
+                      "valeur_api": "green"
+                    },
+                    {
+                      "libelle": "Bleu",
+                      "valeur_api": "blue"
+                    },
+                    {
+                      "libelle": "Cyan",
+                      "valeur_api": "cyan"
+                    },
+                    {
+                      "libelle": "Magenta",
+                      "valeur_api": "magenta"
+                    },
+                    {
+                      "libelle": "Jaune",
+                      "valeur_api": "yellow"
+                    }
                   ],
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["choix"]
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "choix"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "colorManagementColorSystem",
+                    "acces": "lecture_ecriture"
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.ajuster.saturation-teinte-luminosite",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Ajuster"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Ajuster"
+                  ],
                   "libelle": "Ajuster la saturation/Ajuster la teinte/Ajuster la luminosité",
                   "description": "Ajustez la chrominance /teinte/luminance du ton dans la plage comprise entre -30 et +30.",
                   "controle": "curseur",
-                  "bornes": { "min": -30, "max": 30 },
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["libelle"]
+                  "bornes": {
+                    "min": -30,
+                    "max": 30
+                  },
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "libelle"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "colorManagement<Composante><Couleur>",
+                    "acces": "lecture_ecriture"
+                  },
+                  "notes": [
+                    "[API] 18 clés API : colorManagement{Saturation,Hue,Luminance}{Red,Green,Blue,Cyan,Magenta,Yellow}, chacune de -30 à +30."
+                  ]
                 }
               ]
             },
             {
               "id": "image.parametres-avances.couleur.balance-blancs",
-              "chemin": ["Image", "Paramètres avancés", "Couleur"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Couleur"
+              ],
               "libelle": "Balance des blancs",
               "description": "La fonction permettant d'ajuster chaque couleur à reproduire avec plus de précision en fonction du blanc vous permet d'ajuster la couleur globale de l'écran selon vos préférences.",
               "controle": "sous-menu",
-              "source": { "guide": "6.2.5" },
+              "source": {
+                "guide": "6.2.5"
+              },
               "enfants": [
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.temperature-couleur",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Température de couleur",
                   "description": "Vous pouvez définir la couleur pour rendre l'écran plus froid ou plus chaud.",
                   "controle": "curseur",
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["controle", "bornes"]
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "controle"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "colorTemperature",
+                    "acces": "lecture_ecriture"
+                  },
+                  "bornes": {
+                    "min": -50,
+                    "max": 50,
+                    "pas": 1
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.methode",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Méthode",
                   "description": "Cette méthode sert à ajuster le réglage de la température de couleur. Vous pouvez contrôler la température de couleur à deux points de la zone claire et de la zone sombre de la vidéo si vous sélectionnez 2 points, à chaque point sur 10 niveaux si vous sélectionnez Niveau de signal 10 points (%), et à chaque point sur 22 niveaux de la vidéo si vous sélectionnez Niveau de signal 22 points (%).",
                   "controle": "liste",
                   "choix": [
-                    { "libelle": "2 points" },
-                    { "libelle": "Niveau de signal 10 points (%)" },
-                    { "libelle": "Niveau de signal 22 points (%)" }
+                    {
+                      "libelle": "2 points",
+                      "valeur_api": "2"
+                    },
+                    {
+                      "libelle": "Niveau de signal 10 points (%)",
+                      "valeur_api": "10"
+                    },
+                    {
+                      "libelle": "Niveau de signal 22 points (%)",
+                      "valeur_api": "22"
+                    }
                   ],
-                  "source": { "guide": "6.2.5" }
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "whiteBalanceMethod",
+                    "acces": "lecture_ecriture"
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.point",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Point",
                   "description": "Sélectionnez la luminosité de l'écran pour l'ajustement de la température de couleur.\nSi le paramètre Méthode est défini sur 2 points ; utilisez Faible pour sélectionner les ombres et Élevé pour sélectionner les zones en surbrillance.",
                   "controle": "liste",
                   "choix": [
-                    { "libelle": "Faible" },
-                    { "libelle": "Élevé" }
+                    {
+                      "libelle": "Faible",
+                      "valeur_api": "low"
+                    },
+                    {
+                      "libelle": "Élevé",
+                      "valeur_api": "high"
+                    }
                   ],
-                  "visibilite": { "condition_texte": "Méthode définie sur 2 points." },
-                  "source": { "guide": "6.2.5" }
+                  "visibilite": {
+                    "condition_texte": "Méthode définie sur 2 points."
+                  },
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "whiteBalancePoint",
+                    "acces": "lecture_ecriture"
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.niveau-signal",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Niveau de signal (%)",
                   "description": "Sélectionnez la luminosité de l'écran pour l'ajustement de la température de couleur.\nSi le paramètre Méthode est défini sur Niveau de signal 10 points (%) ; utilisez les chiffres indiquant 10 niveaux pour sélectionner la luminosité.\nQuand la Méthode est définie sur Niveau de signal 22 points (%), vous pouvez sélectionner la luminosité avec les 22 niveaux de luminosité.",
                   "notes": [
-                    "Le nom du Niveau de signal (%) peut varier selon le signal."
+                    "Le nom du Niveau de signal (%) peut varier selon le signal.",
+                    "[API] Valeurs API documentées : « 2.5 » à « 100 » par pas ; whiteBalanceIre10pt pour la méthode 10 points."
                   ],
                   "controle": "liste",
-                  "visibilite": { "condition_texte": "Méthode définie sur Niveau de signal 10 points (%) ou Niveau de signal 22 points (%)." },
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["choix"]
+                  "visibilite": {
+                    "condition_texte": "Méthode définie sur Niveau de signal 10 points (%) ou Niveau de signal 22 points (%)."
+                  },
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "choix"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "whiteBalanceIre",
+                    "acces": "lecture_ecriture"
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.luminosite-signal-max",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Afficher la luminosité au niveau de signal maximal (%)",
                   "description": "Ajuste la luminance du niveau de signal le plus élevé de 100 %.",
                   "controle": "curseur",
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["controle", "bornes"]
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "controle",
+                    "bornes"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "whiteBalanceLuminance",
+                    "acces": "lecture_ecriture"
+                  },
+                  "notes": [
+                    "[API] Rapprochement présumé ; à confirmer par test."
+                  ]
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.luminosite-signal-selectionne",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Ajuster la luminosité au niveau de signal sélectionné (%)",
                   "description": "La luminosité du niveau de signal sélectionné peut être ajustée.",
                   "notes": [
-                    "Vous pouvez effectuer ces réglages uniquement lorsque Image → Mode Sélection est défini sur Cinéma, Expert (pièce lumineuse, journée) ou Expert (pièce sombre, nuit) et quand la Méthode est définie sur Niveau de signal 10 points (%) ou Niveau de signal 22 points (%)."
+                    "Vous pouvez effectuer ces réglages uniquement lorsque Image → Mode Sélection est défini sur Cinéma, Expert (pièce lumineuse, journée) ou Expert (pièce sombre, nuit) et quand la Méthode est définie sur Niveau de signal 10 points (%) ou Niveau de signal 22 points (%).",
+                    "[API] Tableau de valeurs par point (-50 à +50) ; adjustingLuminance10pt pour la méthode 10 points."
                   ],
                   "controle": "curseur",
-                  "visibilite": { "condition_texte": "Mode Sélection défini sur Cinéma, Expert (pièce lumineuse, journée) ou Expert (pièce sombre, nuit), et Méthode sur Niveau de signal 10 ou 22 points (%)." },
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["controle", "bornes"]
+                  "visibilite": {
+                    "condition_texte": "Mode Sélection défini sur Cinéma, Expert (pièce lumineuse, journée) ou Expert (pièce sombre, nuit), et Méthode sur Niveau de signal 10 ou 22 points (%)."
+                  },
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "controle",
+                    "bornes"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "adjustingLuminance",
+                    "acces": "lecture_ecriture"
+                  }
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.rouge-vert-bleu",
-                  "chemin": ["Image", "Paramètres avancés", "Couleur", "Balance des blancs"],
+                  "chemin": [
+                    "Image",
+                    "Paramètres avancés",
+                    "Couleur",
+                    "Balance des blancs"
+                  ],
                   "libelle": "Rouge/Vert/Bleu",
                   "description": "Ajustez la température de couleur du point sélectionné.\nAjustez l'intensité des couleurs Rouge/Vert/Bleu dans la gamme comprise entre -50 et 50.\nVous pouvez ajuster les valeurs respectives de la luminosité sélectionnée dans Point.",
                   "controle": "curseur",
-                  "bornes": { "min": -50, "max": 50 },
-                  "source": { "guide": "6.2.5" },
-                  "a_verifier": ["libelle"]
+                  "bornes": {
+                    "min": -50,
+                    "max": 50
+                  },
+                  "source": {
+                    "guide": "6.2.5"
+                  },
+                  "a_verifier": [
+                    "libelle"
+                  ],
+                  "api": {
+                    "categorie": "picture",
+                    "cle": "whiteBalance<Couleur>",
+                    "acces": "lecture_ecriture"
+                  },
+                  "notes": [
+                    "[API] Clés API : whiteBalance{Red,Green,Blue} (tableaux par point, -50 à +50) ; en méthode 2 points : whiteBalance{Red,Green,Blue}{Gain,Offset}."
+                  ]
                 }
               ]
             }
@@ -442,122 +1072,301 @@
         },
         {
           "id": "image.parametres-avances.clarte",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Clarté",
           "description": "Vous pouvez régler le contraste d'une image pour en augmenter la clarté.",
           "controle": "sous-menu",
-          "source": { "guide": "6.2.6" },
+          "source": {
+            "guide": "6.2.6"
+          },
           "enfants": [
             {
               "id": "image.parametres-avances.clarte.ajuster-nettete",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "Ajuster la netteté",
               "description": "Permet de régler la netteté de l’image. Plus la valeur est proche de 50, plus l’image est nette et claire.",
               "controle": "curseur",
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["bornes"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "api": {
+                "categorie": "picture",
+                "cle": "sharpness",
+                "acces": "lecture_ecriture"
+              },
+              "bornes": {
+                "min": 0,
+                "max": 50,
+                "pas": 1
+              },
+              "notes": [
+                "[API] Écriture vérifiée en phase 1 (netteté)."
+              ]
             },
             {
               "id": "image.parametres-avances.clarte.resolution-elevee",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "Résolution élevée",
               "description": "Permet de régler la résolution pour éclaircir les images peu lumineuses et floues.",
               "controle": "liste",
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "superResolution",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : off/low/medium/high."
+              ]
             },
             {
               "id": "image.parametres-avances.clarte.reduction-bruit",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "Réduction du bruit",
               "description": "Permet de supprimer les petits points parasites pour une image plus pure.",
               "controle": "liste",
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "noiseReduction",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : off/low/medium/high/auto."
+              ]
             },
             {
               "id": "image.parametres-avances.clarte.reduction-bruit-mpeg",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "Réduction du bruit MPEG",
               "description": "Permet de réduire le bruit produit lors de la création de signaux vidéo numériques.",
               "controle": "liste",
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "mpegNoiseReduction",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : off/low/medium/high/auto."
+              ]
             },
             {
               "id": "image.parametres-avances.clarte.degrades-fluides",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "Dégradés fluides",
               "description": "Elle réduit le phénomène qui fait que le contour de l'image est brut (en dents de scie) et affiche un écran plus lisse.",
               "controle": "liste",
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["controle", "choix"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "a_verifier": [
+                "controle",
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "smoothGradation",
+                "acces": "lecture_ecriture"
+              },
+              "notes": [
+                "[API] Valeurs API documentées : off/low/medium/high."
+              ]
             },
             {
               "id": "image.parametres-avances.clarte.cinema-originel",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "Cinéma originel",
               "description": "Optimisez l'affichage pour les films.",
               "controle": "interrupteur",
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["controle"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "a_verifier": [
+                "controle"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "realCinema",
+                "acces": "lecture_ecriture"
+              }
             },
             {
               "id": "image.parametres-avances.clarte.trumotion",
-              "chemin": ["Image", "Paramètres avancés", "Clarté"],
+              "chemin": [
+                "Image",
+                "Paramètres avancés",
+                "Clarté"
+              ],
               "libelle": "TruMotion",
               "description": "Qualité adéquate des images en succession rapide.",
               "controle": "liste",
               "choix": [
-                { "libelle": "Désactivé", "description": "Désactive TruMotion." },
-                { "libelle": "Mouvement cinématographique", "description": "Ajustez les saccades du mouvement sur l'écran pour que vous vous sentiez comme dans une salle de cinéma." },
-                { "libelle": "Naturel", "description": "Définissez des images avec beaucoup de mouvements pour obtenir un aspect naturel et clair." },
-                { "libelle": "Mouvement fluide", "description": "Adoucit les images en succession rapide." },
-                { "libelle": "Sélection de l'utilisateur", "description": "Permet de régler manuellement l'option TruMotion." }
+                {
+                  "libelle": "Désactivé",
+                  "description": "Désactive TruMotion.",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Mouvement cinématographique",
+                  "description": "Ajustez les saccades du mouvement sur l'écran pour que vous vous sentiez comme dans une salle de cinéma.",
+                  "valeur_api": "cinemaClear"
+                },
+                {
+                  "libelle": "Naturel",
+                  "description": "Définissez des images avec beaucoup de mouvements pour obtenir un aspect naturel et clair.",
+                  "valeur_api": "natural"
+                },
+                {
+                  "libelle": "Mouvement fluide",
+                  "description": "Adoucit les images en succession rapide.",
+                  "valeur_api": "smooth"
+                },
+                {
+                  "libelle": "Sélection de l'utilisateur",
+                  "description": "Permet de régler manuellement l'option TruMotion.",
+                  "valeur_api": "user"
+                }
               ],
-              "source": { "guide": "6.2.6" },
-              "a_verifier": ["choix"]
+              "source": {
+                "guide": "6.2.6"
+              },
+              "a_verifier": [
+                "choix"
+              ],
+              "api": {
+                "categorie": "picture",
+                "cle": "truMotionMode",
+                "acces": "lecture_ecriture"
+              }
             }
           ]
         },
         {
           "id": "image.parametres-avances.appliquer-toutes-entrees",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Appliquer à toutes les entrées",
           "description": "Application des paramètres vidéo actuels à toutes les entrées.",
           "controle": "action",
-          "source": { "guide": "6.2.7" }
+          "source": {
+            "guide": "6.2.7"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "image.parametres-avances.reinitialisation",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Réinitialisation",
           "description": "Après avoir configuré les paramètres vidéo, vous pouvez rétablir leurs valeurs par défaut à tout moment.",
           "controle": "action",
-          "source": { "guide": "6.2.8" }
+          "source": {
+            "guide": "6.2.8"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "image.parametres-avances.demarrage-auto-filmmaker",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Démarrage automatique du MODE FILMMAKER",
           "description": "Lorsqu'un signal pouvant être manipulé en FILMMAKER MODE est détecté, Mode Image est automatiquement défini sur FILMMAKER MODE.",
           "notes": [
             "Bien que ce mode transmette efficacement l'intention du créateur, il peut sembler plus sombre qu'un autre Mode Image."
           ],
           "controle": "interrupteur",
-          "source": { "guide": "6.2.9" }
+          "source": {
+            "guide": "6.2.9"
+          },
+          "api": {
+            "acces": "aucun"
+          }
         },
         {
           "id": "image.parametres-avances.reduire-lumiere-bleue",
-          "chemin": ["Image", "Paramètres avancés"],
+          "chemin": [
+            "Image",
+            "Paramètres avancés"
+          ],
           "libelle": "Réduire la lumière bleue",
           "description": "La température de la couleur est ajustée afin de réduire la fatigue oculaire.",
           "controle": "liste",
           "choix": [
-            { "libelle": "Activé", "description": "La température de couleur de votre écran est ajustée." },
-            { "libelle": "Désactivé", "description": "Désactive la fonctionnalité Réduire la lumière bleue." }
+            {
+              "libelle": "Activé",
+              "description": "La température de couleur de votre écran est ajustée.",
+              "valeur_api": "on"
+            },
+            {
+              "libelle": "Désactivé",
+              "description": "Désactive la fonctionnalité Réduire la lumière bleue.",
+              "valeur_api": "off"
+            }
           ],
-          "source": { "guide": "6.2.10" }
+          "source": {
+            "guide": "6.2.10"
+          },
+          "api": {
+            "categorie": "picture",
+            "cle": "eyeComfortMode",
+            "acces": "lecture_ecriture"
+          }
         }
       ]
     }
