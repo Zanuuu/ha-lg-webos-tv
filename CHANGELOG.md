@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.1 — 2026-08-17
+
+Interface adaptée aux fenêtres étroites (panneau Ingress sur mobile,
+colonne réduite).
+
+- Les lignes de réglage passent le contrôle sous le libellé quand la place
+  manque, au lieu d'écraser le texte.
+- Sous 720 px : la barre latérale devient un bandeau d'onglets horizontal,
+  les curseurs prennent toute la largeur, les tables des presets et de
+  l'historique défilent horizontalement.
+- En-tête réorganisable (mode d'image, connexion) et hauteur calée sur
+  `100dvh` pour les navigateurs mobiles.
+
 ## 1.0.0 — 2026-08-17
 
 Première version installable en app Home Assistant locale.
