@@ -20,7 +20,8 @@
       "description": "",
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles.",
-        "Si vous utilisez la fonction Fonction Économie d'énergie, la luminosité du périphérique sera modifiée."
+        "Si vous utilisez la fonction Fonction Économie d'énergie, la luminosité du périphérique sera modifiée.",
+        "[firmware] Table firmware complète : auto/off/min/med/max (+ screen_off porté par l'entrée Écran désactivé)."
       ],
       "controle": "liste",
       "choix": [
@@ -51,7 +52,8 @@
         }
       ],
       "source": {
-        "guide": "6.14"
+        "guide": "6.14",
+        "firmware": "33.31.68"
       },
       "api": {
         "categorie": "picture",
@@ -72,7 +74,8 @@
         "condition_texte": "Fonction Économie d'énergie définie sur Auto."
       },
       "source": {
-        "guide": "6.14"
+        "guide": "6.14",
+        "firmware": "33.31.68"
       },
       "a_verifier": [
         "controle",
@@ -80,7 +83,10 @@
       ],
       "api": {
         "acces": "aucun"
-      }
+      },
+      "notes": [
+        "[firmware] Clé interne energySavingAutoMin, non accessible par l'API publique."
+      ]
     },
     {
       "id": "general.economie-energie.arret-auto",
@@ -113,11 +119,13 @@
       "libelle": "Écran désactivé",
       "description": "L’écran est désactivé et seul le son est diffusé.\nAppuyez sur n’importe quel bouton à l’exception des boutons de mise sous tension et de volume pour rallumer l’écran.",
       "notes": [
-        "Il peut ne pas être pris en charge, selon l'application ou la fonction en cours d'exécution."
+        "Il peut ne pas être pris en charge, selon l'application ou la fonction en cours d'exécution.",
+        "[firmware] Correspond à la valeur screen_off de picture.energySaving (libellé firmware : « Écran désactivé »)."
       ],
       "controle": "action",
       "source": {
-        "guide": "6.14"
+        "guide": "6.14",
+        "firmware": "33.31.68"
       },
       "api": {
         "acces": "aucun"

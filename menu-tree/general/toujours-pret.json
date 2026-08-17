@@ -25,12 +25,9 @@
       "description": "",
       "controle": "interrupteur",
       "source": {
-        "guide": "6.5"
+        "guide": "6.5",
+        "firmware": "33.31.68"
       },
-      "a_verifier": [
-        "libelle",
-        "description"
-      ],
       "api": {
         "acces": "aucun"
       }

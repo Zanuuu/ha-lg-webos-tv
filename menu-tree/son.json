@@ -16,55 +16,48 @@
       "notes": [
         "Les éléments pouvant être configurés varient selon les modèles.",
         "Si vous connectez une barre de son LG prenant en charge Partage du mode son du téléviseur au port HDMI, vous pouvez sélectionner le Mode du son fourni par la barre de son LG sur le périphérique.",
-        "[API] Lisible mais absent de la liste communautaire d'écriture publique : écriture à tester prudemment en phase 3. Voix nette/Son personnalisé restent à rapprocher (news/bassBlast ?)."
+        "[API] Lisible mais absent de la liste communautaire d'écriture publique : écriture à tester prudemment en phase 3. Voix nette/Son personnalisé restent à rapprocher (news/bassBlast ?).",
+        "[firmware] Sur ce modèle le mode AI s'affiche « Son AI Pro » (aiSoundPlus) ; « Son AI » (aiSound) est la variante des modèles sans Pro. Voix nette = news."
       ],
       "controle": "liste",
       "choix": [
         {
           "libelle": "Son personnalisé",
-          "description": "Grâce à la technologie d'apprentissage approfondi de l'intelligence artificielle, la qualité sonore optimale est analysée et définie en fonction des préférences de l'utilisateur."
+          "valeur_api": "personalized"
         },
         {
-          "libelle": "Son AI/Son AI Pro",
-          "description": "Selon le contenu que vous regardez, vous pouvez profiter du son optimisé et du son Virtual Surround en temps réel.",
+          "libelle": "Son AI Pro",
           "valeur_api": "aiSoundPlus"
         },
         {
           "libelle": "Standard",
-          "description": "Permet d’optimiser le son pour tout type de contenu.",
           "valeur_api": "standard"
         },
         {
           "libelle": "Cinéma",
-          "description": "Permet d’optimiser le son pour les films.",
           "valeur_api": "movie"
         },
         {
-          "libelle": "Voix nette/Voix nette Pro",
-          "description": "Permet d’optimiser la clarté des voix."
+          "libelle": "Voix nette",
+          "valeur_api": "news"
         },
         {
           "libelle": "Sport",
-          "description": "Permet d’optimiser le son pour les événements sportifs.",
           "valeur_api": "sports"
         },
         {
           "libelle": "Musique",
-          "description": "Permet d’optimiser le son pour la musique.",
           "valeur_api": "music"
         },
         {
           "libelle": "Optimiseur de jeu",
-          "description": "Permet d’optimiser le son pour les jeux.",
           "valeur_api": "game"
         }
       ],
       "source": {
-        "guide": "6.3.1"
+        "guide": "6.3.1",
+        "firmware": "33.31.68"
       },
-      "a_verifier": [
-        "choix"
-      ],
       "api": {
         "categorie": "sound",
         "cle": "soundMode",
@@ -110,14 +103,18 @@
           "description": "Le son est diffusé par les haut-parleurs internes du périphérique.",
           "controle": "action",
           "source": {
-            "guide": "6.3.3"
+            "guide": "6.3.3",
+            "firmware": "33.31.68"
           },
           "a_verifier": [
             "controle"
           ],
           "api": {
             "acces": "aucun"
-          }
+          },
+          "notes": [
+            "[firmware] Valeur soundOutput : tv_speaker (« Haut-parleur TV »)."
+          ]
         },
         {
           "id": "son.sortie-son.haut-parleur-sans-fil",
@@ -130,7 +127,8 @@
           "choix": [
             {
               "libelle": "Périphérique Bluetooth",
-              "description": "Connectez un périphérique audio Bluetooth sans fil pour profiter plus facilement du son.\nConsultez le manuel d'utilisation du périphérique audio Bluetooth pour obtenir plus de détails sur la connexion et l'utilisation du périphérique."
+              "description": "Connectez un périphérique audio Bluetooth sans fil pour profiter plus facilement du son.\nConsultez le manuel d'utilisation du périphérique audio Bluetooth pour obtenir plus de détails sur la connexion et l'utilisation du périphérique.",
+              "valeur_api": "bt_soundbar"
             },
             {
               "libelle": "Périphérique LG WOWCAST",
@@ -138,23 +136,28 @@
             },
             {
               "libelle": "Haut-parleurs WiSA",
-              "description": "Vous pouvez connecter le périphérique sans fil aux Haut-parleurs WiSA pour profiter d'un son de haute qualité."
+              "description": "Vous pouvez connecter le périphérique sans fil aux Haut-parleurs WiSA pour profiter d'un son de haute qualité.",
+              "valeur_api": "wisa_speaker"
             },
             {
               "libelle": "Périphérique mobile",
-              "description": "Si vous installez l'application LG ThinQ sur un appareil mobile et associez ce dernier à l'appareil, vous pouvez utiliser le premier comme haut-parleur pour le second."
+              "description": "Si vous installez l'application LG ThinQ sur un appareil mobile et associez ce dernier à l'appareil, vous pouvez utiliser le premier comme haut-parleur pour le second.",
+              "valeur_api": "mobile_phone"
             }
           ],
           "source": {
-            "guide": "6.3.4"
+            "guide": "6.3.4",
+            "firmware": "33.31.68"
           },
           "a_verifier": [
-            "controle",
-            "choix"
+            "controle"
           ],
           "api": {
             "acces": "aucun"
-          }
+          },
+          "notes": [
+            "[firmware] LG WOWCAST n'a pas de valeur soundOutput identifiée dans le firmware (géré à part) ; à vérifier."
+          ]
         },
         {
           "id": "son.sortie-son.haut-parleur-filaire",
@@ -167,11 +170,13 @@
           "choix": [
             {
               "libelle": "Périphérique de sortie optique",
-              "description": "Vous pouvez connecter un périphérique audio compatible Optique au port de sortie audio numérique optique du périphérique pour bénéficier d'un son de meilleure qualité."
+              "description": "Vous pouvez connecter un périphérique audio compatible Optique au port de sortie audio numérique optique du périphérique pour bénéficier d'un son de meilleure qualité.",
+              "valeur_api": "external_optical"
             },
             {
               "libelle": "Périphérique HDMI(ARC)",
-              "description": "Le son peut être diffusé par un périphérique audio externe connecté via un port HDMI (eARC/ARC)."
+              "description": "Le son peut être diffusé par un périphérique audio externe connecté via un port HDMI (eARC/ARC).",
+              "valeur_api": "external_arc"
             },
             {
               "libelle": "Périphérique de sortie audio/Casque avec fil",
@@ -179,15 +184,18 @@
             }
           ],
           "source": {
-            "guide": "6.3.5"
+            "guide": "6.3.5",
+            "firmware": "33.31.68"
           },
           "a_verifier": [
-            "controle",
-            "choix"
+            "controle"
           ],
           "api": {
             "acces": "aucun"
-          }
+          },
+          "notes": [
+            "[firmware] « Périphérique de sortie audio » = lineout, « Casque avec fil » = headphone (deux valeurs soundOutput distinctes)."
+          ]
         },
         {
           "id": "son.sortie-son.haut-parleurs-externes-et-tv",
@@ -204,7 +212,8 @@
           "choix": [
             {
               "libelle": "Périphérique Bluetooth + Haut-parleur TV",
-              "description": "Vous pouvez utiliser le haut-parleur interne du périphérique et le haut-parleur Bluetooth afin de reproduire le son simultanément, ou utiliser le son surround.\nVous pouvez connecter jusqu'à deux périphériques Bluetooth du même modèle."
+              "description": "Vous pouvez utiliser le haut-parleur interne du périphérique et le haut-parleur Bluetooth afin de reproduire le son simultanément, ou utiliser le son surround.\nVous pouvez connecter jusqu'à deux périphériques Bluetooth du même modèle.",
+              "valeur_api": "tv_speaker_bluetooth"
             },
             {
               "libelle": "Dolby Atmos FlexConnect",
@@ -216,23 +225,26 @@
             },
             {
               "libelle": "Périphérique de sortie optique + Haut-parleur TV",
-              "description": "Le son est diffusé simultanément par les haut-parleurs internes du périphérique et le périphérique audio connecté au port de sortie audio optique numérique."
+              "description": "Le son est diffusé simultanément par les haut-parleurs internes du périphérique et le périphérique audio connecté au port de sortie audio optique numérique.",
+              "valeur_api": "tv_external_speaker"
             },
             {
               "libelle": "Périphérique HDMI(ARC) + Haut-parleur du téléviseur",
-              "description": "Les haut-parleurs et la barre de son internes peuvent émettre simultanément du son afin de vous faire vivre une expérience audio plus riche (WOW Orchestra). Permet aussi la connexion d'une aide auditive via l'émetteur branché au port HDMI (eARC/ARC)."
+              "description": "Les haut-parleurs et la barre de son internes peuvent émettre simultanément du son afin de vous faire vivre une expérience audio plus riche (WOW Orchestra). Permet aussi la connexion d'une aide auditive via l'émetteur branché au port HDMI (eARC/ARC).",
+              "valeur_api": "tv_speaker_external_arc"
             },
             {
               "libelle": "Casque avec fil + Haut-parleur TV",
-              "description": "Le son est diffusé simultanément par les haut-parleurs internes et le Casque avec fil."
+              "description": "Le son est diffusé simultanément par les haut-parleurs internes et le Casque avec fil.",
+              "valeur_api": "tv_speaker_headphone"
             }
           ],
           "source": {
-            "guide": "6.3.6"
+            "guide": "6.3.6",
+            "firmware": "33.31.68"
           },
           "a_verifier": [
-            "controle",
-            "choix"
+            "controle"
           ],
           "api": {
             "acces": "aucun"
@@ -666,11 +678,9 @@
             "condition_texte": "Sortie son définie sur Périphérique de sortie optique ou Périphérique HDMI(ARC)."
           },
           "source": {
-            "guide": "6.3.21"
+            "guide": "6.3.21",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "choix"
-          ],
           "api": {
             "categorie": "sound",
             "cle": "soundOutputDigital",
@@ -705,14 +715,15 @@
           "description": "Rend les dialogues plus clairs dans la vidéo grâce à l'audio AC-4.Cette fonction est utile lorsque vous regardez du contenu et que vous n'entendez pas bien les dialogues.",
           "controle": "interrupteur",
           "source": {
-            "guide": "6.3.23"
+            "guide": "6.3.23",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "controle"
-          ],
           "api": {
             "acces": "aucun"
-          }
+          },
+          "notes": [
+            "[firmware] Clé interne ac4DialogueEnhancer (on/off), non accessible par l'API publique."
+          ]
         }
       ]
     }

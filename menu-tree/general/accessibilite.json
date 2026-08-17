@@ -40,12 +40,9 @@
           "description": "",
           "controle": "interrupteur",
           "source": {
-            "guide": "6.4.1"
+            "guide": "6.4.1",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "libelle",
-            "description"
-          ],
           "api": {
             "categorie": "option",
             "cle": "audioGuidance",
@@ -180,12 +177,9 @@
           "description": "",
           "controle": "interrupteur",
           "source": {
-            "guide": "6.4.3"
+            "guide": "6.4.3",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "libelle",
-            "description"
-          ],
           "api": {
             "acces": "aucun"
           }
@@ -345,12 +339,9 @@
           "description": "",
           "controle": "interrupteur",
           "source": {
-            "guide": "6.4.7"
+            "guide": "6.4.7",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "libelle",
-            "description"
-          ],
           "api": {
             "acces": "aucun"
           }

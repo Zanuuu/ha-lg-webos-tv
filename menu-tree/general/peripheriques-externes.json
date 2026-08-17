@@ -100,18 +100,18 @@
           "controle": "liste",
           "choix": [
             {
-              "libelle": "4K"
+              "libelle": "4K",
+              "valeur_api": "on"
             },
             {
-              "libelle": "Désactivé"
+              "libelle": "Désactivé",
+              "valeur_api": "off"
             }
           ],
           "source": {
-            "guide": "6.12.3"
+            "guide": "6.12.3",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "choix"
-          ],
           "api": {
             "categorie": "other",
             "cle": "uhdDeepColorHDMI<n>",
@@ -214,12 +214,9 @@
           ],
           "controle": "interrupteur",
           "source": {
-            "guide": "6.12.4"
+            "guide": "6.12.4",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "libelle",
-            "description"
-          ],
           "api": {
             "categorie": "network",
             "cle": "wolwowlOnOff",
@@ -240,12 +237,9 @@
           ],
           "controle": "interrupteur",
           "source": {
-            "guide": "6.12.4"
+            "guide": "6.12.4",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "libelle",
-            "description"
-          ],
           "api": {
             "categorie": "network",
             "cle": "bleAdvertisingOnOff",

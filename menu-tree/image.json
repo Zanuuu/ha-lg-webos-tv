@@ -17,7 +17,12 @@
         "Le guide désigne aussi cette entrée par « Mode Image » (6.2.9) ; libellé exact à confirmer sur photo.",
         "La liste des modes disponibles dépend du signal (SDR/HDR/Dolby Vision) et de l'entrée.",
         "Le guide indique « Sport/Football/Cricket » pour le mode Sport : le nom du sport peut varier selon le pays.",
-        "[API] Modes SDR ; en HDR/Dolby Vision l'API expose hdr*/dolbyHdr*. « Basique » et « Accueil cinéma » restent à rapprocher (probablement modes HDR)."
+        "[API] Modes SDR ; en HDR/Dolby Vision l'API expose hdr*/dolbyHdr*. « Basique » et « Accueil cinéma » restent à rapprocher (probablement modes HDR).",
+        "[firmware] Titre d'écran confirmé : « Mode Sélection » (Select Mode). L'entrée est désignée « Mode Image » (Picture Mode) dans les textes.",
+        "[firmware] Écart guide→firmware : le mode eco s'affiche « Éco », pas « Economie d'énergie automatique ».",
+        "[firmware] « Accueil cinéma » (hdrCinemaBright) et les variantes hdr*/dolbyHdr* n'apparaissent qu'en signal HDR/Dolby Vision.",
+        "[firmware] « Basique » (guide) est absent de la table pictureMode du firmware : probablement une variante d'autres modèles ; à confirmer.",
+        "[firmware] Le firmware connaît aussi photo (Photo) et hdrEffect (Effet HDR), non listés par le guide."
       ],
       "controle": "liste",
       "choix": [
@@ -37,7 +42,7 @@
           "valeur_api": "normal"
         },
         {
-          "libelle": "Economie d'énergie automatique",
+          "libelle": "Éco",
           "description": "Le mode Economie d'énergie automatique réduit la consommation d'énergie en contrôlant le niveau de rétroéclairage.",
           "valeur_api": "eco"
         },
@@ -47,7 +52,8 @@
         },
         {
           "libelle": "Accueil cinéma",
-          "description": "L’écran apparaît plus clair et lumineux que Cinéma."
+          "description": "L’écran apparaît plus clair et lumineux que Cinéma.",
+          "valeur_api": "hdrCinemaBright"
         },
         {
           "libelle": "Cinéma",
@@ -81,10 +87,10 @@
         }
       ],
       "source": {
-        "guide": "6.2.1"
+        "guide": "6.2.1",
+        "firmware": "33.31.68"
       },
       "a_verifier": [
-        "libelle",
         "choix"
       ],
       "api": {
@@ -334,15 +340,12 @@
                 "Luminosité"
               ],
               "libelle": "Contraste dynamique automatique",
-              "description": "Permet de corriger la différence entre les parties claires et sombres de l’écran pour un résultat optimal selon la luminosité de l’image.",
+              "description": "Optimisez les paramètres de contraste en fonction de la luminosité de l'image.",
               "controle": "liste",
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "dynamicContrast",
@@ -350,6 +353,24 @@
               },
               "notes": [
                 "[API] Valeurs API documentées : off/low/medium/high ; libellés affichés à relever sur photo."
+              ],
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Élevé",
+                  "valeur_api": "high"
+                }
               ]
             },
             {
@@ -360,7 +381,7 @@
                 "Luminosité"
               ],
               "libelle": "Mappage des tons dynamiques",
-              "description": "Réglez sur Activé.Paramètres adéquats de contraste en fonction de la luminosité des images du contenu HDR.\nRéglez sur Désactivé.Pour affiner la richesse du contenu HDR, définissez Professionnel sur Activé.",
+              "description": "Ajustez le contraste en temps réel lorsque vous regardez une vidéo HDR.",
               "controle": "liste",
               "choix": [
                 {
@@ -376,20 +397,17 @@
                 "condition_texte": "Contenu HDR."
               },
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix",
-                "visibilite"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "hdrDynamicToneMapping",
                 "acces": "lecture_ecriture"
               },
               "notes": [
-                "[API] L'API accepte aussi HGIG."
+                "[API] L'API accepte aussi HGIG.",
+                "[firmware] L'API accepte aussi la valeur HGIG (exposée dans l'Optimiseur de jeu)."
               ]
             },
             {
@@ -406,16 +424,32 @@
                 "condition_texte": "Contenu HDR."
               },
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
               "a_verifier": [
-                "controle",
-                "choix",
                 "visibilite"
               ],
               "api": {
                 "acces": "aucun"
-              }
+              },
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Détails",
+                  "valeur_api": "detail"
+                },
+                {
+                  "libelle": "Luminosité",
+                  "valeur_api": "highlight"
+                }
+              ],
+              "notes": [
+                "[firmware] Clé interne expressionEnhancer, non accessible par l'API publique."
+              ]
             },
             {
               "id": "image.parametres-avances.luminosite.luminosite-maximale",
@@ -425,22 +459,34 @@
                 "Luminosité"
               ],
               "libelle": "Luminosité maximale",
-              "description": "Permet de régler la luminosité maximale de l'écran.",
+              "description": "Ajustez la luminosité pour obtenir une luminosité maximale de l'écran.",
               "controle": "liste",
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "peakBrightness",
                 "acces": "lecture_ecriture"
               },
               "notes": [
-                "[API] Valeurs API documentées : off/high."
+                "[API] Valeurs API documentées : off/high.",
+                "[firmware] Le descripteur du téléviseur n'expose que off/high ; le firmware connaît aussi low/medium (Faible/Moyen) sur d'autres modèles.",
+                "[firmware] Le titre est « Luminosité dynamique » (Dynamic Brightness) sur une variante de modèles, « Luminosité maximale » sinon : à trancher sur photo."
+              ],
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Activé",
+                  "valeur_api": "high"
+                }
+              ],
+              "a_verifier": [
+                "libelle"
               ]
             },
             {
@@ -454,20 +500,37 @@
               "description": "Permet de régler la luminosité moyenne de l’image.",
               "notes": [
                 "Le paramètre BT.1886 exprime le dégradé dans ITU-R BT.1886, une norme internationale.",
-                "[API] Valeurs API documentées : low/medium/high1/high2/mediumHavingLevel ; valeur actuelle relevée : high2 (2.2 probable). Libellés affichés à relever sur photo."
+                "[API] Valeurs API documentées : low/medium/high1/high2/mediumHavingLevel ; valeur actuelle relevée : high2 (2.2 probable). Libellés affichés à relever sur photo.",
+                "[firmware] Table gamma_adv du firmware. Le téléviseur documente aussi mediumHavingLevel ; la note BT.1886 du guide correspond probablement à un libellé contextuel des modes expert : à confirmer sur photo."
               ],
               "controle": "liste",
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "gamma",
                 "acces": "lecture_ecriture"
-              }
+              },
+              "choix": [
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Élevé1",
+                  "valeur_api": "high1"
+                },
+                {
+                  "libelle": "Élevé2",
+                  "valeur_api": "high2"
+                }
+              ]
             },
             {
               "id": "image.parametres-avances.luminosite.lumiere-ambiante-filmmaker",
@@ -524,24 +587,36 @@
               "description": "Ajuste l'obscurité de l'écran afin d'afficher un noir parfait.Sélectionnez Plage vidéo pour correspondre à la plage de couleurs du périphérique d'entrée externe.",
               "notes": [
                 "Vous pouvez utiliser cette fonction lorsque vous regardez du contenu via une entrée externe.",
-                "[API] L'API renvoie un objet par type de signal (auto/low/high)."
+                "[API] L'API renvoie un objet par type de signal (auto/low/high).",
+                "[firmware] Le firmware utilise aussi les alias limited/full pour certains contextes."
               ],
               "controle": "liste",
               "visibilite": {
                 "condition_texte": "Contenu via une entrée externe."
               },
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "blackLevel",
                 "acces": "lecture_ecriture"
-              }
+              },
+              "choix": [
+                {
+                  "libelle": "Auto",
+                  "valeur_api": "auto"
+                },
+                {
+                  "libelle": "Limité(e)",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Plein écran",
+                  "valeur_api": "high"
+                }
+              ]
             },
             {
               "id": "image.parametres-avances.luminosite.led-local-dimming",
@@ -559,27 +634,27 @@
               "choix": [
                 {
                   "libelle": "Désactivé",
-                  "description": "Permet de désactiver la fonction LED -Local Dimming."
+                  "valeur_api": "off"
                 },
                 {
                   "libelle": "Faible",
-                  "description": "Permet de modifier le taux de contraste."
+                  "valeur_api": "low"
                 },
                 {
                   "libelle": "Moyen",
-                  "description": "Permet de modifier le taux de contraste."
+                  "valeur_api": "medium"
                 },
                 {
                   "libelle": "Élevé",
-                  "description": "Permet de modifier le taux de contraste."
+                  "valeur_api": "high"
                 }
               ],
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
               "a_verifier": [
-                "presence",
-                "choix"
+                "presence"
               ],
               "api": {
                 "acces": "aucun"
@@ -600,11 +675,9 @@
               ],
               "controle": "interrupteur",
               "source": {
-                "guide": "6.2.4"
+                "guide": "6.2.4",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "motionEyeCare",
@@ -684,36 +757,34 @@
                 "Couleur"
               ],
               "libelle": "Gamme de couleurs",
-              "description": "Sélectionne la plage de couleurs à afficher.",
+              "description": "Développez la plage de couleurs pouvant être affichée.",
               "controle": "liste",
               "choix": [
                 {
-                  "libelle": "Originale",
-                  "description": "Affiche des couleurs plus vives et plus riches."
+                  "libelle": "Détection auto",
+                  "valeur_api": "auto"
                 },
                 {
-                  "libelle": "Détection auto",
-                  "description": "La Gamme de couleurs est automatiquement définie pour correspondre au signal."
+                  "libelle": "Originale",
+                  "valeur_api": "native"
                 },
                 {
                   "libelle": "Dynamique",
-                  "description": "La Gamme de couleurs est élargie pour correspondre à la scène."
+                  "valeur_api": "dynamic"
                 },
                 {
-                  "libelle": "Adobe RGB",
-                  "description": "Définit la Gamme de couleurs sur les standards Adobe RGB."
+                  "libelle": "Étendu",
+                  "valeur_api": "extended"
                 },
                 {
-                  "libelle": "Cinéma",
-                  "description": "Permet de définir la Gamme de couleurs sur les standards DCI-P3."
+                  "libelle": "Large",
+                  "valeur_api": "wide"
                 }
               ],
               "source": {
-                "guide": "6.2.5"
+                "guide": "6.2.5",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "colorGamut",
@@ -796,11 +867,9 @@
                     }
                   ],
                   "source": {
-                    "guide": "6.2.5"
+                    "guide": "6.2.5",
+                    "firmware": "33.31.68"
                   },
-                  "a_verifier": [
-                    "choix"
-                  ],
                   "api": {
                     "categorie": "picture",
                     "cle": "colorManagementColorSystem",
@@ -865,7 +934,8 @@
                   "description": "Vous pouvez définir la couleur pour rendre l'écran plus froid ou plus chaud.",
                   "controle": "curseur",
                   "source": {
-                    "guide": "6.2.5"
+                    "guide": "6.2.5",
+                    "firmware": "33.31.68"
                   },
                   "a_verifier": [
                     "controle"
@@ -879,7 +949,10 @@
                     "min": -50,
                     "max": 50,
                     "pas": 1
-                  }
+                  },
+                  "notes": [
+                    "[firmware] Hors modes expert, le firmware propose une liste Froid/Moyen/Chaud1-3 (cool/medium/warm1-3) ; en mode expert c'est un curseur -50..+50 (valeur relevée : -40)."
+                  ]
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.methode",
@@ -907,13 +980,17 @@
                     }
                   ],
                   "source": {
-                    "guide": "6.2.5"
+                    "guide": "6.2.5",
+                    "firmware": "33.31.68"
                   },
                   "api": {
                     "categorie": "picture",
                     "cle": "whiteBalanceMethod",
                     "acces": "lecture_ecriture"
-                  }
+                  },
+                  "notes": [
+                    "[firmware] Le firmware connaît aussi « IRE à 20 points » (valeur 20) sur certains modèles."
+                  ]
                 },
                 {
                   "id": "image.parametres-avances.couleur.balance-blancs.point",
@@ -1121,12 +1198,9 @@
               "description": "Permet de régler la résolution pour éclaircir les images peu lumineuses et floues.",
               "controle": "liste",
               "source": {
-                "guide": "6.2.6"
+                "guide": "6.2.6",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "superResolution",
@@ -1134,6 +1208,24 @@
               },
               "notes": [
                 "[API] Valeurs API documentées : off/low/medium/high."
+              ],
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Élevé",
+                  "valeur_api": "high"
+                }
               ]
             },
             {
@@ -1147,12 +1239,9 @@
               "description": "Permet de supprimer les petits points parasites pour une image plus pure.",
               "controle": "liste",
               "source": {
-                "guide": "6.2.6"
+                "guide": "6.2.6",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "noiseReduction",
@@ -1160,6 +1249,28 @@
               },
               "notes": [
                 "[API] Valeurs API documentées : off/low/medium/high/auto."
+              ],
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Élevé",
+                  "valeur_api": "high"
+                },
+                {
+                  "libelle": "Auto",
+                  "valeur_api": "auto"
+                }
               ]
             },
             {
@@ -1173,12 +1284,9 @@
               "description": "Permet de réduire le bruit produit lors de la création de signaux vidéo numériques.",
               "controle": "liste",
               "source": {
-                "guide": "6.2.6"
+                "guide": "6.2.6",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "mpegNoiseReduction",
@@ -1186,6 +1294,28 @@
               },
               "notes": [
                 "[API] Valeurs API documentées : off/low/medium/high/auto."
+              ],
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Élevé",
+                  "valeur_api": "high"
+                },
+                {
+                  "libelle": "Auto",
+                  "valeur_api": "auto"
+                }
               ]
             },
             {
@@ -1199,12 +1329,9 @@
               "description": "Elle réduit le phénomène qui fait que le contour de l'image est brut (en dents de scie) et affiche un écran plus lisse.",
               "controle": "liste",
               "source": {
-                "guide": "6.2.6"
+                "guide": "6.2.6",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle",
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "smoothGradation",
@@ -1212,6 +1339,24 @@
               },
               "notes": [
                 "[API] Valeurs API documentées : off/low/medium/high."
+              ],
+              "choix": [
+                {
+                  "libelle": "Désactivé",
+                  "valeur_api": "off"
+                },
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "low"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Élevé",
+                  "valeur_api": "high"
+                }
               ]
             },
             {
@@ -1225,11 +1370,9 @@
               "description": "Optimisez l'affichage pour les films.",
               "controle": "interrupteur",
               "source": {
-                "guide": "6.2.6"
+                "guide": "6.2.6",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "controle"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "realCinema",
@@ -1244,46 +1387,46 @@
                 "Clarté"
               ],
               "libelle": "TruMotion",
-              "description": "Qualité adéquate des images en succession rapide.",
+              "description": "Optimisez la qualité de l'image pour ne rien rater des scènes d'action.",
               "controle": "liste",
               "choix": [
                 {
                   "libelle": "Désactivé",
-                  "description": "Désactive TruMotion.",
                   "valeur_api": "off"
                 },
                 {
                   "libelle": "Mouvement cinématographique",
-                  "description": "Ajustez les saccades du mouvement sur l'écran pour que vous vous sentiez comme dans une salle de cinéma.",
                   "valeur_api": "cinemaClear"
                 },
                 {
                   "libelle": "Naturel",
-                  "description": "Définissez des images avec beaucoup de mouvements pour obtenir un aspect naturel et clair.",
                   "valeur_api": "natural"
                 },
                 {
                   "libelle": "Mouvement fluide",
-                  "description": "Adoucit les images en succession rapide.",
                   "valeur_api": "smooth"
                 },
                 {
+                  "libelle": "Éclatant",
+                  "valeur_api": "clear"
+                },
+                {
                   "libelle": "Sélection de l'utilisateur",
-                  "description": "Permet de régler manuellement l'option TruMotion.",
                   "valeur_api": "user"
                 }
               ],
               "source": {
-                "guide": "6.2.6"
+                "guide": "6.2.6",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "choix"
-              ],
               "api": {
                 "categorie": "picture",
                 "cle": "truMotionMode",
                 "acces": "lecture_ecriture"
-              }
+              },
+              "notes": [
+                "[firmware] « Éclatant » (clear) n'existe que sur certains modèles/entrées ; visibilité à confirmer."
+              ]
             }
           ]
         },

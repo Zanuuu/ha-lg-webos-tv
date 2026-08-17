@@ -22,27 +22,35 @@
       "choix": [
         {
           "libelle": "Désactivé",
-          "description": "Désactive l'option Paramètres de l'image de maintenance."
+          "description": "Désactive l'option Paramètres de l'image de maintenance.",
+          "valeur_api": "off"
         },
         {
           "libelle": "Mode Confort",
-          "description": "L’image s’affiche avec un niveau de contraste, de luminosité et de netteté standard."
+          "description": "L’image s’affiche avec un niveau de contraste, de luminosité et de netteté standard.",
+          "valeur_api": "comfortCare"
         },
         {
           "libelle": "Mode Salle de spectacle",
-          "description": "Image adéquate pour les films."
+          "description": "Image adéquate pour les films.",
+          "valeur_api": "cinemaCare"
         },
         {
           "libelle": "Mode Enfants",
-          "description": "Cette option ajuste la lumière bleue pour adapter l'affichage de l'écran aux enfants."
+          "description": "Cette option ajuste la lumière bleue pour adapter l'affichage de l'écran aux enfants.",
+          "valeur_api": "kidsCare"
         }
       ],
       "source": {
-        "guide": "6.8"
+        "guide": "6.8",
+        "firmware": "33.31.68"
       },
       "api": {
         "acces": "aucun"
-      }
+      },
+      "notes": [
+        "[firmware] Clé interne oledCareMode, non accessible par l'API publique."
+      ]
     },
     {
       "id": "general.maintenance-oled.maintenance-ecran-oled",

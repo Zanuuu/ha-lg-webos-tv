@@ -461,12 +461,9 @@
           "description": "",
           "controle": "interrupteur",
           "source": {
-            "guide": "6.13.4"
+            "guide": "6.13.4",
+            "firmware": "33.31.68"
           },
-          "a_verifier": [
-            "libelle",
-            "description"
-          ],
           "api": {
             "categorie": "lock",
             "cle": "parentalControl",
@@ -771,14 +768,41 @@
               "description": "Vous pouvez définir l'heure à laquelle l'économiseur d'écran doit être activé.",
               "controle": "liste",
               "source": {
-                "guide": "6.13.7"
+                "guide": "6.13.7",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "choix"
-              ],
               "api": {
                 "acces": "aucun"
-              }
+              },
+              "choix": [
+                {
+                  "libelle": "5 min",
+                  "valeur_api": "5"
+                },
+                {
+                  "libelle": "10 min",
+                  "valeur_api": "10"
+                },
+                {
+                  "libelle": "15 min",
+                  "valeur_api": "15"
+                },
+                {
+                  "libelle": "30 min",
+                  "valeur_api": "30"
+                },
+                {
+                  "libelle": "1 h",
+                  "valeur_api": "60"
+                },
+                {
+                  "libelle": "2 h",
+                  "valeur_api": "120"
+                }
+              ],
+              "notes": [
+                "[firmware] Table screenOffTime du firmware ; clé non accessible par l'API publique."
+              ]
             }
           ]
         },
@@ -828,14 +852,37 @@
               "description": "Permet de régler la vitesse du pointeur.",
               "controle": "liste",
               "source": {
-                "guide": "6.13.9"
+                "guide": "6.13.9",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "choix"
-              ],
               "api": {
                 "acces": "aucun"
-              }
+              },
+              "choix": [
+                {
+                  "libelle": "Très lent",
+                  "valeur_api": "verySlow"
+                },
+                {
+                  "libelle": "Faible",
+                  "valeur_api": "slow"
+                },
+                {
+                  "libelle": "Moyen",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Rapide",
+                  "valeur_api": "fast"
+                },
+                {
+                  "libelle": "Très rapide",
+                  "valeur_api": "veryFast"
+                }
+              ],
+              "notes": [
+                "[firmware] Clé interne (catégorie non publique) ; valeurs de la table slowToFast du firmware."
+              ]
             },
             {
               "id": "general.systeme.parametres-supplementaires.options-de-pointeur.taille-du-pointeur",
@@ -849,14 +896,26 @@
               "description": "Sélectionne la taille du pointeur.",
               "controle": "liste",
               "source": {
-                "guide": "6.13.9"
+                "guide": "6.13.9",
+                "firmware": "33.31.68"
               },
-              "a_verifier": [
-                "choix"
-              ],
               "api": {
                 "acces": "aucun"
-              }
+              },
+              "choix": [
+                {
+                  "libelle": "Petite taille",
+                  "valeur_api": "small"
+                },
+                {
+                  "libelle": "Taille moyenne",
+                  "valeur_api": "medium"
+                },
+                {
+                  "libelle": "Grande taille",
+                  "valeur_api": "large"
+                }
+              ]
             }
           ]
         },

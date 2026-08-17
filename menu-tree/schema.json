@@ -87,7 +87,8 @@
           "additionalProperties": false,
           "properties": {
             "guide": { "type": "string", "description": "Numéro de sous-section du guide (ex. '6.2.4')." },
-            "photo": { "type": "string", "description": "Référence de la photo de vérification (passe 3)." }
+            "photo": { "type": "string", "description": "Référence de la photo de vérification (passe 3)." },
+            "firmware": { "type": "string", "description": "Vérifié contre l'app Réglages du firmware indiqué (ex. '33.31.68')." }
           }
         },
         "a_verifier": {
