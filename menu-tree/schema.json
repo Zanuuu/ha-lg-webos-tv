@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "menu-tree/schema.json",
+  "title": "Entrée du menu Réglages LG G5 (webOS 25)",
+  "description": "Chaque fichier de section (image.json, son.json…) contient un objet racine de type 'section' dont les enfants suivent ce schéma.",
+  "$defs": {
+    "entree": {
+      "type": "object",
+      "required": ["id", "libelle", "controle"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)*$",
+          "description": "Identifiant hiérarchique unique en kebab-case, segments séparés par des points."
+        },
+        "chemin": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Chemin d'affichage dans le menu, libellés français exacts, sans l'entrée elle-même."
+        },
+        "libelle": { "type": "string", "description": "Libellé français exact." },
+        "description": { "type": "string", "description": "Description française exacte (guide ou écran). Vide si non fournie." },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Remarques du guide (conditions, limitations), texte exact."
+        },
+        "controle": {
+          "enum": ["sous-menu", "curseur", "liste", "interrupteur", "action", "texte"]
+        },
+        "choix": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["libelle"],
+            "additionalProperties": false,
+            "properties": {
+              "libelle": { "type": "string" },
+              "valeur_api": {},
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "bornes": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "pas": { "type": "number" }
+          }
+        },
+        "api": {
+          "type": "object",
+          "required": ["acces"],
+          "additionalProperties": false,
+          "properties": {
+            "categorie": { "type": "string" },
+            "cle": { "type": "string" },
+            "acces": { "enum": ["lecture_ecriture", "lecture_seule", "aucun"] }
+          },
+          "description": "Correspondance API. Absente = pas encore rapprochée. acces='aucun' = « À régler sur la TV »."
+        },
+        "visibilite": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "modes_image": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Visible/actif seulement dans ces modes d'image (valeurs API)."
+            },
+            "condition_texte": {
+              "type": "string",
+              "description": "Condition en clair quand elle n'est pas encore structurable."
+            }
+          }
+        },
+        "enfants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entree" }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "guide": { "type": "string", "description": "Numéro de sous-section du guide (ex. '6.2.4')." },
+            "photo": { "type": "string", "description": "Référence de la photo de vérification (passe 3)." }
+          }
+        },
+        "a_verifier": {
+          "type": "array",
+          "items": {
+            "enum": ["libelle", "description", "controle", "choix", "bornes", "visibilite", "position", "presence", "valeur_api"]
+          },
+          "description": "Points en attente de confirmation (photos ou tests TV)."
+        }
+      }
+    }
+  },
+  "type": "object",
+  "required": ["id", "libelle", "controle", "enfants"],
+  "$ref": "#/$defs/entree"
+}
