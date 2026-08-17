@@ -1,5 +1,5 @@
 {
-  "commentaire": "Ordre d'affichage des sections du menu « Tous les paramètres ». L'ordre interne de Général suit le guide (chapitre 6) et reste à confirmer sur photos (passe 3).",
+  "commentaire": "Ordre d'affichage des sections du menu « Tous les paramètres ». Ordre (racine et branches de Général) validé visuellement sur le téléviseur par l'utilisateur le 17/08/2026.",
   "sections": [
     { "fichier": "image.json", "id": "image" },
     { "fichier": "son.json", "id": "son" },

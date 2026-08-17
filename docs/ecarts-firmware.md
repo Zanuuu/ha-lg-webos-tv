@@ -32,6 +32,17 @@ Généré par `backend/scripts/croiser_firmware.py`.
 - `image.parametres-avances.clarte.trumotion` : liste de choix posée depuis le firmware (6 choix).
 - `son.mode-selection` : liste de choix posée depuis le firmware (8 choix).
 
+## Vérification visuelle sur le téléviseur (utilisateur, 17/08/2026)
+
+- Pas de mode d'image « Basique » ; « Standard » présent.
+- Titre confirmé : « Luminosité maximale » (pas « Luminosité dynamique »).
+- Gamma : libellés numériques (« 2.2 », « BT.1886 » constatés) — correspondance API à établir en phase 3.
+- Température de couleur : curseur (mode expert).
+- Ordre confirmé : Image, Son, Général, Assistance ; sous Général : Accessibilité, Toujours prêt, Service d'AI, Optimiseur de jeu, Maintenance OLED, Précautions d'utilisation, Chaînes, Réseau, Périphériques externes, Système, Économie d'énergie.
+
+- `image.mode-selection` : choix supprimé(s) : Basique.
+- `image.parametres-avances.luminosite.gamma` : liste de choix posée depuis le firmware (2 choix).
+
 ## Constats d'API
 
 - Les clés supplémentaires vues dans l'app (dimensionInfo.*, expressionEnhancer, oledCareMode, energySavingAutoMin, ac4DialogueEnhancer, pointerSpeed/Size, screenOffTime…) sont toutes refusées par l'API publique `getSystemSettings` (testé le 17/08/2026) : l'app passe par le bus Luna privilégié. L'inventaire de la phase 1 reste la référence de ce qui est pilotable.

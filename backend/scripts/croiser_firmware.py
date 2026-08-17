@@ -342,6 +342,37 @@ C = {
 }
 
 
+# Verdicts de la vérification visuelle sur le téléviseur (utilisateur,
+# 17/08/2026) : appliqués avec source.photo au lieu de source.firmware.
+V = {
+    "image.mode-selection": {
+        "supprimer_choix": ["Basique"],
+        "resoudre": ["choix"],
+        "notes": ["Vérifié sur TV : pas de mode « Basique », le mode « Standard » existe."],
+    },
+    "image.parametres-avances.luminosite.luminosite-maximale": {
+        "resoudre": ["libelle"],
+        "notes": ["Vérifié sur TV : le titre est bien « Luminosité maximale »."],
+    },
+    "image.parametres-avances.luminosite.gamma": {
+        "choix": [
+            {"libelle": "2.2"},
+            {"libelle": "BT.1886"},
+        ],
+        "a_verifier": ["choix"],
+        "notes": [
+            "Vérifié sur TV : libellés numériques (« 2.2 » et « BT.1886 » constatés), pas Faible/Moyen/Élevé1/Élevé2 (table gamma_adv). Liste complète (1.9 ? 2.4 ?) et correspondance avec les valeurs API low/medium/high1/high2 à établir en phase 3 par écriture puis lecture du libellé affiché.",
+        ],
+    },
+    "image.parametres-avances.couleur.balance-blancs.temperature-couleur": {
+        "resoudre": ["controle"],
+        "notes": ["Vérifié sur TV : curseur (mode expert actif)."],
+    },
+}
+
+VERIF_VISUELLE = "validation visuelle utilisateur 2026-08-17"
+
+
 def iter_entrees(entree):
     yield entree
     for enfant in entree.get("enfants", []):
@@ -350,6 +381,12 @@ def iter_entrees(entree):
 
 def appliquer(entree: dict, corr: dict, rapport: list[str]) -> None:
     eid = entree["id"]
+    if "supprimer_choix" in corr:
+        avant = len(entree.get("choix", []))
+        entree["choix"] = [c for c in entree.get("choix", [])
+                           if c["libelle"] not in corr["supprimer_choix"]]
+        if len(entree["choix"]) != avant:
+            rapport.append(f"- `{eid}` : choix supprimé(s) : {', '.join(corr['supprimer_choix'])}.")
     if "description" in corr:
         if entree.get("description") != corr["description"]:
             rapport.append(f"- `{eid}` : description remplacée par le texte de l'écran Réglages.")
@@ -384,11 +421,11 @@ def appliquer(entree: dict, corr: dict, rapport: list[str]) -> None:
         entree.setdefault("a_verifier", [])
         if point not in entree["a_verifier"]:
             entree["a_verifier"].append(point)
-    entree.setdefault("source", {})["firmware"] = FIRMWARE
 
 
 def main() -> None:
     rapport: list[str] = []
+    rapport_visuel: list[str] = []
     ecarts: list[str] = []
     appliques = set()
 
@@ -401,14 +438,21 @@ def main() -> None:
             corr = C.get(entree.get("id", ""))
             if corr:
                 appliquer(entree, corr, rapport)
+                entree.setdefault("source", {})["firmware"] = FIRMWARE
                 appliques.add(entree["id"])
                 if "ecart" in corr:
                     ecarts.append(f"- `{entree['id']}` : {corr['ecart']}")
                 modifie = True
+            verif = V.get(entree.get("id", ""))
+            if verif:
+                appliquer(entree, verif, rapport_visuel)
+                entree.setdefault("source", {})["photo"] = VERIF_VISUELLE
+                appliques.add(entree["id"])
+                modifie = True
         if modifie:
             path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
-    manquants = sorted(set(C) - appliques)
+    manquants = sorted((set(C) | set(V)) - appliques)
     for m in manquants:
         rapport.append(f"- AVERTISSEMENT : correction sans entrée : `{m}`")
 
@@ -427,6 +471,16 @@ def main() -> None:
         "## Corrections appliquées",
         "",
         *rapport,
+        "",
+        "## Vérification visuelle sur le téléviseur (utilisateur, 17/08/2026)",
+        "",
+        "- Pas de mode d'image « Basique » ; « Standard » présent.",
+        "- Titre confirmé : « Luminosité maximale » (pas « Luminosité dynamique »).",
+        "- Gamma : libellés numériques (« 2.2 », « BT.1886 » constatés) — correspondance API à établir en phase 3.",
+        "- Température de couleur : curseur (mode expert).",
+        "- Ordre confirmé : Image, Son, Général, Assistance ; sous Général : Accessibilité, Toujours prêt, Service d'AI, Optimiseur de jeu, Maintenance OLED, Précautions d'utilisation, Chaînes, Réseau, Périphériques externes, Système, Économie d'énergie.",
+        "",
+        *rapport_visuel,
         "",
         "## Constats d'API",
         "",

@@ -22,7 +22,8 @@
         "[firmware] Écart guide→firmware : le mode eco s'affiche « Éco », pas « Economie d'énergie automatique ».",
         "[firmware] « Accueil cinéma » (hdrCinemaBright) et les variantes hdr*/dolbyHdr* n'apparaissent qu'en signal HDR/Dolby Vision.",
         "[firmware] « Basique » (guide) est absent de la table pictureMode du firmware : probablement une variante d'autres modèles ; à confirmer.",
-        "[firmware] Le firmware connaît aussi photo (Photo) et hdrEffect (Effet HDR), non listés par le guide."
+        "[firmware] Le firmware connaît aussi photo (Photo) et hdrEffect (Effet HDR), non listés par le guide.",
+        "[firmware] Vérifié sur TV : pas de mode « Basique », le mode « Standard » existe."
       ],
       "controle": "liste",
       "choix": [
@@ -45,10 +46,6 @@
           "libelle": "Éco",
           "description": "Le mode Economie d'énergie automatique réduit la consommation d'énergie en contrôlant le niveau de rétroéclairage.",
           "valeur_api": "eco"
-        },
-        {
-          "libelle": "Basique",
-          "description": "L'image s'affiche selon le réglage de base du fabricant qui est optimisé pour un visionnement normal."
         },
         {
           "libelle": "Accueil cinéma",
@@ -88,11 +85,9 @@
       ],
       "source": {
         "guide": "6.2.1",
-        "firmware": "33.31.68"
+        "firmware": "33.31.68",
+        "photo": "validation visuelle utilisateur 2026-08-17"
       },
-      "a_verifier": [
-        "choix"
-      ],
       "api": {
         "categorie": "picture",
         "cle": "pictureMode",
@@ -463,7 +458,8 @@
               "controle": "liste",
               "source": {
                 "guide": "6.2.4",
-                "firmware": "33.31.68"
+                "firmware": "33.31.68",
+                "photo": "validation visuelle utilisateur 2026-08-17"
               },
               "api": {
                 "categorie": "picture",
@@ -473,7 +469,8 @@
               "notes": [
                 "[API] Valeurs API documentées : off/high.",
                 "[firmware] Le descripteur du téléviseur n'expose que off/high ; le firmware connaît aussi low/medium (Faible/Moyen) sur d'autres modèles.",
-                "[firmware] Le titre est « Luminosité dynamique » (Dynamic Brightness) sur une variante de modèles, « Luminosité maximale » sinon : à trancher sur photo."
+                "[firmware] Le titre est « Luminosité dynamique » (Dynamic Brightness) sur une variante de modèles, « Luminosité maximale » sinon : à trancher sur photo.",
+                "[firmware] Vérifié sur TV : le titre est bien « Luminosité maximale »."
               ],
               "choix": [
                 {
@@ -484,9 +481,6 @@
                   "libelle": "Activé",
                   "valeur_api": "high"
                 }
-              ],
-              "a_verifier": [
-                "libelle"
               ]
             },
             {
@@ -501,12 +495,14 @@
               "notes": [
                 "Le paramètre BT.1886 exprime le dégradé dans ITU-R BT.1886, une norme internationale.",
                 "[API] Valeurs API documentées : low/medium/high1/high2/mediumHavingLevel ; valeur actuelle relevée : high2 (2.2 probable). Libellés affichés à relever sur photo.",
-                "[firmware] Table gamma_adv du firmware. Le téléviseur documente aussi mediumHavingLevel ; la note BT.1886 du guide correspond probablement à un libellé contextuel des modes expert : à confirmer sur photo."
+                "[firmware] Table gamma_adv du firmware. Le téléviseur documente aussi mediumHavingLevel ; la note BT.1886 du guide correspond probablement à un libellé contextuel des modes expert : à confirmer sur photo.",
+                "[firmware] Vérifié sur TV : libellés numériques (« 2.2 » et « BT.1886 » constatés), pas Faible/Moyen/Élevé1/Élevé2 (table gamma_adv). Liste complète (1.9 ? 2.4 ?) et correspondance avec les valeurs API low/medium/high1/high2 à établir en phase 3 par écriture puis lecture du libellé affiché."
               ],
               "controle": "liste",
               "source": {
                 "guide": "6.2.4",
-                "firmware": "33.31.68"
+                "firmware": "33.31.68",
+                "photo": "validation visuelle utilisateur 2026-08-17"
               },
               "api": {
                 "categorie": "picture",
@@ -515,21 +511,14 @@
               },
               "choix": [
                 {
-                  "libelle": "Faible",
-                  "valeur_api": "low"
+                  "libelle": "2.2"
                 },
                 {
-                  "libelle": "Moyen",
-                  "valeur_api": "medium"
-                },
-                {
-                  "libelle": "Élevé1",
-                  "valeur_api": "high1"
-                },
-                {
-                  "libelle": "Élevé2",
-                  "valeur_api": "high2"
+                  "libelle": "BT.1886"
                 }
+              ],
+              "a_verifier": [
+                "choix"
               ]
             },
             {
@@ -935,11 +924,9 @@
                   "controle": "curseur",
                   "source": {
                     "guide": "6.2.5",
-                    "firmware": "33.31.68"
+                    "firmware": "33.31.68",
+                    "photo": "validation visuelle utilisateur 2026-08-17"
                   },
-                  "a_verifier": [
-                    "controle"
-                  ],
                   "api": {
                     "categorie": "picture",
                     "cle": "colorTemperature",
@@ -951,7 +938,8 @@
                     "pas": 1
                   },
                   "notes": [
-                    "[firmware] Hors modes expert, le firmware propose une liste Froid/Moyen/Chaud1-3 (cool/medium/warm1-3) ; en mode expert c'est un curseur -50..+50 (valeur relevée : -40)."
+                    "[firmware] Hors modes expert, le firmware propose une liste Froid/Moyen/Chaud1-3 (cool/medium/warm1-3) ; en mode expert c'est un curseur -50..+50 (valeur relevée : -40).",
+                    "[firmware] Vérifié sur TV : curseur (mode expert actif)."
                   ]
                 },
                 {
