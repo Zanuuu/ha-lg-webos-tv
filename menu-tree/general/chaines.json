@@ -1,0 +1,194 @@
+{
+  "id": "general.chaines",
+  "chemin": ["Général"],
+  "libelle": "Chaînes",
+  "controle": "sous-menu",
+  "source": { "guide": "6.10" },
+  "enfants": [
+    {
+      "id": "general.chaines.reglage-des-chaines",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "Réglage des chaînes et paramètres",
+      "notes": [
+        "Le guide utilise tantôt « Réglage des chaînes », tantôt « Réglage des chaînes et paramètres » ; intitulé exact à confirmer sur photo."
+      ],
+      "controle": "sous-menu",
+      "source": { "guide": "6.10.1" },
+      "a_verifier": ["libelle"],
+      "enfants": [
+        {
+          "id": "general.chaines.reglage-des-chaines.reglage-automatique",
+          "chemin": ["Général", "Chaînes", "Réglage des chaînes et paramètres"],
+          "libelle": "Réglage automatique",
+          "description": "Permet de rechercher automatiquement les programmes.",
+          "notes": [
+            "Sélectionnez le pays dans lequel l'appareil est utilisé. Les paramètres de chaîne varient en fonction du pays sélectionné.",
+            "Le Réglage automatique recherche uniquement les programmes actifs.",
+            "Si la fonction Verrouillages de chaîne est activée, une fenêtre contextuelle s'affiche et vous demande de saisir un mot de passe.",
+            "L'assistant comporte des paramètres détaillés selon la source : câble (Fréquence, Débit de symboles, Modulation, ID réseau, Fréquence de début/fin) et satellite (Satellite, Fréquence LNB, Transponder, 22kHz Tone, Alimentation LNB, DiSEqC, Unicable, Type de moteur, Sens de Marche, Mode Marche, Tester Transponder, Définir la limite, Accéder à 0). Ce sont des étapes d'assistant, pas des entrées du menu."
+          ],
+          "controle": "action",
+          "source": { "guide": "6.10.1" }
+        },
+        {
+          "id": "general.chaines.reglage-des-chaines.reglage-manuel",
+          "chemin": ["Général", "Chaînes", "Réglage des chaînes et paramètres"],
+          "libelle": "Réglage manuel",
+          "description": "Cette fonction permet de rechercher et d'enregistrer manuellement des chaînes.\nPour les émissions numériques, il est possible de vérifier la force et la qualité du signal.",
+          "controle": "action",
+          "source": { "guide": "6.10.2" }
+        },
+        {
+          "id": "general.chaines.reglage-des-chaines.modification-transponder",
+          "chemin": ["Général", "Chaînes", "Réglage des chaînes et paramètres"],
+          "libelle": "Modification Transponder",
+          "description": "Vous pouvez ajouter / modifier / supprimer un transpondeur.",
+          "notes": [
+            "Cette fonctionnalité peut uniquement être exécutée lorsque le mode chaîne est réglé sur Satellite."
+          ],
+          "controle": "action",
+          "visibilite": { "condition_texte": "Mode chaîne réglé sur Satellite." },
+          "source": { "guide": "6.10.3" }
+        },
+        {
+          "id": "general.chaines.reglage-des-chaines.programme-regional",
+          "chemin": ["Général", "Chaînes", "Réglage des chaînes et paramètres"],
+          "libelle": "Programme régional",
+          "description": "Si vous configurez la fonctionnalité, vous pouvez afficher les chaînes locales fournies par les sociétés de diffusion.\nSélectionnez une société de diffusion locale et une région proposant des chaînes locales dans Réglage des chaînes et terminez les réglages des chaînes afin de regarder les chaînes de la région sélectionnée.",
+          "notes": [
+            "Certains modèles ne sont pas pris en charge.",
+            "Les fournisseurs de services ou les régions sont sujets à modification et les services peuvent être résiliés sans préavis."
+          ],
+          "controle": "action",
+          "source": { "guide": "6.10.4" },
+          "a_verifier": ["presence"]
+        },
+        {
+          "id": "general.chaines.reglage-des-chaines.mise-a-jour-liste",
+          "chemin": ["Général", "Chaînes", "Réglage des chaînes et paramètres"],
+          "libelle": "Mise à jour de la liste des chaînes",
+          "description": "Cette fonctionnalité met à jour les informations modifiées de la liste des chaînes en fonction de la situation de diffusion ou de l'environnement satellite du pays dans lequel l'appareil est installé.\nMet à jour la liste des chaînes lorsque l'appareil est éteint.",
+          "notes": [
+            "Une fois les mises à jour effectuées, il se peut que la liste des chaînes soit différente.Pour éviter cela, sélectionnez Désactivé.",
+            "Certains modèles ne sont pas pris en charge."
+          ],
+          "controle": "interrupteur",
+          "source": { "guide": "6.10.5" },
+          "a_verifier": ["controle"]
+        },
+        {
+          "id": "general.chaines.reglage-des-chaines.test-du-signal",
+          "chemin": ["Général", "Chaînes", "Réglage des chaînes et paramètres"],
+          "libelle": "Test du signal",
+          "description": "Affiche le MUX, les Informations sur le service, etc.",
+          "notes": [
+            "Seul le test du signal pour Antenne ou Câble s’affichera.",
+            "Certains modèles ne sont pas pris en charge."
+          ],
+          "controle": "action",
+          "source": { "guide": "6.10.6" }
+        }
+      ]
+    },
+    {
+      "id": "general.chaines.gestionnaire-des-chaines",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "Gestionnaire des chaînes",
+      "description": "Vous pouvez modifier les chaînes sélectionnées parmi toutes les chaînes mémorisées ou les ajouter/supprimer dans les chaînes préférées.\nSi des chaînes Internet sont définies, vous pouvez également gérer les chaînes dans Gestionnaire des chaînes.",
+      "controle": "sous-menu",
+      "source": { "guide": "6.10.7" },
+      "enfants": [
+        {
+          "id": "general.chaines.gestionnaire-des-chaines.editer-toutes-chaines",
+          "chemin": ["Général", "Chaînes", "Gestionnaire des chaînes"],
+          "libelle": "Éditer une liste de toutes les chaînes",
+          "description": "Dans la liste complète des chaînes, vous pouvez définir les chaînes sélectionnées sur Verrouiller / Déverrouiller ou les configurer de façon à les ignorer lors du changement de chaîne.",
+          "notes": [
+            "Les fonctions disponibles peuvent varier en fonction du signal de diffusion."
+          ],
+          "controle": "action",
+          "source": { "guide": "6.10.7" }
+        },
+        {
+          "id": "general.chaines.gestionnaire-des-chaines.editer-favoris",
+          "chemin": ["Général", "Chaînes", "Gestionnaire des chaînes"],
+          "libelle": "Éditer une liste des favoris",
+          "description": "Vous pouvez ajouter/supprimer les chaînes souhaitées vers et depuis les chaînes favorites, modifier leur ordre, et bien plus encore.",
+          "controle": "action",
+          "source": { "guide": "6.10.7" }
+        },
+        {
+          "id": "general.chaines.gestionnaire-des-chaines.modifier-chaines-satellite",
+          "chemin": ["Général", "Chaînes", "Gestionnaire des chaînes"],
+          "libelle": "Modifier les chaînes satellite (avancé)",
+          "description": "Dans la liste des chaînes satellite, vous pouvez définir les chaînes sélectionnées sur Verrouiller / Déverrouiller ou les configurer de façon à les ignorer lors du changement de chaîne.",
+          "notes": [
+            "Seuls les modèles prenant en charge le satellite sont applicables."
+          ],
+          "controle": "action",
+          "source": { "guide": "6.10.7" }
+        }
+      ]
+    },
+    {
+      "id": "general.chaines.flux-multiple",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "Flux multiple",
+      "description": "Vous pouvez choisir un angle de visualisation sur votre appareil grâce à la diffusion filmée sous différents angles.",
+      "notes": [
+        "Certains modèles ne sont pas pris en charge."
+      ],
+      "controle": "action",
+      "source": { "guide": "6.10.8" },
+      "a_verifier": ["presence", "controle"]
+    },
+    {
+      "id": "general.chaines.hbbtv",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "HbbTV",
+      "description": "HbbTV (Hybrid Broadcast Broadband TV) est une nouvelle norme de diffusion permettant des services de type super-télétexte. Elle permet d'intégrer les programmes transmis aux appareils intelligents utilisés ou de les connecter à des services en ligne transmis via le haut débit.",
+      "notes": [
+        "Certains modèles ne sont pas pris en charge.",
+        "Sans connexion Internet, le service peut être limité.",
+        "Les fonctionnalités et la qualité du service HbbTV peuvent varier selon la qualité de votre connexion haut débit.",
+        "Il n’est pas garanti que les services HbbTV soient disponibles pour tous les programmes. Les programmes compatibles dépendent du choix de votre diffuseur.",
+        "Lorsque la fonction Live Playback est activée, le service HbbTV est désactivé."
+      ],
+      "controle": "interrupteur",
+      "source": { "guide": "6.10.9" }
+    },
+    {
+      "id": "general.chaines.informations-ci",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "Informations CI",
+      "description": "Vous pouvez afficher les informations concernant le CI actuellement connecté.",
+      "controle": "texte",
+      "source": { "guide": "6.10.10" }
+    },
+    {
+      "id": "general.chaines.enregistrer-mot-de-passe-ci",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "Enregistrer le mot de passe CI",
+      "description": "Entrez le code PIN sous Enregistrer le mot de passe CI. Vous n’aurez plus besoin d’entrer le code PIN après l’enregistrement.",
+      "notes": [
+        "L’option Enregistrer le mot de passe CI est visible lorsque vous insérez un module CI CAM (Conditional Access Module) prenant en charge le code PIN.",
+        "Si le CI CAM possède un code PIN, l’option Réinitialiser le mot de passe CI s’affiche."
+      ],
+      "controle": "action",
+      "visibilite": { "condition_texte": "Module CI CAM avec code PIN inséré." },
+      "source": { "guide": "6.10.11" }
+    },
+    {
+      "id": "general.chaines.copier-chaines",
+      "chemin": ["Général", "Chaînes"],
+      "libelle": "Copier chaînes",
+      "description": "Vous pouvez enregistrer la liste des chaînes de l'appareil sur le périphérique de stockage USB connecté ou enregistrer la liste des chaînes USB sur l'appareil.",
+      "notes": [
+        "Pour les modèles satellite."
+      ],
+      "controle": "action",
+      "source": { "guide": "6.10.12" },
+      "a_verifier": ["presence"]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "commentaire": "Ordre d'affichage des sections du menu « Tous les paramètres ». L'ordre interne de Général suit le guide (chapitre 6) et reste à confirmer sur photos (passe 3).",
+  "sections": [
+    { "fichier": "image.json", "id": "image" },
+    { "fichier": "son.json", "id": "son" },
+    {
+      "id": "general",
+      "libelle": "Général",
+      "branches": [
+        { "fichier": "general/accessibilite.json", "id": "general.accessibilite" },
+        { "fichier": "general/toujours-pret.json", "id": "general.toujours-pret" },
+        { "fichier": "general/service-ai.json", "id": "general.service-ai" },
+        { "fichier": "general/optimiseur-de-jeu.json", "id": "general.optimiseur-de-jeu" },
+        { "fichier": "general/maintenance-oled.json", "id": "general.maintenance-oled" },
+        { "fichier": "general/precautions-utilisation.json", "id": "general.precautions-utilisation" },
+        { "fichier": "general/chaines.json", "id": "general.chaines" },
+        { "fichier": "general/reseau.json", "id": "general.reseau" },
+        { "fichier": "general/peripheriques-externes.json", "id": "general.peripheriques-externes" },
+        { "fichier": "general/systeme.json", "id": "general.systeme" },
+        { "fichier": "general/economie-energie.json", "id": "general.economie-energie" }
+      ]
+    },
+    { "fichier": "assistance.json", "id": "assistance" }
+  ]
+}
