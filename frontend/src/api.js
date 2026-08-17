@@ -1,20 +1,29 @@
+// Sous Ingress Home Assistant, l'app est servie derrière un préfixe d'URL
+// dynamique : toutes les URLs sont donc résolues relativement à la page
+// (document.baseURI), jamais depuis la racine du domaine.
+const BASE = new URL('.', document.baseURI)
+
+function url(chemin) {
+  return new URL(chemin, BASE)
+}
+
 export async function recupererArbre() {
-  const res = await fetch('/api/arbre')
+  const res = await fetch(url('api/arbre'))
   return res.json()
 }
 
 export async function recupererReglages() {
-  const res = await fetch('/api/reglages')
+  const res = await fetch(url('api/reglages'))
   return res.json()
 }
 
 export async function recupererEtat() {
-  const res = await fetch('/api/etat')
+  const res = await fetch(url('api/etat'))
   return res.json()
 }
 
 export async function ecrireReglage(entreeId, valeur) {
-  const res = await fetch(`/api/reglages/${encodeURIComponent(entreeId)}`, {
+  const res = await fetch(url(`api/reglages/${encodeURIComponent(entreeId)}`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ valeur }),
@@ -33,15 +42,15 @@ async function jsonOuLeve(res) {
 }
 
 export async function recupererPresets() {
-  return jsonOuLeve(await fetch('/api/presets'))
+  return jsonOuLeve(await fetch(url('api/presets')))
 }
 
 export async function recupererPreset(nom) {
-  return jsonOuLeve(await fetch(`/api/presets/${encodeURIComponent(nom)}`))
+  return jsonOuLeve(await fetch(url(`api/presets/${encodeURIComponent(nom)}`)))
 }
 
 export async function creerPreset(nom) {
-  return jsonOuLeve(await fetch('/api/presets', {
+  return jsonOuLeve(await fetch(url('api/presets'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nom }),
@@ -49,7 +58,7 @@ export async function creerPreset(nom) {
 }
 
 export async function importerPreset(donnees, remplacer = false) {
-  return jsonOuLeve(await fetch('/api/presets/import', {
+  return jsonOuLeve(await fetch(url('api/presets/import'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...donnees, remplacer }),
@@ -57,24 +66,24 @@ export async function importerPreset(donnees, remplacer = false) {
 }
 
 export async function supprimerPreset(nom) {
-  return jsonOuLeve(await fetch(`/api/presets/${encodeURIComponent(nom)}`, { method: 'DELETE' }))
+  return jsonOuLeve(await fetch(url(`api/presets/${encodeURIComponent(nom)}`), { method: 'DELETE' }))
 }
 
 export async function appliquerPreset(nom) {
-  return jsonOuLeve(await fetch(`/api/presets/${encodeURIComponent(nom)}/appliquer`, { method: 'POST' }))
+  return jsonOuLeve(await fetch(url(`api/presets/${encodeURIComponent(nom)}/appliquer`), { method: 'POST' }))
 }
 
 export async function recupererHistorique(limite = 100) {
-  const res = await fetch(`/api/historique?limite=${limite}`)
+  const res = await fetch(url(`api/historique?limite=${limite}`))
   return res.json()
 }
 
 export async function annulerEcriture(id) {
-  return jsonOuLeve(await fetch(`/api/historique/${id}/annuler`, { method: 'POST' }))
+  return jsonOuLeve(await fetch(url(`api/historique/${id}/annuler`), { method: 'POST' }))
 }
 
 export async function revenirA(horodatage) {
-  return jsonOuLeve(await fetch('/api/historique/revenir', {
+  return jsonOuLeve(await fetch(url('api/historique/revenir'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ horodatage }),
@@ -82,8 +91,9 @@ export async function revenirA(horodatage) {
 }
 
 export function ouvrirCanal(gestionnaires) {
-  const protocole = location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const ws = new WebSocket(`${protocole}//${location.host}/api/ws`)
+  const cible = url('api/ws')
+  const protocole = cible.protocol === 'https:' ? 'wss:' : 'ws:'
+  const ws = new WebSocket(`${protocole}//${cible.host}${cible.pathname}`)
   ws.onmessage = (evt) => gestionnaires.onMessage(JSON.parse(evt.data))
   ws.onopen = () => gestionnaires.onOuverture?.()
   ws.onclose = () => gestionnaires.onFermeture?.()

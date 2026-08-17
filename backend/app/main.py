@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import arbre, restauration
+from . import arbre, config, restauration
 from .historique import Historique
 from .presets import PresetExistant, PresetInconnu, Presets, capturer_snapshot
 from .televiseur import Televiseur
@@ -45,6 +45,38 @@ class RevenirA(BaseModel):
     horodatage: float
 
 
+class FiltreIngress:
+    """En mode app Home Assistant, seule l'IP du proxy Ingress du Superviseur
+    est acceptée (contrainte de sécurité des apps avec ingress), sauf si
+    l'utilisateur a explicitement ouvert l'accès direct (option acces_lan).
+
+    Middleware ASGI pur : un middleware HTTP FastAPI ne couvrirait pas le
+    WebSocket. La configuration est relue à chaque requête pour rester
+    surchargeable par les tests.
+    """
+
+    AUTORISES_LOCAUX = ("127.0.0.1", "::1")
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (scope["type"] in ("http", "websocket")
+                and config.MODE_APP_HA and not config.ACCES_LAN):
+            client = scope.get("client")
+            hote = client[0] if client else ""
+            if hote != config.INGRESS_PROXY_IP and hote not in self.AUTORISES_LOCAUX:
+                if scope["type"] == "http":
+                    reponse = JSONResponse(
+                        {"detail": "Accès réservé à l'Ingress Home Assistant"},
+                        status_code=403)
+                    await reponse(scope, receive, send)
+                else:
+                    await send({"type": "websocket.close", "code": 4403})
+                return
+        await self.app(scope, receive, send)
+
+
 def creer_app(televiseur: Televiseur | None = None,
               historique: Historique | None = None,
               presets: Presets | None = None) -> FastAPI:
@@ -60,6 +92,7 @@ def creer_app(televiseur: Televiseur | None = None,
             await app.state.televiseur.arreter()
 
     app = FastAPI(title="Réglages LG OLED 65 G5", lifespan=cycle_de_vie)
+    app.add_middleware(FiltreIngress)
 
     @app.get("/api/health")
     async def health() -> dict:

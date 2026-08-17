@@ -1,0 +1,25 @@
+name: Réglages LG OLED G5
+version: "1.0.0"
+slug: lg_settings
+description: Réplique du menu Réglages du LG OLED 65 G5 (webOS 25) — consultation et modification des réglages, presets, historique avec retour arrière.
+arch:
+  - amd64
+startup: application
+boot: auto
+ingress: true
+ingress_port: 8000
+panel_title: Réglages TV LG
+panel_icon: mdi:television
+# Port direct hors Ingress : désactivé par défaut, à mapper explicitement
+# (et activer l'option acces_lan) pour un accès sans authentification HA.
+ports:
+  8000/tcp: null
+ports_description:
+  8000/tcp: Accès direct sans Ingress (nécessite aussi l'option acces_lan)
+webui: http://[HOST]:[PORT:8000]/
+options:
+  lg_tv_host: "192.168.1.50"
+  acces_lan: false
+schema:
+  lg_tv_host: str
+  acces_lan: bool

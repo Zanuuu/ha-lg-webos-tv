@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/srv/data
+      - ./data:/data
     environment:
       # Adresse IP du téléviseur, à renseigner avant la mise en service.
       LG_TV_HOST: ""
