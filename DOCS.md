@@ -1,4 +1,4 @@
-# Réglages LG OLED G5
+# LG webOS TV
 
 Réplique en français du menu Réglages d'un LG OLED 65 G5 (webOS 25) :
 consultation et modification des réglages du téléviseur, presets
@@ -41,7 +41,7 @@ réactive d'elle-même.
 ## Utilisation
 
 L'interface apparaît dans la barre latérale de Home Assistant
-(« Réglages TV LG »). Elle reproduit l'arborescence du menu Réglages du
+(« LG webOS TV »). Elle reproduit l'arborescence du menu Réglages du
 téléviseur : les valeurs affichées sont lues en temps réel, les modifications
 sont appliquées immédiatement.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 — 2026-09-24
+
+- App renommée « LG webOS TV » (nom et entrée de la barre latérale),
+  nouvelle icône et logo webOS. Identifiant technique inchangé
+  (`lg_settings`) : historique, presets et appairage sont conservés.
+
 ## 1.0.2 — 2026-09-24
 
 Compatibilité avec le firmware 43.21.77 (webOS 11.2) du téléviseur.

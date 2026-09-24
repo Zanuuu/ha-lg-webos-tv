@@ -8,7 +8,7 @@ racine), copié dans le répertoire `/addons` de la machine Home Assistant.
 Le **Superviseur construit l'image localement** à l'installation — aucun
 registre d'images ni CI n'est nécessaire.
 
-L'interface est intégrée par **Ingress** : entrée « Réglages TV LG » dans la
+L'interface est intégrée par **Ingress** : entrée « LG webOS TV » dans la
 barre latérale, authentification héritée de Home Assistant, aucun port
 exposé sur le réseau. Un port direct (8000) existe mais est **désactivé par
 défaut** ; pour l'activer : mapper le port dans l'onglet Réseau de l'app
@@ -43,7 +43,7 @@ Décisions associées :
 
 2. **Faire apparaître l'app** : Paramètres → Modules complémentaires →
    Boutique des modules → menu ⋮ (en haut à droite) → « Rechercher les
-   mises à jour ». L'app « Réglages LG OLED G5 » apparaît dans la section
+   mises à jour ». L'app « LG webOS TV » apparaît dans la section
    des modules locaux.
 
 3. **Installer** : le Superviseur construit l'image sur place (build du
@@ -56,7 +56,7 @@ Décisions associées :
    Assistant) » affichée par le téléviseur (première connexion uniquement ;
    l'en-tête affiche « Appairage » tant qu'elle n'est pas acceptée).
 
-6. **Ouvrir** : entrée « Réglages TV LG » dans la barre latérale.
+6. **Ouvrir** : entrée « LG webOS TV » dans la barre latérale.
 
 ## Recette
 
