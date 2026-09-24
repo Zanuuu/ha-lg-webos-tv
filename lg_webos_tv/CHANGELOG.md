@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — 2026-09-24
+
+- L'en-tête affiche « Appairage : acceptez la demande sur la TV » dès que
+  la demande est à l'écran (première connexion, sans clé), et non plus
+  « Connexion… » pendant les deux minutes d'attente.
+
 ## 1.1.0 — 2026-09-24
 
 Distribution par dépôt d'apps Home Assistant

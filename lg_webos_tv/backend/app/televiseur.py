@@ -108,6 +108,10 @@ class Televiseur:
             # Sans clé, le téléviseur affiche une demande d'appairage ; la
             # nouvelle clé est enregistrée par bscpylgtv à l'acceptation.
             client.client_key = None
+        if client.client_key is None:
+            # connect() bloque jusqu'à la réponse sur l'écran de la TV (120 s
+            # au plus) : l'interface doit inviter à l'accepter dès maintenant.
+            await self._changer_etat("appairage")
         await client.connect()
         return client
 

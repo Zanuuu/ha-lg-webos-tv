@@ -1,5 +1,5 @@
 name: LG webOS TV
-version: "1.1.0"
+version: "1.1.1"
 slug: lg_webos_tv
 description: Réplique du menu Réglages du téléviseur LG OLED 65 G5 — consultation des réglages en temps réel, presets, historique.
 url: https://github.com/Zanuuu/ha-lg-webos-tv

@@ -131,3 +131,48 @@ async def test_sonde_ecriture_sans_effet_quand_permise(televiseur, faux_client):
     assert televiseur.instantane()["ecriture_possible"] is True
     assert "sondePermissionEcriture" not in faux_client.valeurs["picture"]
     await televiseur.arreter()
+
+
+async def test_etat_appairage_pendant_la_demande_sans_cle(monkeypatch):
+    """Sans clé stockée, connect() attend l'acceptation sur l'écran de la TV :
+    l'état doit déjà être « appairage » pendant cette attente."""
+    import app.televiseur as module
+
+    etats_pendant_connect = []
+
+    class ClientSansCle:
+        client_key = None
+
+        @classmethod
+        async def create(cls, *args, **kwargs):
+            return cls()
+
+        async def connect(self):
+            etats_pendant_connect.append(televiseur.etat_connexion)
+
+    monkeypatch.setattr(module, "WebOsClient", ClientSansCle)
+    televiseur = module.Televiseur(hote="test")
+    await televiseur._creer_client()
+    assert etats_pendant_connect == ["appairage"]
+
+
+async def test_etat_inchange_avec_cle_stockee(monkeypatch):
+    import app.televiseur as module
+
+    etats_pendant_connect = []
+
+    class ClientAvecCle:
+        client_key = "cle"
+
+        @classmethod
+        async def create(cls, *args, **kwargs):
+            return cls()
+
+        async def connect(self):
+            etats_pendant_connect.append(televiseur.etat_connexion)
+
+    monkeypatch.setattr(module, "WebOsClient", ClientAvecCle)
+    televiseur = module.Televiseur(hote="test")
+    await televiseur._changer_etat("connexion")
+    await televiseur._creer_client()
+    assert etats_pendant_connect == ["connexion"]
