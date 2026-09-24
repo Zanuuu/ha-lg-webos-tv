@@ -1,12 +1,13 @@
-# Déploiement — app Home Assistant locale
+# Déploiement — dépôt d'apps Home Assistant
 
-## Architecture retenue (phase 6)
+## Architecture retenue
 
-Le service est empaqueté en **app (add-on) Home Assistant locale** : le
-dépôt entier est le dossier de l'app (`config.yaml` + `Dockerfile` à la
-racine), copié dans le répertoire `/addons` de la machine Home Assistant.
-Le **Superviseur construit l'image localement** à l'installation — aucun
-registre d'images ni CI n'est nécessaire.
+Le projet est un **dépôt d'apps (add-ons) Home Assistant** hébergé sur
+Dépôt : https://github.com/Zanuuu/ha-lg-webos-tv (public).
+`repository.yaml` à la racine du dépôt, l'app dans `lg_webos_tv/`
+(`config.yaml` + `Dockerfile`). Le **Superviseur clone le dépôt et
+construit l'image localement** à l'installation : aucun registre d'images
+ni CI n'est nécessaire.
 
 L'interface est intégrée par **Ingress** : entrée « LG webOS TV » dans la
 barre latérale, authentification héritée de Home Assistant, aucun port
@@ -17,46 +18,39 @@ connexions ne venant pas du proxy Ingress, `172.30.32.2`).
 
 Décisions associées :
 - `arch: [amd64]` uniquement (HA sur x86).
-- Hébergement et CI de build
-  d'image : **reportés**. La structure reste compatible avec une évolution
-  future vers un dépôt d'apps installable par URL et des images
-  pré-construites (`image:` dans `config.yaml`).
+- CI de build d'image : **reportée**. Évolution possible vers des images
+  pré-construites (`image:` dans `config.yaml`) si le build local devient
+  gênant.
 
 ## Installation
 
-1. **Copier le dépôt dans `/addons/lg_settings/`** sur la machine HA, sans
-   les artefacts locaux (`.git`, `.venv`, `node_modules`, `data/`,
-   `frontend/dist`). Depuis la machine de développement, avec l'add-on SSH
-   (ou un accès SSH équivalent) :
+1. **Ajouter le dépôt** : Paramètres → Modules complémentaires → Boutique
+   des modules → menu ⋮ (en haut à droite) → Dépôts → ajouter
+   `https://github.com/Zanuuu/ha-lg-webos-tv`.
 
-   ```bash
-   rsync -av --delete \
-     --exclude='.git' --exclude='.venv' --exclude='node_modules' \
-     --exclude='data/' --exclude='frontend/dist' \
-     --exclude='__pycache__' --exclude='.pytest_cache' \
-     <dépôt>/ \
-     root@<ip-home-assistant>:/addons/lg_settings/
-   ```
+2. **Installer** l'app « LG webOS TV » depuis la Boutique : le Superviseur
+   construit l'image sur place (build du frontend inclus — quelques minutes
+   au premier coup).
 
-   Variante sans SSH : add-on Samba, partage `addons`, copie du dossier via
-   l'explorateur de fichiers (mêmes exclusions).
-
-2. **Faire apparaître l'app** : Paramètres → Modules complémentaires →
-   Boutique des modules → menu ⋮ (en haut à droite) → « Rechercher les
-   mises à jour ». L'app « LG webOS TV » apparaît dans la section
-   des modules locaux.
-
-3. **Installer** : le Superviseur construit l'image sur place (build du
-   frontend inclus — quelques minutes au premier coup).
-
-4. **Configurer** : onglet Configuration → `lg_tv_host` = adresse IP du
+3. **Configurer** : onglet Configuration → `lg_tv_host` = adresse IP du
    téléviseur. Laisser `acces_lan: false`.
 
-5. **Démarrer**, puis accepter la demande d'appairage « Réglages TV (Home
+4. **Démarrer**, puis accepter la demande d'appairage « Réglages TV (Home
    Assistant) » affichée par le téléviseur (première connexion uniquement ;
    l'en-tête affiche « Appairage » tant qu'elle n'est pas acceptée).
 
-6. **Ouvrir** : entrée « LG webOS TV » dans la barre latérale.
+5. **Ouvrir** : entrée « LG webOS TV » dans la barre latérale.
+
+## Bascule depuis l'ancienne app locale (`/addons/lg_settings`)
+
+L'app installée depuis le dépôt est une app distincte pour le Superviseur
+(identifiant `lg_webos_tv`) : historique, presets et clé d'appairage de
+l'app locale ne sont **pas repris**.
+
+1. Désinstaller l'app locale « LG webOS TV » (section des modules locaux).
+2. Supprimer le dossier `/addons/lg_settings` (add-on SSH ou Samba), sinon
+   la Boutique continue de la proposer.
+3. Suivre l'installation ci-dessus.
 
 ## Recette
 
@@ -75,11 +69,13 @@ Décisions associées :
 
 ## Mise à jour
 
-1. Modifier le code, incrémenter `version:` dans `config.yaml` (et
-   compléter `CHANGELOG.md`).
-2. Recopier le dépôt vers `/addons/lg_settings/` (même commande rsync).
-3. Boutique → « Rechercher les mises à jour » → la nouvelle version est
-   proposée sur la fiche de l'app → Mettre à jour (rebuild local).
+1. Modifier le code, incrémenter `version:` dans `lg_webos_tv/config.yaml`
+   (et compléter `lg_webos_tv/CHANGELOG.md`).
+2. Commiter et pousser sur `main` (`git push`).
+3. Boutique → menu ⋮ → « Rechercher les mises à jour » → la nouvelle
+   version est proposée sur la fiche de l'app → Mettre à jour (rebuild
+   local). Le Superviseur ne propose une mise à jour que si `version:` a
+   changé.
 
 Les données de `/data` (historique, presets, clé d'appairage) survivent aux
 mises à jour ; elles sont supprimées à la **désinstallation**.

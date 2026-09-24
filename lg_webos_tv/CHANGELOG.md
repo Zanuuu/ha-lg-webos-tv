@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 — 2026-09-24
+
+Distribution par dépôt d'apps Home Assistant
+(https://github.com/Zanuuu/ha-lg-webos-tv) au lieu d'une copie
+dans `/addons`.
+
+- Identifiant de l'app : `lg_webos_tv`. C'est une nouvelle app pour le
+  Superviseur : les données de l'app locale (historique, presets, clé
+  d'appairage) ne sont pas reprises ; procédure dans
+  `docs/deploiement.md`.
+
 ## 1.0.3 — 2026-09-24
 
 - App renommée « LG webOS TV » (nom et entrée de la barre latérale),
