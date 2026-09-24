@@ -47,3 +47,11 @@ INVENTAIRE = RACINE / "docs" / "inventaire-api.json"
 # Reconnexion : première tentative rapide puis repli progressif.
 RECONNEXION_DELAI_MIN_S = 5
 RECONNEXION_DELAI_MAX_S = 30
+
+# Manifeste d'appairage SSAP non signé : webOS 11 met en liste noire la
+# signature du manifeste par défaut de bscpylgtv (docs/incidents-ecriture.md).
+MANIFESTE_SSAP = Path(__file__).resolve().parent / "manifeste-ssap.json"
+
+# Délai entre deux demandes d'appairage affichées sur le téléviseur : la
+# demande y expire au bout de 120 s ; ne pas la réafficher en boucle.
+APPAIRAGE_DELAI_S = 180

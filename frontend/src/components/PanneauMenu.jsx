@@ -1,6 +1,6 @@
 import LigneReglage from './LigneReglage.jsx'
 
-export default function PanneauMenu({ chemin, reglages, onEcrire, onEntrer, onRevenir }) {
+export default function PanneauMenu({ chemin, reglages, lectureSeule, onEcrire, onEntrer, onRevenir }) {
   const noeud = chemin[chemin.length - 1]
 
   return (
@@ -12,6 +12,7 @@ export default function PanneauMenu({ chemin, reglages, onEcrire, onEntrer, onRe
             key={enfant.id}
             entree={enfant}
             reglages={reglages}
+            lectureSeule={lectureSeule}
             onEcrire={onEcrire}
             onEntrer={onEntrer}
           />

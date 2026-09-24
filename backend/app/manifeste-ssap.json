@@ -1,0 +1,9 @@
+{
+  "manifestVersion": 1,
+  "appVersion": "1.0",
+  "appId": "io.github.zanuuu.reglages-tv",
+  "vendorId": "io.github.zanuuu",
+  "localizedAppNames": {"": "Réglages TV (Home Assistant)"},
+  "localizedVendorNames": {"": "Home Assistant"},
+  "permissions": ["READ_SETTINGS", "WRITE_SETTINGS"]
+}

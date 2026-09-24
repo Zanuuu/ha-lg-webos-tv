@@ -11,7 +11,7 @@ function telecharger(nomFichier, donnees) {
   URL.revokeObjectURL(url)
 }
 
-export default function VuePresets() {
+export default function VuePresets({ lectureSeule }) {
   const [presets, setPresets] = useState(null)
   const [nomNouveau, setNomNouveau] = useState('')
   const [message, setMessage] = useState(null)
@@ -120,7 +120,9 @@ export default function VuePresets() {
                 <td>{new Date(p.cree_le * 1000).toLocaleString('fr-FR')}</td>
                 <td>{p.nombre_reglages}</td>
                 <td className="actions-preset">
-                  <button type="button" onClick={() => appliquer(p.nom)}>Appliquer</button>
+                  {!lectureSeule && (
+                    <button type="button" onClick={() => appliquer(p.nom)}>Appliquer</button>
+                  )}
                   <button type="button" onClick={() => exporter(p.nom)}>Exporter</button>
                   <button type="button" className="bouton-danger" onClick={() => supprimer(p.nom)}>
                     Supprimer

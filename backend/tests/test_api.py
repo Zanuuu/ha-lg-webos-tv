@@ -71,3 +71,13 @@ def test_websocket_instantane_et_changement(application):
                 "type": "changement", "categorie": "picture",
                 "reglages": {"sharpness": 30},
             }
+
+
+def test_ecriture_en_mode_consultation_refusee_403(application, faux_client):
+    faux_client.permission_ecriture = False
+    with TestClient(application) as client:
+        assert client.get("/api/reglages").json()["ecriture_possible"] is False
+        reponse = client.post(f"/api/reglages/{ID_NETTETE}", json={"valeur": 25})
+        assert reponse.status_code == 403
+        assert "webOS 11" in reponse.json()["detail"]
+        assert client.get("/api/historique").json() == []

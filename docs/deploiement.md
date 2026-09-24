@@ -52,8 +52,9 @@ Décisions associées :
 4. **Configurer** : onglet Configuration → `lg_tv_host` = adresse IP du
    téléviseur. Laisser `acces_lan: false`.
 
-5. **Démarrer**, puis accepter la demande d'appairage affichée par le
-   téléviseur (première connexion uniquement).
+5. **Démarrer**, puis accepter la demande d'appairage « Réglages TV (Home
+   Assistant) » affichée par le téléviseur (première connexion uniquement ;
+   l'en-tête affiche « Appairage » tant qu'elle n'est pas acceptée).
 
 6. **Ouvrir** : entrée « Réglages TV LG » dans la barre latérale.
 
@@ -64,7 +65,8 @@ Décisions associées :
 - Indicateur « Connecté » et mode d'image dans l'en-tête ; une modification
   faite à la télécommande se reflète en temps réel (WebSocket).
 - Écriture d'un réglage anodin (ex. netteté) : appliqué sur la TV, visible
-  dans l'historique.
+  dans l'historique. Sous webOS 11 : bandeau « Modification impossible… »,
+  contrôles grisés, aucune écriture tentée.
 - Presets : création, application, export/import.
 - Persistance : redémarrer l'app → historique, presets et appairage TV
   conservés (`/data`).
@@ -81,6 +83,21 @@ Décisions associées :
 
 Les données de `/data` (historique, presets, clé d'appairage) survivent aux
 mises à jour ; elles sont supprimées à la **désinstallation**.
+
+## Après une mise à jour du firmware du téléviseur
+
+1. Lire le journal de l'app : un `401`/`403` à la connexion signale un
+   changement du protocole d'appairage ou des permissions.
+2. Diagnostic sans l'app : `cd backend/scripts && ../.venv/bin/python -u
+   diag_enregistrement.py` (réponses brutes du téléviseur au `register`,
+   puis sonde lecture/écriture ; `--non-signe` pour le manifeste de l'app).
+3. Relancer l'inventaire (`explore_05_inventaire.py`) et comparer
+   `docs/inventaire-api.json` à sa version précédente : une clé disparue
+   ferait rejeter toute sa catégorie à l'abonnement.
+4. Extraire le firmware (cf. `docs/ecarts-firmware-43.21.77.md`, méthode)
+   et consigner les écarts dans `docs/`.
+
+Précédent : 43.21.77 / webOS 11.2 (`docs/incidents-ecriture.md` § 5).
 
 ## Détails techniques
 

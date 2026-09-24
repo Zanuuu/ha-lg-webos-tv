@@ -12,6 +12,9 @@ export function useEtatTv() {
   const [reglages, setReglages] = useState({})
   const [connexion, setConnexion] = useState('connexion')
   const [modeImage, setModeImage] = useState(null)
+  // null tant que le service ne l'a pas vérifié ; false sous webOS 11
+  // (écriture réservée par le téléviseur aux clients signés par LG).
+  const [ecriturePossible, setEcriturePossible] = useState(null)
   const canalRef = useRef(null)
 
   useEffect(() => {
@@ -33,10 +36,13 @@ export function useEtatTv() {
         onMessage(msg) {
           if (msg.type === 'instantane') {
             setConnexion(msg.connexion)
+            setEcriturePossible(msg.ecriture_possible)
             setModeImage(msg.mode_image)
             setReglages(msg.reglages)
           } else if (msg.type === 'connexion') {
             setConnexion(msg.etat)
+          } else if (msg.type === 'ecriture') {
+            setEcriturePossible(msg.possible)
           } else if (msg.type === 'changement') {
             setReglages((prev) => ({
               ...prev,
@@ -80,5 +86,5 @@ export function useEtatTv() {
     return resultat
   }, [])
 
-  return { arbre, reglages, connexion, modeImage, ecrire }
+  return { arbre, reglages, connexion, modeImage, ecriturePossible, ecrire }
 }

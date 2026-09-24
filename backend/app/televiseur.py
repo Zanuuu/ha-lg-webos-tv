@@ -6,6 +6,8 @@ Responsabilités :
 - cache de l'état courant, avec normalisation des types (les notifications
   livrent parfois les nombres sous forme de chaînes, cf. rapport phase 1) ;
 - écriture d'un réglage puis relecture de confirmation ;
+- vérification, à chaque connexion, de l'appairage et de la permission
+  d'écriture (webOS 11 refuse l'écriture aux clients non signés par LG) ;
 - diffusion des événements (changements, état de connexion) aux abonnés
   internes (canal WebSocket du frontend, historique).
 """
@@ -24,9 +26,32 @@ from . import config
 log = logging.getLogger(__name__)
 
 # Événements diffusés aux abonnés internes :
-#   {"type": "connexion", "etat": "connecte" | "deconnecte" | "connexion"}
+#   {"type": "connexion",
+#    "etat": "connecte" | "deconnecte" | "connexion" | "appairage"}
+#   {"type": "ecriture", "possible": bool}
 #   {"type": "changement", "categorie": str, "reglages": {cle: valeur}}
 Abonne = Callable[[dict], Awaitable[None]]
+
+# Clé absente de la liste des clés modifiables du firmware : l'adaptateur
+# settings la rejette avant toute écriture (« Some keys are not allowed »),
+# ce qui permet de tester la permission WRITE_SETTINGS sans rien modifier.
+CLE_SONDE_ECRITURE = "sondePermissionEcriture"
+
+
+def _texte_erreur(exc: Exception) -> str:
+    message = getattr(exc, "message", exc)
+    if isinstance(message, dict):
+        return str(message.get("error") or message.get("payload", {}).get("errorText")
+                   or message)
+    return str(message)
+
+
+def _non_enregistre(exc: Exception) -> bool:
+    return "not registered" in _texte_erreur(exc)
+
+
+def _permission_refusee(exc: Exception) -> bool:
+    return "401 insufficient permissions" in _texte_erreur(exc)
 
 
 def _cles_lisibles_par_categorie() -> dict[str, list[str]]:
@@ -68,12 +93,21 @@ class Televiseur:
         self._cles = _cles_lisibles_par_categorie()
         self._tache: asyncio.Task | None = None
         self._verrou_ecriture = asyncio.Lock()
+        # None tant qu'aucune connexion n'a permis de le vérifier.
+        self.ecriture_possible: bool | None = None
+        self._forcer_appairage = False
+        self.delai_appairage = config.APPAIRAGE_DELAI_S
 
     # ------------------------------------------------------------------ cycle
-    async def _creer_client(self):
+    async def _creer_client(self, forcer_appairage: bool = False):
         client = await WebOsClient.create(
             self.hote, states=[], key_file_path=str(config.CLE_TV_DB),
+            manifest_file_path=str(config.MANIFESTE_SSAP),
         )
+        if forcer_appairage:
+            # Sans clé, le téléviseur affiche une demande d'appairage ; la
+            # nouvelle clé est enregistrée par bscpylgtv à l'acceptation.
+            client.client_key = None
         await client.connect()
         return client
 
@@ -89,32 +123,91 @@ class Televiseur:
                 pass
         await self._deconnecter()
 
-    async def _deconnecter(self) -> None:
+    async def _fermer_client(self) -> None:
         if self.client is not None:
             try:
                 await self.client.disconnect()
             except Exception:  # noqa: BLE001 — la fermeture ne doit pas lever
                 pass
             self.client = None
+
+    async def _deconnecter(self) -> None:
+        await self._fermer_client()
         await self._changer_etat("deconnecte")
+
+    async def _verifier_acces(self) -> None:
+        """Vérifie l'enregistrement du client, puis la permission d'écriture.
+
+        Lève AppairageRequis si le téléviseur ne reconnaît pas le client.
+        """
+        try:
+            await self.client.request(
+                "settings/getSystemSettings",
+                {"category": "picture", "keys": ["pictureMode"]},
+            )
+        except PyLGTVCmdException as exc:
+            if _non_enregistre(exc):
+                raise AppairageRequis from exc
+            raise
+        try:
+            await self.client.request(
+                "settings/setSystemSettings",
+                {"category": "picture", "settings": {CLE_SONDE_ECRITURE: 0}},
+            )
+            possible = True  # improbable : clé sonde acceptée
+        except PyLGTVCmdException as exc:
+            # Toute autre erreur que le refus de permission signifie que la
+            # requête a atteint l'adaptateur, qui a rejeté la clé sonde.
+            possible = not _permission_refusee(exc)
+        await self._changer_ecriture(possible)
+
+    async def _changer_ecriture(self, possible: bool) -> None:
+        if possible != self.ecriture_possible:
+            self.ecriture_possible = possible
+            if not possible:
+                log.warning("Le téléviseur refuse l'écriture des réglages à ce "
+                            "client (webOS 11 : manifeste non signé par LG) : "
+                            "mode consultation")
+            await self._diffuser({"type": "ecriture", "possible": possible})
 
     async def _boucle_connexion(self) -> None:
         delai = config.RECONNEXION_DELAI_MIN_S
         while True:
-            await self._changer_etat("connexion")
+            await self._changer_etat(
+                "appairage" if self._forcer_appairage else "connexion")
             try:
-                self.client = await self._fabrique_client()
+                self.client = await self._fabrique_client(
+                    forcer_appairage=self._forcer_appairage)
+                await self._verifier_acces()
+            except AppairageRequis:
+                # bscpylgtv n'échoue pas quand le téléviseur refuse la clé :
+                # la socket reste ouverte mais non enregistrée. On redemande
+                # un appairage, sans le réafficher en boucle à l'écran.
+                log.warning("Appairage refusé par le téléviseur : nouvelle "
+                            "demande dans %s s", self.delai_appairage)
+                await self._fermer_client()
+                self._forcer_appairage = True
+                await self._changer_etat("appairage")
+                await asyncio.sleep(self.delai_appairage)
+                continue
             except Exception as exc:  # noqa: BLE001 — TV éteinte, réseau…
                 log.info("Connexion au téléviseur impossible : %s", exc)
-                self.client = None
+                await self._fermer_client()
+                if self._forcer_appairage:
+                    # Demande d'appairage refusée ou expirée.
+                    await self._changer_etat("appairage")
+                    await asyncio.sleep(self.delai_appairage)
+                    continue
                 await self._changer_etat("deconnecte")
                 await asyncio.sleep(delai)
                 delai = min(delai * 2, config.RECONNEXION_DELAI_MAX_S)
                 continue
 
+            self._forcer_appairage = False
             delai = config.RECONNEXION_DELAI_MIN_S
             try:
-                await self._souscrire_tout()
+                if not await self._souscrire_tout():
+                    raise ConnexionTvPerdue("aucun abonnement n'a abouti")
                 await self._changer_etat("connecte")
                 # La tâche de connexion du client vit tant que le lien tient ;
                 # sa fin signale la déconnexion.
@@ -151,7 +244,9 @@ class Televiseur:
             await self._diffuser({"type": "connexion", "etat": etat})
 
     # ---------------------------------------------------------- abonnements
-    async def _souscrire_tout(self) -> None:
+    async def _souscrire_tout(self) -> bool:
+        """Renvoie False si aucun abonnement n'a abouti."""
+        reussis = 0
         for categorie, cles in self._cles.items():
             async def rappel(charge: dict, categorie=categorie) -> None:
                 await self._sur_notification(categorie, charge)
@@ -161,8 +256,10 @@ class Televiseur:
                     {"category": categorie, "keys": cles},
                 )
                 self.etat[categorie] = dict(premiere.get("settings", {}))
+                reussis += 1
             except Exception as exc:  # noqa: BLE001
                 log.warning("Abonnement %s impossible : %s", categorie or '""', exc)
+        return reussis > 0
 
     async def _sur_notification(self, categorie: str, charge: dict) -> None:
         reglages = charge.get("settings") or {}
@@ -188,6 +285,7 @@ class Televiseur:
     def instantane(self) -> dict:
         return {
             "connexion": self.etat_connexion,
+            "ecriture_possible": self.ecriture_possible,
             "mode_image": self.mode_image,
             "reglages": self.etat,
         }
@@ -212,6 +310,8 @@ class Televiseur:
         """
         if self.client is None or self.etat_connexion != "connecte":
             raise ConnexionTvPerdue
+        if self.ecriture_possible is False:
+            raise EcritureImpossible
         async with self._verrou_ecriture:
             mode_image = self.mode_image
             try:
@@ -225,6 +325,9 @@ class Televiseur:
                 )
                 relue = (await self.lire(categorie, [cle])).get(cle)
             except PyLGTVCmdException as exc:
+                if _permission_refusee(exc):
+                    await self._changer_ecriture(False)
+                    raise EcritureImpossible from exc
                 # Refus applicatif du téléviseur (valeur hors plage, clé non
                 # acceptée dans ce contexte…) : à distinguer d'une perte de
                 # connexion, l'appelant doit pouvoir continuer sur d'autres
@@ -243,6 +346,16 @@ class Televiseur:
 
 class ConnexionTvPerdue(Exception):
     """Le téléviseur n'est pas joignable."""
+
+
+class AppairageRequis(Exception):
+    """Le téléviseur ne reconnaît pas le client (clé refusée ou demande
+    d'appairage non acceptée)."""
+
+
+class EcritureImpossible(Exception):
+    """Le téléviseur n'accorde pas la permission d'écriture à ce client
+    (webOS 11 : réservée aux manifestes signés par LG)."""
 
 
 class EcritureRefusee(Exception):

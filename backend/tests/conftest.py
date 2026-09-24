@@ -6,7 +6,7 @@ from bscpylgtv.exceptions import PyLGTVCmdError
 from app.historique import Historique
 from app.main import creer_app
 from app.presets import Presets
-from app.televiseur import Televiseur
+from app.televiseur import CLE_SONDE_ECRITURE, Televiseur
 
 
 class FauxClient:
@@ -25,21 +25,45 @@ class FauxClient:
         # Écritures que le téléviseur doit refuser, ex. {("picture", "gamma")}
         # — simule une valeur hors plage ou une clé non acceptée.
         self.refuser: set[tuple[str, str]] = set()
+        # Clé client refusée par le téléviseur (ex. après une mise à jour du
+        # firmware) : toute requête répond 401, comme le vrai.
+        self.non_enregistre = False
+        # webOS 11 : WRITE_SETTINGS refusée aux manifestes non signés.
+        self.permission_ecriture = True
+
+    def _verifier_enregistrement(self, ident):
+        if self.non_enregistre:
+            raise PyLGTVCmdError({
+                "type": "error", "id": ident, "payload": {},
+                "error": "401 insufficient permissions (not registered)"})
 
     async def subscribe(self, rappel, uri, payload):
+        self._verifier_enregistrement(len(self.rappels))
         categorie = payload["category"]
         if categorie not in self.valeurs:
             raise RuntimeError(f"catégorie {categorie} non simulée")
         self.rappels[categorie] = rappel
         return {"settings": dict(self.valeurs[categorie]), "subscribed": True}
 
-    async def request(self, uri, payload):
+    async def request(self, uri, payload=None):
+        self._verifier_enregistrement(0)
+        if uri == "com.webos.service.update/getCurrentSWInformation":
+            return {"returnValue": True, "product_name": "webOSTV 11.2.0",
+                    "major_ver": "43", "minor_ver": "21.77"}
         categorie = payload.get("category")
         if uri == "settings/getSystemSettings":
             valeurs = self.valeurs.get(categorie, {})
             return {"settings": {k: valeurs[k] for k in payload["keys"] if k in valeurs}}
         if uri == "settings/setSystemSettings":
+            if not self.permission_ecriture:
+                raise PyLGTVCmdError({"type": "error", "id": 0, "payload": {},
+                                      "error": "401 insufficient permissions"})
             for cle in payload["settings"]:
+                if cle == CLE_SONDE_ECRITURE:
+                    # Comme l'adaptateur du firmware : clé hors liste rejetée
+                    # avant toute écriture.
+                    raise PyLGTVCmdError({"payload": {"errorText":
+                        f"Some keys are not allowed for the request. ( {cle} )"}})
                 if (categorie, cle) in self.refuser:
                     raise PyLGTVCmdError({
                         "payload": {"errorText": f"Out of range: {cle}"}})
@@ -69,7 +93,7 @@ def faux_client():
 
 @pytest.fixture
 def televiseur(faux_client):
-    async def fabrique():
+    async def fabrique(forcer_appairage=False):
         return faux_client
     return Televiseur(hote="test", fabrique_client=fabrique)
 

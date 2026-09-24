@@ -3,14 +3,33 @@
 Réplique en français du menu Réglages d'un LG OLED 65 G5 (webOS 25) :
 consultation et modification des réglages du téléviseur, presets
 exportables/importables, historique des modifications avec retour arrière.
+Sous webOS 11, consultation seule (voir « Mode consultation »).
 
 ## Prérequis
 
 - Téléviseur LG G5 (webOS 25) allumé et joignable sur le réseau local, avec
   « LG Connect Apps » / contrôle réseau autorisé.
-- Au premier démarrage, le téléviseur affiche une demande d'appairage :
-  l'accepter avec la télécommande. La clé d'appairage est ensuite conservée
-  dans le stockage persistant de l'app.
+- Au premier démarrage, le téléviseur affiche une demande d'appairage
+  « Réglages TV (Home Assistant) » : l'accepter avec la télécommande (elle
+  expire au bout de deux minutes ; l'app la représente ensuite toutes les
+  trois minutes, l'en-tête affiche « Appairage »). La clé d'appairage est
+  conservée dans le stockage persistant de l'app.
+
+## Mode consultation (webOS 11)
+
+Depuis le firmware 43.21.77 (webOS 11.2), le téléviseur n'autorise plus
+l'écriture des réglages aux applications tierces : LG la réserve aux
+clients qu'il a lui-même signés. L'app le détecte à chaque connexion et
+passe en mode consultation, signalé par un bandeau :
+
+- les réglages restent affichés et suivis en temps réel ;
+- l'historique enregistre toujours les changements faits à la
+  télécommande, et les presets peuvent toujours être capturés ;
+- la modification, l'application d'un preset et le retour arrière sont
+  désactivés.
+
+Si une mise à jour ultérieure du téléviseur rouvre l'écriture, l'app la
+réactive d'elle-même.
 
 ## Options
 

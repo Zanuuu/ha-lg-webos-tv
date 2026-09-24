@@ -40,3 +40,94 @@ async def test_ecriture_avec_relecture(televiseur):
         "ancienne": 10, "nouvelle": 25, "confirme": True, "mode_image": "expert2",
     }
     await televiseur.arreter()
+
+
+async def test_cle_refusee_force_un_nouvel_appairage(faux_client):
+    """Après une mise à jour du firmware, le téléviseur refuse l'ancienne clé
+    (401 not registered) sans que bscpylgtv ne lève d'erreur : le service
+    doit le détecter et relancer un appairage (demande sur l'écran)."""
+    from app.televiseur import Televiseur
+
+    appels = []
+
+    async def fabrique(forcer_appairage=False):
+        appels.append(forcer_appairage)
+        # La demande d'appairage acceptée rend une clé valide.
+        faux_client.non_enregistre = not forcer_appairage
+        return faux_client
+
+    televiseur = Televiseur(hote="test", fabrique_client=fabrique)
+    televiseur.delai_appairage = 0
+    etats = []
+
+    async def espion(evt):
+        if evt["type"] == "connexion":
+            etats.append(evt["etat"])
+
+    televiseur.abonner(espion)
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    assert appels == [False, True]
+    assert "appairage" in etats
+    assert televiseur.mode_image == "expert2"
+    await televiseur.arreter()
+
+
+async def test_tous_les_abonnements_en_echec_nannonce_pas_connecte(faux_client):
+    """Si aucun abonnement n'aboutit, le service ne doit pas se déclarer
+    connecté avec un état vide."""
+    from app.televiseur import Televiseur
+
+    async def abonnement_refuse(rappel, uri, payload):
+        raise RuntimeError("refusé")
+
+    faux_client.subscribe = abonnement_refuse
+
+    async def fabrique(forcer_appairage=False):
+        return faux_client
+
+    televiseur = Televiseur(hote="test", fabrique_client=fabrique)
+    etats = []
+
+    async def espion(evt):
+        if evt["type"] == "connexion":
+            etats.append(evt["etat"])
+
+    televiseur.abonner(espion)
+    await televiseur.demarrer()
+    await attendre(lambda: "deconnecte" in etats, delai=1.0)
+    assert "connecte" not in etats
+    await televiseur.arreter()
+
+
+async def test_permission_ecriture_refusee_passe_en_consultation(televiseur, faux_client):
+    """webOS 11 : lecture accordée, écriture refusée au manifeste non signé."""
+    from app.televiseur import EcritureImpossible
+
+    faux_client.permission_ecriture = False
+    evenements = []
+
+    async def espion(evt):
+        evenements.append(evt)
+
+    televiseur.abonner(espion)
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    assert televiseur.instantane()["ecriture_possible"] is False
+    assert {"type": "ecriture", "possible": False} in evenements
+    assert televiseur.mode_image == "expert2"
+    try:
+        await televiseur.ecrire("picture", "sharpness", 25)
+        raise AssertionError("écriture acceptée en mode consultation")
+    except EcritureImpossible:
+        pass
+    assert faux_client.valeurs["picture"]["sharpness"] == 10
+    await televiseur.arreter()
+
+
+async def test_sonde_ecriture_sans_effet_quand_permise(televiseur, faux_client):
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    assert televiseur.instantane()["ecriture_possible"] is True
+    assert "sondePermissionEcriture" not in faux_client.valeurs["picture"]
+    await televiseur.arreter()

@@ -7,7 +7,7 @@ function formaterValeur(v) {
   return String(v)
 }
 
-export default function VueHistorique({ index }) {
+export default function VueHistorique({ index, lectureSeule }) {
   const [lignes, setLignes] = useState(null)
   const [message, setMessage] = useState(null)
 
@@ -76,10 +76,14 @@ export default function VueHistorique({ index }) {
                 <td>{formaterValeur(l.ancienne)} → {formaterValeur(l.nouvelle)}</td>
                 <td>{l.mode_image || '—'}</td>
                 <td className="actions-historique">
-                  <button type="button" onClick={() => annuler(l.id)}>Annuler</button>
-                  <button type="button" onClick={() => revenir(l.horodatage)}>
-                    Revenir à cet instant
-                  </button>
+                  {!lectureSeule && (
+                    <>
+                      <button type="button" onClick={() => annuler(l.id)}>Annuler</button>
+                      <button type="button" onClick={() => revenir(l.horodatage)}>
+                        Revenir à cet instant
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

@@ -4,6 +4,7 @@ const LIBELLES_CONNEXION = {
   connecte: 'Connecté',
   deconnecte: 'Déconnecté',
   connexion: 'Connexion…',
+  appairage: 'Appairage : acceptez la demande sur la TV',
 }
 
 export default function Entete({ connexion, modeImage, entreeModeImage, vue, onChangerVue }) {

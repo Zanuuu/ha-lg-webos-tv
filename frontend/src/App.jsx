@@ -8,7 +8,8 @@ import PanneauService from './components/PanneauService.jsx'
 import { useEtatTv } from './hooks/useEtatTv.js'
 
 export default function App() {
-  const { arbre, reglages, connexion, modeImage, ecrire } = useEtatTv()
+  const { arbre, reglages, connexion, modeImage, ecriturePossible, ecrire } = useEtatTv()
+  const lectureSeule = ecriturePossible === false
   const [chemin, setChemin] = useState([])
   const [vue, setVue] = useState('reglages')
 
@@ -41,15 +42,22 @@ export default function App() {
         vue={vue}
         onChangerVue={setVue}
       />
+      {lectureSeule && (
+        <p className="bandeau-consultation" role="status">
+          Modification impossible depuis la mise à jour webOS 11 du téléviseur : les réglages
+          restent consultables ici, mais sont à régler sur la TV.
+        </p>
+      )}
       <div className="corps">
         {vue === 'service' ? (
-          <PanneauService index={index} />
+          <PanneauService index={index} lectureSeule={lectureSeule} />
         ) : (
           <>
             <BarreLaterale sections={sections} sectionActiveId={sectionActiveId} onChoisir={choisirSection} />
             <PanneauMenu
               chemin={cheminEffectif}
               reglages={reglages}
+              lectureSeule={lectureSeule}
               onEcrire={ecrire}
               onEntrer={entrer}
               onRevenir={revenir}

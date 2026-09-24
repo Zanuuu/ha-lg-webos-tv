@@ -2,7 +2,7 @@ import { useState } from 'react'
 import VueHistorique from './VueHistorique.jsx'
 import VuePresets from './VuePresets.jsx'
 
-export default function PanneauService({ index }) {
+export default function PanneauService({ index, lectureSeule }) {
   const [onglet, setOnglet] = useState('presets')
 
   return (
@@ -23,7 +23,9 @@ export default function PanneauService({ index }) {
           Historique
         </button>
       </div>
-      {onglet === 'presets' ? <VuePresets /> : <VueHistorique index={index} />}
+      {onglet === 'presets'
+        ? <VuePresets lectureSeule={lectureSeule} />
+        : <VueHistorique index={index} lectureSeule={lectureSeule} />}
     </section>
   )
 }

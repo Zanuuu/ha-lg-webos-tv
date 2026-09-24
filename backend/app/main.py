@@ -118,6 +118,8 @@ def creer_app(televiseur: Televiseur | None = None,
         raison = resultat.get("raison", "")
         if raison == "téléviseur injoignable":
             raise HTTPException(503, raison)
+        if raison == restauration.RAISON_ECRITURE_IMPOSSIBLE:
+            raise HTTPException(403, raison)
         if raison.startswith("refusée par le téléviseur"):
             raise HTTPException(400, raison)
 

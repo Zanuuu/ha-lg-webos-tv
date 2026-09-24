@@ -10,6 +10,20 @@
 Toute mise à jour du firmware impose de refaire l'inventaire : relancer les
 scripts `backend/scripts/explore_*.py` (voir méthodologie).
 
+### Mise à jour 43.21.77 (webOS 11.2) — 24 septembre 2026
+
+- Inventaire relancé (`explore_05`) : `docs/inventaire-api.json` reflète
+  désormais le 43.21.77. Aucune clé perdue, 14 ajoutées (détail :
+  `docs/ecarts-firmware-43.21.77.md`). Mode d'image au moment du relevé :
+  `filmMaker`. Champ `firmware` vide : la version logicielle n'est plus
+  lisible sans manifeste signé.
+- Appairage : le manifeste par défaut de bscpylgtv est en liste noire ;
+  les scripts utilisent le manifeste non signé de l'app
+  (`backend/app/manifeste-ssap.json`, via `scripts/common.py`).
+- **Écriture impossible** (`setSystemSettings` → `401 insufficient
+  permissions`) : les sections « écriture » ci-dessous décrivent le
+  comportement du 33.31.68. Détail : `docs/incidents-ecriture.md` § 5.
+
 ## Méthodologie
 
 L'appairage (`explore_01`) conserve la clé client dans `data/bscpylgtv.sqlite`

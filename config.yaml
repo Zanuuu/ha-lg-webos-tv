@@ -1,5 +1,5 @@
 name: Réglages LG OLED G5
-version: "1.0.1"
+version: "1.0.2"
 slug: lg_settings
 description: Réplique du menu Réglages du LG OLED 65 G5 (webOS 25) — consultation et modification des réglages, presets, historique avec retour arrière.
 arch:

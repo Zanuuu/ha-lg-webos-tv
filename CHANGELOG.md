@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.2 — 2026-09-24
+
+Compatibilité avec le firmware 43.21.77 (webOS 11.2) du téléviseur.
+
+- Appairage avec un manifeste propre à l'app, non signé : webOS 11 rejette
+  le manifeste par défaut de bscpylgtv (signature mise en liste noire par
+  LG), ce qui rendait l'app muette (`401 not registered`).
+- Mode consultation : webOS 11 réserve l'écriture des réglages aux clients
+  signés par LG. L'app le détecte à chaque connexion, affiche un bandeau,
+  grise les contrôles et masque application de preset et retour arrière ;
+  l'API répond 403 aux écritures. Réactivation automatique si l'écriture
+  redevient possible.
+- Appairage refusé ou expiré détecté (état « Appairage » dans l'en-tête),
+  nouvelle demande espacée de trois minutes.
+- L'app ne se déclare plus « connectée » quand aucun abonnement n'aboutit.
+- Inventaire API relevé sur le 43.21.77 (14 clés lisibles de plus).
+
 ## 1.0.1 — 2026-08-17
 
 Interface adaptée aux fenêtres étroites (panneau Ingress sur mobile,

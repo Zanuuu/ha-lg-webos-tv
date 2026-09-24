@@ -6,6 +6,7 @@
           "account": false,
           "app_id": "",
           "category": "",
+          "dataType": "object",
           "dbtype": "G",
           "dimension": [],
           "key": "eulaInfoNetwork",
@@ -36,30 +37,8 @@
               "id": "S_DSC",
               "title": "Overview",
               "type": "V",
-              "updated": true,
+              "updated": false,
               "version": "20240806080_FR"
-            },
-            {
-              "_id": "",
-              "accepted": false,
-              "fileLocation": "/var/palm/license/",
-              "fileName": "terms_20240806065635912_fr-fr.html",
-              "id": "S_LGN",
-              "title": "Legal Notice",
-              "type": "L",
-              "updated": true,
-              "version": "20240806081_FR"
-            },
-            {
-              "_id": "",
-              "accepted": false,
-              "fileLocation": "/var/palm/license/",
-              "fileName": "terms_20240806070015179_fr-fr.html",
-              "id": "S_DPA",
-              "title": "Accord de partenariat de données",
-              "type": "M",
-              "updated": true,
-              "version": "20240806092_FR"
             },
             {
               "_id": "",
@@ -69,19 +48,8 @@
               "id": "S_ALL",
               "title": "Tout Sélectionner",
               "type": "S",
-              "updated": true,
+              "updated": false,
               "version": "20240926014_FR"
-            },
-            {
-              "_id": "",
-              "accepted": true,
-              "fileLocation": "/var/palm/license/",
-              "fileName": "terms_20241115025800045_fr-fr.html",
-              "id": "S_SVC",
-              "title": "Conditions d'Utilisation",
-              "type": "M",
-              "updated": true,
-              "version": "20241115415_FR"
             },
             {
               "_id": "",
@@ -91,7 +59,7 @@
               "id": "S_VNG",
               "title": "Informations Vocales",
               "type": "M",
-              "updated": true,
+              "updated": false,
               "version": "20250120445_FR"
             },
             {
@@ -102,30 +70,8 @@
               "id": "S_MKT",
               "title": "Accord de communication marketing",
               "type": "M",
-              "updated": true,
+              "updated": false,
               "version": "20250304105_FR"
-            },
-            {
-              "_id": "",
-              "accepted": false,
-              "fileLocation": "/var/palm/license/",
-              "fileName": "terms_20250611074114087_fr-fr.html",
-              "id": "S_PRP",
-              "title": "Politique de Confidentialité",
-              "type": "N",
-              "updated": true,
-              "version": "20250611335_FR"
-            },
-            {
-              "_id": "",
-              "accepted": true,
-              "fileLocation": "/var/palm/license/",
-              "fileName": "terms_20250611074126913_fr-fr.html",
-              "id": "S_ADG",
-              "title": "Accord sur les informations de visionnage",
-              "type": "M",
-              "updated": true,
-              "version": "20250611336_FR"
             },
             {
               "_id": "",
@@ -135,8 +81,74 @@
               "id": "S_TAG",
               "title": "Accord sur la publicité basée sur les intérêts",
               "type": "M",
-              "updated": true,
+              "updated": false,
               "version": "20250611337_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20260407060455265_fr-fr.html",
+              "id": "S_DDA",
+              "title": "Consentement aux données de diagnostic",
+              "type": "M",
+              "updated": false,
+              "version": "20260407005_FR"
+            },
+            {
+              "_id": "",
+              "accepted": true,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20260514030333957_fr-fr.html",
+              "id": "S_SVC",
+              "title": "Conditions d'Utilisation",
+              "type": "M",
+              "updated": false,
+              "version": "20260514114_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20260514035024337_fr-fr.html",
+              "id": "S_LGN",
+              "title": "Legal Notice",
+              "type": "L",
+              "updated": false,
+              "version": "20260514308_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20260514051852799_fr-fr.html",
+              "id": "S_PRP",
+              "title": "Politique de Confidentialité",
+              "type": "N",
+              "updated": false,
+              "version": "20260514525_FR"
+            },
+            {
+              "_id": "",
+              "accepted": true,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20260514061137021_fr-fr.html",
+              "id": "S_ADG",
+              "title": "Accord sur les informations de visionnage",
+              "type": "M",
+              "updated": false,
+              "version": "20260514678_FR"
+            },
+            {
+              "_id": "",
+              "accepted": false,
+              "fileLocation": "/var/palm/license/",
+              "fileName": "terms_20260522023558643_fr-fr.html",
+              "id": "S_DPA",
+              "title": "Accord de partenariat de données",
+              "type": "M",
+              "updated": false,
+              "version": "20260522047_FR"
             }
           ]
         },
@@ -147,7 +159,7 @@
           "acrOnAllowed": true,
           "additional1Allowed": false,
           "additional2Allowed": false,
-          "additional3Allowed": false,
+          "additional3Allowed": true,
           "additional4Allowed": false,
           "additional5Allowed": false,
           "additionalDataAllowed": true,
@@ -856,6 +868,7 @@
         "SCA3SystemCountry": {
           "account": false,
           "category": "general",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "SCA3SystemCountry",
@@ -957,6 +970,7 @@
         "tvInstallMethod": {
           "account": false,
           "category": "general",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvInstallMethod",
@@ -988,6 +1002,7 @@
         "tvOnScreen": {
           "account": false,
           "category": "general",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvOnScreen",
@@ -1094,8 +1109,12 @@
     "hotelMode": {
       "descripteurs": {},
       "erreurs": [],
-      "lisibles": {},
-      "rejetees_desc": [],
+      "lisibles": {
+        "enableHotelMode": "off"
+      },
+      "rejetees_desc": [
+        "enableHotelMode"
+      ],
       "rejetees_lecture": [
         "autoBrowser",
         "autoBrowserUrl",
@@ -1120,7 +1139,6 @@
         "enableFullscreen",
         "enableFunctionStatus",
         "enableHIDDevice",
-        "enableHotelMode",
         "enableInputSourceChange",
         "enableIrRemote",
         "enableKeylock",
@@ -1167,6 +1185,7 @@
         "dailyRepeatFlag": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "dailyRepeatFlag",
@@ -1198,6 +1217,7 @@
         "inputBlock": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "inputBlock",
@@ -1222,6 +1242,7 @@
         "movieRating": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "movieRating",
@@ -1278,6 +1299,7 @@
         "offHearingProtectFlag": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "offHearingProtectFlag",
@@ -1309,6 +1331,7 @@
         "offHearingProtectMaxVolume": {
           "account": false,
           "category": "lock",
+          "dataType": "int",
           "dbtype": "G",
           "dimension": [],
           "key": "offHearingProtectMaxVolume",
@@ -1333,6 +1356,7 @@
         "offUsageTimeFlag": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "offUsageTimeFlag",
@@ -1365,6 +1389,7 @@
           "account": false,
           "category": "lock",
           "country": "FRA",
+          "dataType": "boolean",
           "dbtype": "G",
           "dimension": [],
           "hasCountryVar": true,
@@ -1398,6 +1423,7 @@
           "account": false,
           "category": "lock",
           "country": "FRA",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "hasCountryVar": true,
@@ -1494,6 +1520,7 @@
         "tvRatingChildrenAge": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingChildrenAge",
@@ -1530,6 +1557,7 @@
         "tvRatingChildrenFantasy": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingChildrenFantasy",
@@ -1561,6 +1589,7 @@
         "tvRatingGeneralAge": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingGeneralAge",
@@ -1607,6 +1636,7 @@
         "tvRatingGeneralDialog": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingGeneralDialog",
@@ -1643,6 +1673,7 @@
         "tvRatingGeneralLanguage": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingGeneralLanguage",
@@ -1684,6 +1715,7 @@
         "tvRatingGeneralSex": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingGeneralSex",
@@ -1725,6 +1757,7 @@
         "tvRatingGeneralViolence": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "tvRatingGeneralViolence",
@@ -1766,6 +1799,7 @@
         "unlockDate": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "unlockDate",
@@ -1786,6 +1820,7 @@
         "usageTimeEnd": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "usageTimeEnd",
@@ -1806,6 +1841,7 @@
         "usageTimeStart": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "usageTimeStart",
@@ -1826,6 +1862,7 @@
         "ziggoRaiting": {
           "account": false,
           "category": "lock",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "hasCountryVar": true,
@@ -2027,6 +2064,7 @@
         "phlCitySelection": "0",
         "quickStartMode": "on",
         "smartServiceCountryCode3": "FRA",
+        "standByLight": "on",
         "storeMode": "home",
         "syncMode": "off",
         "wallPaperSettings": {
@@ -2051,6 +2089,7 @@
         "phlCitySelection",
         "quickStartMode",
         "smartServiceCountryCode3",
+        "standByLight",
         "storeMode",
         "syncMode",
         "wallPaperSettings",
@@ -2205,7 +2244,6 @@
         "soundPlus",
         "speakToTv",
         "specialRemote",
-        "standByLight",
         "storeHDR",
         "storeLogo",
         "storeMode2",
@@ -2236,26 +2274,32 @@
       "descripteurs": {},
       "erreurs": [],
       "lisibles": {
+        "444BypassHDMI1": "off",
+        "444BypassHDMI2": "off",
+        "444BypassHDMI3": "off",
+        "444BypassHDMI4": "off",
         "simplinkEnable": "on",
         "ueiEnable": "on",
+        "uhdDeepColor": "4k",
         "uhdDeepColorHDMI1": "off",
         "uhdDeepColorHDMI2": "off",
         "uhdDeepColorHDMI3": "off",
         "uhdDeepColorHDMI4": "off"
       },
       "rejetees_desc": [
+        "444BypassHDMI1",
+        "444BypassHDMI2",
+        "444BypassHDMI3",
+        "444BypassHDMI4",
         "simplinkEnable",
         "ueiEnable",
+        "uhdDeepColor",
         "uhdDeepColorHDMI1",
         "uhdDeepColorHDMI2",
         "uhdDeepColorHDMI3",
         "uhdDeepColorHDMI4"
       ],
       "rejetees_lecture": [
-        "444BypassHDMI1",
-        "444BypassHDMI2",
-        "444BypassHDMI3",
-        "444BypassHDMI4",
         "444BypassHDMINone",
         "activeArtisticDisplayScreenSaver",
         "amazonHotkeyIsActive",
@@ -2409,7 +2453,6 @@
         "supportBnoModel",
         "svcMenuFlag",
         "touchRemoteLaunchMode",
-        "uhdDeepColor",
         "uhdDeepColor8kHDMI1",
         "uhdDeepColor8kHDMI2",
         "uhdDeepColor8kHDMI3",
@@ -2429,6 +2472,7 @@
         "backlight": {
           "account": false,
           "category": "picture",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "input",
@@ -2457,6 +2501,7 @@
         "brightness": {
           "account": false,
           "category": "picture",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "input",
@@ -2484,6 +2529,7 @@
         "color": {
           "account": false,
           "category": "picture",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "input",
@@ -2511,6 +2557,7 @@
         "contrast": {
           "account": false,
           "category": "picture",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "input",
@@ -2538,6 +2585,7 @@
         "eyeComfortMode": {
           "account": false,
           "category": "picture",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "eyeComfortMode",
@@ -2569,6 +2617,7 @@
         "pictureMode": {
           "account": false,
           "category": "picture",
+          "dataType": "",
           "dbtype": "G",
           "dimension": [
             "input",
@@ -2673,6 +2722,21 @@
               },
               {
                 "active": true,
+                "value": "creator",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "hdrCreator",
+                "visible": false
+              },
+              {
+                "active": true,
+                "value": "dolbyHdrCreator",
+                "visible": false
+              },
+              {
+                "active": true,
                 "value": "hdrFilmMaker",
                 "visible": false
               },
@@ -2719,6 +2783,7 @@
         "sharpness": {
           "account": false,
           "category": "picture",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "input",
@@ -2782,7 +2847,7 @@
           0,
           0
         ],
-        "backlight": 0,
+        "backlight": "50",
         "blackLevel": {
           "ntsc": "auto",
           "ntsc443": "auto",
@@ -2815,8 +2880,8 @@
         "colorManagementSaturationMagenta": 0,
         "colorManagementSaturationRed": 0,
         "colorManagementSaturationYellow": 0,
-        "colorTemperature": -40,
-        "contrast": 100,
+        "colorTemperature": "-40",
+        "contrast": 80,
         "dynamicColor": "off",
         "dynamicContrast": "off",
         "energySaving": "off",
@@ -2827,7 +2892,7 @@
         "mpegNoiseReduction": "off",
         "noiseReduction": "off",
         "peakBrightness": "off",
-        "pictureMode": "expert2",
+        "pictureMode": "filmMaker",
         "realCinema": "on",
         "sharpness": 0,
         "smoothGradation": "off",
@@ -3131,13 +3196,14 @@
           "condition": {
             "hdmiSwitchIC": "none"
           },
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [],
           "key": "eArcSupport",
           "ui": {
             "active": true,
             "displayName": "eArcSupport",
-            "visible": false,
+            "visible": true,
             "widget": "None"
           },
           "valueCheck": true,
@@ -3162,6 +3228,7 @@
         "soundOutput": {
           "account": false,
           "category": "sound",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "audioOutput"
@@ -3291,6 +3358,7 @@
           "account": false,
           "app_id": "",
           "category": "sound",
+          "dataType": "string",
           "dbtype": "G",
           "dimension": [
             "audioInput"
@@ -3333,7 +3401,9 @@
         "avSync": "on",
         "avSyncBypassInput": "off",
         "avSyncSpdif": "0",
+        "digitalAudioPriority": "auto",
         "eArcSupport": "on",
+        "lgSoundSync": "off",
         "soundMode": "standard",
         "soundOutput": "external_arc",
         "soundOutputDigital": "passThrough",
@@ -3343,6 +3413,8 @@
         "avSync",
         "avSyncBypassInput",
         "avSyncSpdif",
+        "digitalAudioPriority",
+        "lgSoundSync",
         "soundMode",
         "tvSetupConfiguration"
       ],
@@ -3376,7 +3448,6 @@
         "deviceCntOfBtGeneral",
         "dialogEnhancementAtsc30",
         "dialogEnhancementVolumeAtsc30",
-        "digitalAudioPriority",
         "display",
         "equalizerStatus",
         "forceOutputDDPLUS",
@@ -3394,7 +3465,6 @@
         "inputAudioFormatHDMI4",
         "inputAudioFormatUSBC1",
         "inputAudioFormatUSBC2",
-        "lgSoundSync",
         "magicSoundModified",
         "magicSoundTime",
         "magicSpaceSound",
@@ -3472,7 +3542,11 @@
       "descripteurs": {},
       "erreurs": [],
       "lisibles": {
+        "autoOff2HourOnTimer": "on",
+        "automaticStandBy": "4",
+        "offTimerEnable": "off",
         "onTimerVolume": "10",
+        "timeOffset": "GMT+1",
         "timeZone": {
           "City": "Paris",
           "Country": "France",
@@ -3485,7 +3559,11 @@
         }
       },
       "rejetees_desc": [
+        "autoOff2HourOnTimer",
+        "automaticStandBy",
+        "offTimerEnable",
         "onTimerVolume",
+        "timeOffset",
         "timeZone"
       ],
       "rejetees_lecture": [
@@ -3493,14 +3571,12 @@
         "autoClock",
         "autoDeleteMode",
         "autoOff15Min",
-        "autoOff2HourOnTimer",
         "autoPowerOff",
         "autoPowerOff2Hour",
         "autoPowerOff2HourMute",
         "autoRecStorageValue",
         "autoRecordMode",
         "autoUploadMode",
-        "automaticStandBy",
         "continuePlayMode",
         "daylightSaving",
         "dpmsAutoOff",
@@ -3509,7 +3585,6 @@
         "noMenuAutoOff15Min",
         "noOperationAutoOff",
         "noSignalAutoOff",
-        "offTimerEnable",
         "offTimerFlag",
         "offTimerHour",
         "offTimerMinute",
@@ -3565,7 +3640,6 @@
         "sleepTimer",
         "starttime",
         "stopRecordValue",
-        "timeOffset",
         "timemachineMode",
         "tsStorageValue",
         "warmTimerEnable",
@@ -3683,11 +3757,11 @@
     }
   },
   "contexte": {
-    "pictureMode": "expert2"
+    "pictureMode": "filmMaker"
   },
   "firmware": {
-    "major_ver": "33",
-    "minor_ver": "31.68",
-    "product_name": "webOSTV 25"
+    "major_ver": null,
+    "minor_ver": null,
+    "product_name": null
   }
 }

@@ -77,3 +77,52 @@ natif, qui est accepté.
 **Correction.** `backend/app/arbre.py` exempte désormais `parentalControl`
 de la conversion automatique (`CLES_BOOLEENNES_NATIVES`). Aucune autre clé
 de ce type n'a été identifiée à ce jour.
+
+## 5. Firmware 43.21.77 (webOS 11.2) : appairage rejeté, écriture interdite
+
+**Constat (24/09/2026).** Après la mise à jour du téléviseur en 43.21.77
+(webOS 11.2.0, otaID inchangé `HE_DTV_W25O_AFABATAA`), l'app journalisait
+`401 insufficient permissions (not registered)` sur chaque abonnement et
+n'affichait plus aucune valeur.
+
+**Cause.** La passerelle SSAP (`com.webos.service.secondscreen.gateway`)
+embarque désormais une liste noire de signatures de manifeste
+(`blacklist.json`, version 1.0.1 du 2026-01-27, actualisable depuis les
+serveurs LG). Elle contient la signature `test-signing-cert` du manifeste
+par défaut de bscpylgtv — celui que presque tous les clients
+communautaires réutilisent. Réponse brute au `register`, avec ou sans clé :
+`403 Pairing rejected: blacklisted certificate detected`. bscpylgtv 0.5.2
+ignore cette erreur (il garde l'ancienne clé et déclare la connexion
+établie), d'où les `401 not registered` en aval.
+
+**Ce qui reste permis.** Un manifeste **non signé** est accepté : la
+passerelle n'en retient que les permissions dont le niveau d'accès n'est pas
+`SECURE` (`client-profile.js`, `loadUnsignedProperties`) :
+
+| Méthode | Permission | Niveau | Manifeste non signé |
+|---|---|---|---|
+| `settings/getSystemSettings`, `getSystemSettingDesc`, abonnements | `READ_SETTINGS` | PROTECTED | accordée |
+| `settings/setSystemSettings`, `resetSystemSettings` | `WRITE_SETTINGS` | SECURE | **refusée** (`401 insufficient permissions`) |
+| `system.notifications/createAlert` (contournement des scripts HA) | `WRITE_NOTIFICATION_ALERT` | SECURE | refusée |
+| `com.webos.service.update/getCurrentSWInformation` | `READ_UPDATE_INFO` | SECURE | refusée |
+
+Vérifié sur le téléviseur (`backend/scripts/diag_enregistrement.py`) :
+appairage accepté à l'écran, lecture de `picture` conforme, écriture
+refusée. L'ancienne clé d'appairage reste valable avec le nouveau manifeste
+(pas de nouvelle demande à l'écran). La demande d'appairage expire au bout
+de 120 s (`403 cancelled`). Le `hello` SSAP ne reçoit plus de réponse.
+
+**Correction.** L'app s'appaire avec son propre manifeste non signé
+(`backend/app/manifeste-ssap.json`) et vérifie à chaque connexion :
+l'enregistrement (sonde de lecture ; en cas de refus, nouvelle demande
+d'appairage espacée de `APPAIRAGE_DELAI_S`) et la permission d'écriture
+(sonde `setSystemSettings` sur une clé hors liste, rejetée par l'adaptateur
+avant toute écriture si la permission est accordée). Sans permission,
+l'app passe en **mode consultation** : lecture et temps réel, historique des
+changements faits à la télécommande, capture de presets ; modification,
+application de preset et retour arrière désactivés (API : 403). Si un
+firmware ultérieur rouvre la permission, l'écriture se réactive seule.
+
+Contournement écarté : réutiliser une autre signature LG non encore
+blacklistée — révocation volontaire de LG, liste noire actualisable à
+distance, solution sans garantie de durée.

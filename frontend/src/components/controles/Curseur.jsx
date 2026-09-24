@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const DELAI_ENVOI_MS = 300
 
-export default function Curseur({ entree, valeur, onEcrire }) {
+export default function Curseur({ entree, valeur, ecriture = true, onEcrire }) {
   const bornes = entree.bornes || { min: 0, max: 100, pas: 1 }
   const [local, setLocal] = useState(valeur)
   const minuteur = useRef(null)
@@ -28,6 +28,7 @@ export default function Curseur({ entree, valeur, onEcrire }) {
         max={bornes.max}
         step={bornes.pas || 1}
         value={local}
+        disabled={!ecriture}
         onChange={(e) => changer(e.target.value)}
       />
       <span className="valeur-curseur">{local}</span>

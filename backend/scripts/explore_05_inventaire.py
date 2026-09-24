@@ -79,7 +79,12 @@ async def main() -> None:
     client = await make_client()
 
     inventory: dict = {"categories": {}}
-    software = await client.get_software_info()
+    try:
+        software = await client.get_software_info()
+    except PyLGTVCmdError:
+        # Depuis webOS 11, READ_UPDATE_INFO est SECURE : refusé au manifeste
+        # non signé. La version est alors relevée à la main (EPK, menu TV).
+        software = {}
     inventory["firmware"] = {
         "product_name": software.get("product_name"),
         "major_ver": software.get("major_ver"),

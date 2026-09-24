@@ -10,7 +10,12 @@ from typing import Any
 from . import arbre
 from .historique import Historique
 from .presets import PresetInconnu, Presets
-from .televiseur import ConnexionTvPerdue, EcritureRefusee, Televiseur
+from .televiseur import (ConnexionTvPerdue, EcritureImpossible, EcritureRefusee,
+                         Televiseur)
+
+# Raison renvoyée quand le téléviseur n'accorde pas l'écriture (webOS 11).
+RAISON_ECRITURE_IMPOSSIBLE = ("modification impossible : le téléviseur n'autorise "
+                              "plus l'écriture des réglages par l'API (webOS 11)")
 
 
 async def ecrire(tv: Televiseur, historique: Historique, entree_id: str | None,
@@ -37,6 +42,8 @@ async def ecrire(tv: Televiseur, historique: Historique, entree_id: str | None,
         resultat = await tv.ecrire(categorie, cle, valeur)
     except ConnexionTvPerdue:
         return {**base, "ok": False, "raison": "téléviseur injoignable"}
+    except EcritureImpossible:
+        return {**base, "ok": False, "raison": RAISON_ECRITURE_IMPOSSIBLE}
     except EcritureRefusee as exc:
         return {**base, "ok": False, "raison": f"refusée par le téléviseur : {exc}"}
     if not resultat["confirme"]:

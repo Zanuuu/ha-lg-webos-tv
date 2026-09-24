@@ -6,7 +6,7 @@ import Liste from './controles/Liste.jsx'
 import NonPilotable from './controles/NonPilotable.jsx'
 import Texte from './controles/Texte.jsx'
 
-export default function LigneReglage({ entree, reglages, onEcrire, onEntrer }) {
+export default function LigneReglage({ entree, reglages, lectureSeule, onEcrire, onEntrer }) {
   const [erreur, setErreur] = useState(null)
   const api = entree.api
 
@@ -31,6 +31,7 @@ export default function LigneReglage({ entree, reglages, onEcrire, onEntrer }) {
   const valeur = valeurDe(reglages, api)
   const pilotable = estPilotable(api)
   const lisible = estLisible(api)
+  const ecriture = pilotable && !lectureSeule
 
   return (
     <div className="ligne-reglage">
@@ -40,15 +41,15 @@ export default function LigneReglage({ entree, reglages, onEcrire, onEntrer }) {
           if (!lisible) return <NonPilotable />
           switch (entree.controle) {
             case 'curseur':
-              return <Curseur entree={entree} valeur={valeur} onEcrire={ecrire} />
+              return <Curseur entree={entree} valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
             case 'liste':
-              return <Liste entree={entree} valeur={valeur} ecriture={pilotable} onEcrire={ecrire} />
+              return <Liste entree={entree} valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
             case 'interrupteur':
               return pilotable
-                ? <Interrupteur valeur={valeur} onEcrire={ecrire} />
+                ? <Interrupteur valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
                 : <span className="valeur-lecture-seule">{String(valeur)}</span>
             case 'texte':
-              return <Texte valeur={valeur} ecriture={pilotable} onEcrire={ecrire} />
+              return <Texte valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
             default:
               return <NonPilotable />
           }

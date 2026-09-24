@@ -7,6 +7,7 @@
   --accent: #4dabf7;
   --erreur: #ff6b6b;
   --succes: #51cf66;
+  --avertissement: #f7c948;
 }
 
 * {
@@ -80,7 +81,24 @@ body {
 }
 
 .indicateur-connexion:not(.indicateur-connecte):not(.indicateur-deconnecte) .puce {
-  background: #f7c948;
+  background: var(--avertissement);
+}
+
+/* Mode consultation (webOS 11 refuse l'écriture) : bandeau sous l'en-tête. */
+.bandeau-consultation {
+  margin: 0;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--bordure);
+  border-left: 3px solid var(--avertissement);
+  background: var(--panneau);
+  color: var(--texte);
+  font-size: 0.9rem;
+}
+
+.controle-curseur input[type="range"]:disabled,
+.interrupteur:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .corps {
