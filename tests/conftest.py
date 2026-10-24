@@ -26,7 +26,7 @@ class FauxClient:
         self.valeurs = {
             "picture": {
                 "sharpness": 10, "contrast": 100, "backlight": 80,
-                "pictureMode": "expert2", "energySaving": "off",
+                "pictureMode": "expert2", "energySaving": "off", "motionEyeCare": "off",
             },
             "sound": {"soundMode": "standard", "eArcSupport": "on"},
         }
@@ -133,7 +133,12 @@ def faux_client():
 def televiseur(faux_client):
     async def fabrique():
         return faux_client
-    return Televiseur(hote="test", client_key="cle", fabrique_client=fabrique)
+    tv = Televiseur(hote="test", client_key="cle", fabrique_client=fabrique)
+    # Écritures refusées par le pont d'alerte : pas de notification, la
+    # relecture de secours doit trancher vite en test.
+    tv.delai_notification = 0.05
+    tv.intervalle_relecture = 0
+    return tv
 
 
 @pytest.fixture

@@ -5,7 +5,9 @@
       "user": {
         "title": "TV address",
         "description": "IP address or host name of the LG TV. A fixed address (DHCP reservation) is recommended.",
-        "data": {"host": "Address"}
+        "data": {
+          "host": "Address"
+        }
       },
       "confirmer_decouverte": {
         "title": "TV discovered",
@@ -17,7 +19,9 @@
       },
       "reconfigure": {
         "title": "Change the TV address",
-        "data": {"host": "Address"}
+        "data": {
+          "host": "Address"
+        }
       }
     },
     "progress": {
@@ -31,6 +35,32 @@
       "cannot_connect": "TV address missing from the network announcement.",
       "reauth_successful": "Pairing renewed.",
       "reconfigure_successful": "Address updated."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connexion": {
+        "name": "TV connection"
+      },
+      "ecriture_impossible": {
+        "name": "Settings write unavailable"
+      }
+    },
+    "sensor": {
+      "voie_ecriture": {
+        "name": "Write path",
+        "state": {
+          "ssap": "Direct (setSystemSettings)",
+          "alerte": "Alert bridge (createAlert)",
+          "aucune": "None (read-only)"
+        }
+      }
+    }
+  },
+  "issues": {
+    "ecriture_impossible": {
+      "title": "The TV refuses settings changes",
+      "description": "The TV no longer grants the integration any way to write settings, probably after a software update. Settings remain readable in real time but can no longer be changed from Home Assistant. Writing will come back by itself if a later software version allows it again."
     }
   }
 }

@@ -55,9 +55,11 @@ ALERTE_SONDE = "sondePermissionAlerte"
 # closeAlert est resté une fois sans réponse sur 43.21.71 (bscpylgtv PR #9) ;
 # la relecture tranche de toute façon.
 DELAI_ALERTE_S = 5.0
-# L'appel luna est muet et asynchrone : la valeur est visible à la relecture
-# en moins de 0,5 s sur 43.21.77 ; une valeur refusée (hors plage) ne
-# l'est jamais.
+# L'appel luna est muet et asynchrone. La notification d'abonnement portant
+# la nouvelle valeur arrive ≈ 0,1 s après l'appel (43.21.77, docs/rapport-
+# api.md phase 7) : c'est elle qui confirme. Sans notification (valeur
+# identique à l'actuelle, ou refusée car hors plage), la relecture tranche.
+DELAI_NOTIFICATION_S = 1.0
 RELECTURES_ALERTE = 6
 INTERVALLE_RELECTURE_S = 0.5
 
@@ -174,6 +176,10 @@ class Televiseur:
         # "ssap" (setSystemSettings direct) ou "alerte" (pont createAlert).
         self.voie_ecriture: str | None = None
         self.intervalle_relecture = INTERVALLE_RELECTURE_S
+        self.delai_notification = DELAI_NOTIFICATION_S
+        # Écritures en attente de leur notification : (catégorie, clé) →
+        # [(valeur attendue, futur)].
+        self._attentes: dict[tuple[str, str], list[tuple[Any, asyncio.Future]]] = {}
 
     # ------------------------------------------------------------------ cycle
     async def _creer_client(self):
@@ -346,6 +352,7 @@ class Televiseur:
         delta: dict[str, Any] = {}
         for cle, valeur in reglages.items():
             valeur = _normaliser(cache.get(cle), valeur)
+            self._resoudre_attentes(categorie, cle, valeur)
             if cache.get(cle) != valeur:
                 cache[cle] = valeur
                 delta[cle] = valeur
@@ -353,6 +360,13 @@ class Televiseur:
             await self._diffuser({
                 "type": "changement", "categorie": categorie, "reglages": delta,
             })
+
+    def _resoudre_attentes(self, categorie: str, cle: str, valeur: Any) -> None:
+        for attendue, futur in self._attentes.get((categorie, cle), []):
+            # Comparaison textuelle : les notifications mêlent entiers et
+            # chaînes selon le mode d'image.
+            if str(attendue) == str(valeur) and not futur.done():
+                futur.set_result(None)
 
     # ------------------------------------------------------ lecture/écriture
     @property
@@ -429,19 +443,34 @@ class Televiseur:
         (hors plage, clé non acceptée) se traduit par une relecture
         inchangée, donc une écriture non confirmée.
         """
+        futur = asyncio.get_running_loop().create_future()
+        attentes = self._attentes.setdefault((categorie, cle), [])
+        attentes.append((valeur, futur))
         try:
-            await asyncio.wait_for(self.client.luna_request(LUNA_ECRITURE, charge),
-                                   timeout=DELAI_ALERTE_S)
-        except asyncio.TimeoutError:
-            log.warning("Pas de réponse à closeAlert pour %s.%s : vérification "
-                        "par relecture", categorie, cle)
-        relue = None
-        for _ in range(RELECTURES_ALERTE):
-            await asyncio.sleep(self.intervalle_relecture)
-            relue = (await self.lire(categorie, [cle])).get(cle)
-            if relue == valeur:
-                break
-        return relue
+            try:
+                await asyncio.wait_for(
+                    self.client.luna_request(LUNA_ECRITURE, charge),
+                    timeout=DELAI_ALERTE_S)
+            except asyncio.TimeoutError:
+                log.warning("Pas de réponse à closeAlert pour %s.%s : vérification "
+                            "par relecture", categorie, cle)
+            try:
+                await asyncio.wait_for(asyncio.shield(futur), self.delai_notification)
+                return self.etat.get(categorie, {}).get(cle)
+            except asyncio.TimeoutError:
+                pass
+            relue = None
+            for _ in range(RELECTURES_ALERTE):
+                relue = (await self.lire(categorie, [cle])).get(cle)
+                if relue == valeur:
+                    break
+                await asyncio.sleep(self.intervalle_relecture)
+            return relue
+        finally:
+            attentes.remove((valeur, futur))
+            if not attentes:
+                del self._attentes[(categorie, cle)]
+            futur.cancel()
 
 
 class ConnexionTvPerdue(Exception):

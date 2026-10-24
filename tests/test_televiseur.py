@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from bscpylgtv.exceptions import PyLGTVCmdError
 
@@ -121,7 +123,6 @@ async def test_permission_ecriture_refusee_passe_en_consultation(televiseur, fau
 async def test_ecriture_par_alerte_sous_webos_11(televiseur, faux_client):
     """webOS 11 : setSystemSettings refusé, écriture par le pont createAlert."""
     faux_client.permission_ecriture = False
-    televiseur.intervalle_relecture = 0
     await televiseur.demarrer()
     assert await attendre(lambda: televiseur.etat_connexion == "connecte")
     assert televiseur.instantane()["ecriture_possible"] is True
@@ -141,7 +142,6 @@ async def test_valeur_ignoree_par_alerte_non_confirmee(televiseur, faux_client):
     """Le pont est muet : une valeur refusée n'apparaît pas à la relecture."""
     faux_client.permission_ecriture = False
     faux_client.refuser.add(("picture", "contrast"))
-    televiseur.intervalle_relecture = 0
     await televiseur.demarrer()
     assert await attendre(lambda: televiseur.etat_connexion == "connecte")
     resultat = await televiseur.ecrire("picture", "contrast", 999)
@@ -213,3 +213,34 @@ async def test_appairer_echec(monkeypatch, client):
     with pytest.raises(module.AppairageEchoue):
         await module.appairer("test")
     assert client.deconnecte
+
+
+async def test_ecriture_par_alerte_confirmee_par_la_notification(televiseur, faux_client):
+    """La notification (≈ 0,1 s sur le vrai téléviseur) confirme sans
+    relecture, y compris quand elle porte la valeur en chaîne."""
+    faux_client.permission_ecriture = False
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    televiseur.delai_notification = 5.0  # la relecture ne doit pas servir
+
+    luna_origine = faux_client.luna_request
+
+    async def luna_notifie_en_chaine(uri, params):
+        await luna_origine(uri, {**params, "settings": {
+            cle: str(v) for cle, v in params["settings"].items()}})
+
+    faux_client.luna_request = luna_notifie_en_chaine
+    lectures = []
+    requete_origine = faux_client.request
+
+    async def espion(uri, payload=None):
+        lectures.append(uri)
+        return await requete_origine(uri, payload)
+
+    faux_client.request = espion
+    resultat = await asyncio.wait_for(televiseur.ecrire("picture", "sharpness", 25), 1.0)
+    assert resultat["confirme"] is True
+    assert resultat["nouvelle"] == 25
+    assert lectures == []
+    assert televiseur._attentes == {}
+    await televiseur.arreter()

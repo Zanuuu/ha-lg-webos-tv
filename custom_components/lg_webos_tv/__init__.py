@@ -7,14 +7,19 @@ from pathlib import Path
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 
-from . import arbre
+from . import restauration
 from .const import CONF_CLE_CLIENT, DOMAIN
+from .ecritures import FileEcritures
+from .entite import descriptions
 from .historique import Historique
 from .presets import Presets
 from .televiseur import Televiseur
 
-PLATFORMS: list[Platform] = []
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.NUMBER, Platform.SELECT,
+             Platform.SENSOR, Platform.SWITCH]
+PROBLEME_ECRITURE = "ecriture_impossible"
 
 
 @dataclass
@@ -22,6 +27,7 @@ class DonneesLgWebosTv:
     televiseur: Televiseur
     historique: Historique
     presets: Presets
+    ecritures: FileEcritures
 
 
 type LgWebosTvConfigEntry = ConfigEntry[DonneesLgWebosTv]
@@ -36,11 +42,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
         # Lectures disque (arbre, inventaire) et création des bases : hors
         # de la boucle d'événements.
         dossier.mkdir(exist_ok=True)
-        arbre.par_id()
+        descriptions()
+        televiseur = Televiseur(entry.data[CONF_HOST], entry.data[CONF_CLE_CLIENT])
+        historique = Historique(dossier / "historique.sqlite")
+
+        async def ecrire(entree_id, valeur):
+            return await restauration.ecrire_par_entree(
+                televiseur, historique, entree_id, valeur)
+
         return DonneesLgWebosTv(
-            televiseur=Televiseur(entry.data[CONF_HOST], entry.data[CONF_CLE_CLIENT]),
-            historique=Historique(dossier / "historique.sqlite"),
+            televiseur=televiseur, historique=historique,
             presets=Presets(dossier / "presets.sqlite"),
+            ecritures=FileEcritures(ecrire),
         )
 
     donnees = await hass.async_add_executor_job(construire)
@@ -49,6 +62,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
     async def sur_evenement(evenement: dict) -> None:
         if evenement == {"type": "connexion", "etat": "appairage_requis"}:
             entry.async_start_reauth(hass)
+        elif evenement["type"] == "ecriture":
+            # Visible dans Réparations : un firmware peut fermer la voie
+            # d'écriture (docs/incidents-ecriture.md § 7, limites).
+            if evenement["possible"]:
+                ir.async_delete_issue(hass, DOMAIN, PROBLEME_ECRITURE)
+            else:
+                ir.async_create_issue(
+                    hass, DOMAIN, PROBLEME_ECRITURE, is_fixable=False,
+                    severity=ir.IssueSeverity.WARNING,
+                    translation_key=PROBLEME_ECRITURE)
 
     donnees.televiseur.abonner(sur_evenement)
 
@@ -64,5 +87,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
 async def async_unload_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -> bool:
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
+    await entry.runtime_data.ecritures.arreter()
     await entry.runtime_data.televiseur.arreter()
     return True

@@ -5,7 +5,9 @@
       "user": {
         "title": "Adresse du téléviseur",
         "description": "Adresse IP ou nom d'hôte du téléviseur LG. Une adresse fixe (réservation DHCP) est recommandée.",
-        "data": {"host": "Adresse"}
+        "data": {
+          "host": "Adresse"
+        }
       },
       "confirmer_decouverte": {
         "title": "Téléviseur découvert",
@@ -17,7 +19,9 @@
       },
       "reconfigure": {
         "title": "Changer l'adresse du téléviseur",
-        "data": {"host": "Adresse"}
+        "data": {
+          "host": "Adresse"
+        }
       }
     },
     "progress": {
@@ -31,6 +35,32 @@
       "cannot_connect": "Adresse du téléviseur introuvable dans l'annonce réseau.",
       "reauth_successful": "Appairage renouvelé.",
       "reconfigure_successful": "Adresse mise à jour."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connexion": {
+        "name": "Connexion au téléviseur"
+      },
+      "ecriture_impossible": {
+        "name": "Écriture des réglages impossible"
+      }
+    },
+    "sensor": {
+      "voie_ecriture": {
+        "name": "Voie d'écriture",
+        "state": {
+          "ssap": "Directe (setSystemSettings)",
+          "alerte": "Pont d'alerte (createAlert)",
+          "aucune": "Aucune (consultation)"
+        }
+      }
+    }
+  },
+  "issues": {
+    "ecriture_impossible": {
+      "title": "Le téléviseur refuse l'écriture des réglages",
+      "description": "Le téléviseur n'accorde plus aucune voie d'écriture à l'intégration, probablement après une mise à jour de son logiciel. Les réglages restent consultables en temps réel, mais ne peuvent plus être modifiés depuis Home Assistant. L'écriture se réactivera d'elle-même si un logiciel ultérieur la rouvre."
     }
   }
 }
