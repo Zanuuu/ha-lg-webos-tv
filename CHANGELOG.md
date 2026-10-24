@@ -14,6 +14,8 @@
   - Contenus HDR / Dolby Vision et modes inconnus du menu laissés de côté.
   - Pause conservée au redémarrage de Home Assistant.
 - Historique : origine « Luminosité adaptative ».
+- L'ancienne app (add-on 1.x) est retirée du dépôt : le dépôt d'add-ons
+  ne la propose plus. Ses scripts de diagnostic passent dans `outils/`.
 
 ## 2.0.0 — 2026-10-24
 

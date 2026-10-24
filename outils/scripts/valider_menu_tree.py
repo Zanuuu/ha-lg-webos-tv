@@ -7,7 +7,7 @@ from pathlib import Path
 
 import jsonschema
 
-ROOT = Path(__file__).resolve().parents[3] / "custom_components" / "lg_webos_tv" / "menu_tree"
+ROOT = Path(__file__).resolve().parents[2] / "custom_components" / "lg_webos_tv" / "menu_tree"
 
 
 def iter_entrees(entree, parents=()):

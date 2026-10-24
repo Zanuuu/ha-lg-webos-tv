@@ -8,7 +8,7 @@
 - Bibliothèque : bscpylgtv 0.5.2, connexion SSAP en WebSocket TLS (port 3001)
 
 Toute mise à jour du firmware impose de refaire l'inventaire : relancer les
-scripts `backend/scripts/explore_*.py` (voir méthodologie).
+scripts `outils/scripts/explore_*.py` (voir méthodologie).
 
 ### Mise à jour 43.21.77 (webOS 11.2) — 24 septembre 2026
 
@@ -154,7 +154,7 @@ référence exacte pour ces clés.
 ## Phase 7, étape 0 : origine des changements et cadence d'écriture (24/10/2026)
 
 Firmware 43.21.77, mode d'image Vif, script
-`lg_webos_tv/backend/scripts/diag_origine.py`.
+`outils/scripts/diag_origine.py`.
 
 **Connexion avec la seule clé client.** `WebOsClient.create(…, client_key=…)`
 sans `key_file_path` : connexion et lecture conformes, le stockage

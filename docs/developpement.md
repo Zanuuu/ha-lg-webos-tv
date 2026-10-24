@@ -30,10 +30,10 @@ Le dépôt est une **intégration Home Assistant distribuée par HACS**
   (`pytest-homeassistant-custom-component`).
 - `docs/` : notes de développement (exploration de l'API, incidents
   d'écriture, écarts entre firmwares).
-- `lg_webos_tv/` et `repository.yaml` : ancienne app (add-on) 1.3.0, gelée,
-  à retirer. Ses scripts d'exploration et de diagnostic
-  (`lg_webos_tv/backend/scripts/`) restent utiles et lisent les données de
-  l'intégration.
+- `outils/scripts/` : scripts d'exploration et de diagnostic du téléviseur,
+  hérités de l'ancienne app (add-on, retirée en 2.1.0) ; ils lisent l'arbre,
+  l'inventaire et le manifeste de l'intégration. `outils/data/` (hors git) :
+  clé d'appairage de développement, copies du firmware, guide LG.
 
 ## Environnement
 
@@ -57,8 +57,12 @@ Le build doit être refait et commité à chaque modification de
 `frontend/src/`. Le panneau n'a pas de mode autonome : il lui faut l'objet
 `hass` de Home Assistant (voir « Panneau » ci-dessous pour le tester).
 
-Arborescence : `lg_webos_tv/backend/.venv/bin/python
-lg_webos_tv/backend/scripts/valider_menu_tree.py`.
+Scripts d'`outils/`, dans le même venv :
+
+```bash
+uv pip install --python .venv -r outils/requirements.txt
+.venv/bin/python outils/scripts/valider_menu_tree.py   # arborescence
+```
 
 ## Publier une version
 
@@ -74,11 +78,11 @@ lg_webos_tv/backend/scripts/valider_menu_tree.py`.
    l'entité diagnostic « Voie d'écriture » ; une demande de réauthentification
    signale une clé d'appairage refusée.
 2. Diagnostic sans Home Assistant :
-   `cd lg_webos_tv/backend && LG_TV_HOST=<ip> .venv/bin/python
-   scripts/diag_enregistrement.py` (réponses brutes au `register`, sondes
-   lecture/écriture), `scripts/diag_alerte.py` (pont d'alerte),
-   `scripts/diag_origine.py` (champ `caller`, cadence d'écriture).
-3. Relancer l'inventaire (`scripts/explore_05_inventaire.py`) et comparer
+   `LG_TV_HOST=<ip> .venv/bin/python outils/scripts/diag_enregistrement.py`
+   (réponses brutes au `register`, sondes lecture/écriture),
+   `outils/scripts/diag_alerte.py` (pont d'alerte),
+   `outils/scripts/diag_origine.py` (champ `caller`, cadence d'écriture).
+3. Relancer l'inventaire (`outils/scripts/explore_05_inventaire.py`) et comparer
    `custom_components/lg_webos_tv/inventaire-api.json` à sa version
    précédente : une clé disparue ferait rejeter toute sa catégorie à
    l'abonnement.

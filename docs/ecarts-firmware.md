@@ -3,7 +3,7 @@
 Croisement de l'arbre des menus (transcrit depuis le guide webOS 25)
 avec l'app Réglages du firmware installé (`com.palm.app.settings` :
 bundle `main.js` + traductions françaises `strings.json`).
-Généré par `backend/scripts/croiser_firmware.py`.
+Généré par `outils/scripts/croiser_firmware.py`.
 
 ## Écarts notables guide → firmware
 

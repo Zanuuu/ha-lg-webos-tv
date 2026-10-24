@@ -18,7 +18,7 @@ from bscpylgtv.exceptions import PyLGTVCmdError, PyLGTVServiceNotFoundError
 from common import make_client
 
 CANDIDATES_FILE = Path(__file__).parent / "candidats.json"
-OUTPUT_FILE = Path(__file__).resolve().parents[3] / "custom_components" / "lg_webos_tv" / "inventaire-api.json"
+OUTPUT_FILE = Path(__file__).resolve().parents[2] / "custom_components" / "lg_webos_tv" / "inventaire-api.json"
 BATCH_SIZE = 20
 REQUEST_TIMEOUT = 15
 

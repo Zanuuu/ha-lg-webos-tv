@@ -12,7 +12,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-ROOT = Path(__file__).resolve().parent.parent.parent
+ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "data" / "guide-webos25-fre.html"
 DST = ROOT / "data" / "guide-chapitre6.json"
 

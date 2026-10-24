@@ -106,7 +106,7 @@ passerelle n'en retient que les permissions dont le niveau d'accès n'est pas
 | `system.notifications/createAlert`, `closeAlert` | `WRITE_NOTIFICATION_TOAST` | PROTECTED | accordée (rectifié le 24/10/2026, cf. § 7) |
 | `com.webos.service.update/getCurrentSWInformation` | `READ_UPDATE_INFO` | SECURE | refusée |
 
-Vérifié sur le téléviseur (`backend/scripts/diag_enregistrement.py`) :
+Vérifié sur le téléviseur (`outils/scripts/diag_enregistrement.py`) :
 appairage accepté à l'écran, lecture de `picture` conforme, écriture
 refusée. L'ancienne clé d'appairage reste valable avec le nouveau manifeste
 (pas de nouvelle demande à l'écran). La demande d'appairage expire au bout
@@ -188,7 +188,7 @@ rootfs 10.3.1 extrait) exigent en réalité `WRITE_NOTIFICATION_TOAST`, de
 niveau **PROTECTED**, donc retenue pour un manifeste non signé. Le
 manifeste de l'app ne la demandait pas.
 
-**Vérifié sur le téléviseur** (`backend/scripts/diag_alerte.py`, firmware
+**Vérifié sur le téléviseur** (`outils/scripts/diag_alerte.py`, firmware
 43.21.77, mode d'image Vif) :
 
 | Essai | Résultat |

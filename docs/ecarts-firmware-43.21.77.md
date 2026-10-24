@@ -4,7 +4,7 @@ Relevé du 24/09/2026. Firmware `lib32-starfish-global-secured-o24n-qilian-3706-
 otaID `HE_DTV_W25O_AFABATAA` (même plateforme G5), webOS **11.2.0**
 (33.31.68 : webOS 10.3.1). Extraction dans une copie locale hors dépôt
 (clé AES `o24n`, même chaîne que `COMPTE-RENDU-extraction.md`) ; copies utiles
-dans `data/firmware/43.21.77/` (hors git).
+dans `outils/data/firmware/43.21.77/` (hors git).
 
 `docs/ecarts-firmware.md` reste le rapport généré par `croiser_firmware.py`
 pour le 33.31.68 ; ce fichier-ci est rédigé à la main et **ne modifie pas
@@ -80,7 +80,7 @@ une référence suffisante pour ces sections.
 ## Méthode (reproductible)
 
 - `valid-settings.js` : diff direct entre les deux rootfs.
-- Inventaire : `backend/scripts/explore_05_inventaire.py` (manifeste non
+- Inventaire : `outils/scripts/explore_05_inventaire.py` (manifeste non
   signé ; la version logicielle n'est plus lisible, cf. § 1).
 - App Réglages : `analyser_firmware.py` exécuté sur chaque bundle depuis
   une copie aux chemins adaptés (le script cible le 33.31.68), puis

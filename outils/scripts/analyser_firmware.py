@@ -23,7 +23,7 @@ import json
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent
+ROOT = Path(__file__).resolve().parent.parent
 BUNDLE = ROOT / "data" / "firmware" / "settings-main.js"
 STRINGS = ROOT / "data" / "firmware" / "settings-strings-fr.json"
 CANDIDATES = Path(__file__).parent / "candidats.json"

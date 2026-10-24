@@ -6,7 +6,7 @@ Fichiers JSON déclaratifs décrivant le menu Réglages du LG OLED G5
 ## Sources et méthode (phase 2)
 
 1. **Passe 1** : transcription depuis le guide d'utilisation LG webOS 25
-   français (copie locale : `data/guide-webos25-fre.html`, source
+   français (copie locale : `outils/data/guide-webos25-fre.html`, source
    `kr.eguide.lgappstv.com/manual/w25/`, chapitre 6 « Paramètres »).
    Libellés et descriptions repris à l'identique. L'arborescence suit les
    chemins de menu indiqués dans le guide (« Entrez le chemin suivant »),
