@@ -26,7 +26,7 @@ non retenu. (Conclusion dépassée par le pont `createAlert`, § 7.)
 ## 2. Clés lisibles (`valid-settings.js`, inventaire relancé)
 
 Aucune clé retirée. Clés ajoutées à la liste publique, confirmées lisibles
-sur le téléviseur (`lg_webos_tv/backend/app/inventaire-api.json`) :
+sur le téléviseur (`custom_components/lg_webos_tv/inventaire-api.json`) :
 
 | Catégorie | Nouvelles clés |
 |---|---|

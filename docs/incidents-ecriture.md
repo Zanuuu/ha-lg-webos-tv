@@ -47,7 +47,7 @@ besoin se présente, avec une confirmation explicite dans l'interface le cas
 **Constat.** L'entrée « Plage vidéo » avait été rapprochée d'un choix simple
 (auto/low/high), mais l'API renvoie et attend en réalité un **objet** avec
 une valeur par norme de diffusion (`{"ntsc": "auto", "pal": "auto", …}`),
-comme déjà noté dans `lg_webos_tv/backend/app/inventaire-api.json` en phase 1. L'écriture d'une
+comme déjà noté dans `custom_components/lg_webos_tv/inventaire-api.json` en phase 1. L'écriture d'une
 valeur simple a été rejetée côté validation avant même d'atteindre le
 téléviseur.
 
@@ -113,7 +113,7 @@ refusée. L'ancienne clé d'appairage reste valable avec le nouveau manifeste
 de 120 s (`403 cancelled`). Le `hello` SSAP ne reçoit plus de réponse.
 
 **Correction.** L'app s'appaire avec son propre manifeste non signé
-(`backend/app/manifeste-ssap.json`) et vérifie à chaque connexion :
+(`custom_components/lg_webos_tv/manifeste-ssap.json`) et vérifie à chaque connexion :
 l'enregistrement (sonde de lecture ; en cas de refus, nouvelle demande
 d'appairage espacée de `APPAIRAGE_DELAI_S`) et la permission d'écriture
 (sonde `setSystemSettings` sur une clé hors liste, rejetée par l'adaptateur

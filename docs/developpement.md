@@ -2,96 +2,112 @@
 
 ## Structure du dépôt
 
-Le dépôt est un **dépôt d'apps (add-ons) Home Assistant** : `repository.yaml`
-à la racine, l'app dans `lg_webos_tv/` (`config.yaml` + `Dockerfile`,
-contexte de build = ce dossier). Le **Superviseur clone le dépôt et
-construit l'image localement** à l'installation : aucun registre d'images
-ni CI n'est nécessaire.
+Le dépôt est une **intégration Home Assistant distribuée par HACS**
+(`hacs.json` à la racine), publiée sur GitHub
+(« Publier une version » ci-dessous).
 
-- `lg_webos_tv/backend/` : service FastAPI (Python 3.12) et accès au
-  téléviseur (`app/televiseur.py`, seul module qui parle à la TV). Tests
-  pytest dans `tests/`, scripts d'exploration et de diagnostic dans
-  `scripts/`.
-- `lg_webos_tv/frontend/` : interface React / Vite.
-- `lg_webos_tv/menu-tree/` : arborescence des menus en JSON déclaratif
-  (voir son `README.md`).
+- `custom_components/lg_webos_tv/` : l'intégration, seule partie installée
+  par HACS.
+  - `televiseur.py` : seul module qui parle au téléviseur (bscpylgtv et
+    appels SSAP bruts) ; indépendant de Home Assistant, testable seul.
+  - `arbre.py`, `restauration.py`, `presets.py`, `historique.py` : arbre
+    des menus, écritures validées et historisées, presets, retour arrière.
+  - `ecritures.py` : file d'écriture coalescente, partagée par les entités,
+    les actions et le panneau.
+  - `entite.py` et plateformes (`number.py`, `select.py`…) : entités
+    dérivées de l'arbre.
+  - `services.py` (actions), `websocket.py` (API du panneau), `panneau.py`
+    (enregistrement du panneau), `config_flow.py`, `diagnostics.py`.
+  - `menu_tree/` : arborescence des menus en JSON déclaratif (voir son
+    `README.md`) ; `inventaire-api.json` : clés lisibles par catégorie,
+    lu au démarrage ; `manifeste-ssap.json` : manifeste d'appairage.
+  - `frontend/` : **build** du panneau (commité, pas de CI).
+- `frontend/` : sources React / Vite du panneau.
+- `blueprints/` : blueprints d'automatisation.
+- `tests/` : tests pytest sous Home Assistant
+  (`pytest-homeassistant-custom-component`).
 - `docs/` : notes de développement (exploration de l'API, incidents
   d'écriture, écarts entre firmwares).
+- `lg_webos_tv/` et `repository.yaml` : ancienne app (add-on) 1.3.0, gelée,
+  à retirer. Ses scripts d'exploration et de diagnostic
+  (`lg_webos_tv/backend/scripts/`) restent utiles et lisent les données de
+  l'intégration.
 
-`arch: [amd64]` uniquement pour l'instant.
+## Environnement
 
-## Lancer en local
-
-```bash
-cd lg_webos_tv/backend
-python3.12 -m venv .venv && .venv/bin/pip install -e '.[dev]'
-LG_TV_HOST=<ip-du-téléviseur> .venv/bin/python -m uvicorn app.main:app --reload
-
-cd lg_webos_tv/frontend
-npm install
-npm run dev      # ou npm run build : build servi par FastAPI
-```
-
-Sans `/data/options.json`, le service tourne en mode autonome (pas de
-filtrage Ingress) ; données locales dans `lg_webos_tv/data/` (hors git).
-Les scripts de `backend/scripts/` lisent aussi `LG_TV_HOST`.
-
-Le conteneur autonome reste utilisable hors Home Assistant :
-`docker-compose.yml` (volume `./data:/data`, variable `LG_TV_HOST`).
-
-## Tests
+Home Assistant 2026.10 exige Python 3.14 ; `uv` fournit l'interpréteur.
 
 ```bash
-cd lg_webos_tv/backend
+uv venv --python 3.14 .venv
+uv pip install --python .venv -r requirements-dev.txt
 .venv/bin/python -m pytest
-.venv/bin/python scripts/valider_menu_tree.py   # cohérence de l'arborescence
 ```
+
+Panneau (Node 22 ou plus) :
+
+```bash
+cd frontend
+npm install
+npm run build   # écrit dans custom_components/lg_webos_tv/frontend/
+```
+
+Le build doit être refait et commité à chaque modification de
+`frontend/src/`. Le panneau n'a pas de mode autonome : il lui faut l'objet
+`hass` de Home Assistant (voir « Panneau » ci-dessous pour le tester).
+
+Arborescence : `lg_webos_tv/backend/.venv/bin/python
+lg_webos_tv/backend/scripts/valider_menu_tree.py`.
 
 ## Publier une version
 
-1. Incrémenter `version:` dans `lg_webos_tv/config.yaml` et compléter
-   `lg_webos_tv/CHANGELOG.md`.
+1. Incrémenter `version` dans `custom_components/lg_webos_tv/manifest.json`
+   et compléter `CHANGELOG.md` ; refaire le build du panneau s'il a changé.
 2. Commiter et pousser sur `main`.
-3. Dans Home Assistant : Boutique → menu ⋮ → « Rechercher les mises à
-   jour », puis Mettre à jour sur la fiche de l'app (rebuild local). Le
-   Superviseur ne propose une mise à jour que si `version:` a changé.
-
-Les données de `/data` (historique, presets, clé d'appairage) survivent aux
-mises à jour ; elles sont supprimées à la désinstallation.
+3. Dans HACS : l'intégration → menu ⋮ → Mettre à jour (ou attendre la
+   détection), puis redémarrer Home Assistant.
 
 ## Après une mise à jour du firmware du téléviseur
 
-1. Lire le journal de l'app : un `401`/`403` à la connexion signale un
-   changement du protocole d'appairage ou des permissions.
-2. Diagnostic sans l'app : `cd lg_webos_tv/backend/scripts &&
-   LG_TV_HOST=<ip> ../.venv/bin/python -u diag_enregistrement.py` (réponses
-   brutes du téléviseur au `register`, puis sonde lecture/écriture ;
-   `--non-signe` pour le manifeste de l'app).
-3. Relancer l'inventaire (`explore_05_inventaire.py`) et comparer
-   `lg_webos_tv/backend/app/inventaire-api.json` à sa version précédente :
-   une clé disparue ferait rejeter toute sa catégorie à l'abonnement.
+1. Lire le journal de Home Assistant (`custom_components.lg_webos_tv`) et
+   l'entité diagnostic « Voie d'écriture » ; une demande de réauthentification
+   signale une clé d'appairage refusée.
+2. Diagnostic sans Home Assistant :
+   `cd lg_webos_tv/backend && LG_TV_HOST=<ip> .venv/bin/python
+   scripts/diag_enregistrement.py` (réponses brutes au `register`, sondes
+   lecture/écriture), `scripts/diag_alerte.py` (pont d'alerte),
+   `scripts/diag_origine.py` (champ `caller`, cadence d'écriture).
+3. Relancer l'inventaire (`scripts/explore_05_inventaire.py`) et comparer
+   `custom_components/lg_webos_tv/inventaire-api.json` à sa version
+   précédente : une clé disparue ferait rejeter toute sa catégorie à
+   l'abonnement.
 4. Consigner les écarts dans `docs/` (méthode d'extraction du firmware :
    `docs/ecarts-firmware-43.21.77.md`).
 
-Précédent : 43.21.77 / webOS 11.2 (`docs/incidents-ecriture.md` § 5 à 7).
+Précédent : 43.21.77 / webOS 11.2 (`docs/incidents-ecriture.md` § 5 à 7,
+`docs/rapport-api.md` phase 7).
 
 ## Détails techniques
 
-- **Options** : le Superviseur écrit les options dans `/data/options.json` ;
-  `backend/app/config.py` les lit directement (pas de bashio), avec la
-  priorité variables d'environnement > options > défauts. La présence de ce
-  fichier active le mode app (filtrage Ingress). `lg_tv_host` n'a pas de
-  valeur par défaut : sans elle, le service reste à l'état
-  `non_configure` et ne tente aucune connexion.
-- **Filtrage Ingress** : middleware ASGI `FiltreIngress`
-  (`backend/app/main.py`). En mode app, seules les requêtes du proxy du
-  Superviseur (`172.30.32.2`) sont acceptées (HTTP et WebSocket), sauf
-  `acces_lan: true`. Le port direct 8000 est déclaré mais non mappé par
-  défaut.
-- **URLs relatives** : le frontend est construit avec `base: './'` (Vite) et
-  toutes les URLs (fetch et WebSocket) sont résolues depuis
-  `document.baseURI` (`frontend/src/api.js`), car Ingress sert l'app
-  derrière un préfixe dynamique.
-- **Pas d'en-tête anti-cadre** : le panneau Ingress est affiché dans un
-  cadre de l'interface HA ; le service n'émet ni `X-Frame-Options` ni
-  `frame-ancestors`.
+- **Boucle d'événements** : rien de bloquant dans la boucle de Home
+  Assistant. Le client bscpylgtv est construit dans un fil à part (son
+  constructeur lit le manifeste et crée un contexte SSL) ; la clé
+  d'appairage est passée par `client_key` (le stockage sqlitedict de
+  bscpylgtv n'est jamais ouvert) ; arbre, inventaire et bases SQLite sont
+  chargés hors boucle à l'installation de l'entrée.
+- **Confirmation d'écriture** : par la notification d'abonnement (≈ 0,15 s
+  sur 43.21.77), relecture en secours au bout d'une seconde.
+- **Origine des changements** : champ `caller` des notifications
+  (`docs/rapport-api.md`, phase 7) et suivi des écritures en cours ; une
+  relecture passe par le même chemin qu'une notification, pour que toute
+  valeur nouvelle soit diffusée.
+- **Panneau** : enregistré par `panel_custom` avec `embed_iframe` ; Home
+  Assistant charge `panneau.js` dans une iframe, y crée
+  `<lg-webos-tv-panel>` et lui transmet `hass`. Le frontend appelle les
+  commandes websocket `lg_webos_tv/…` (réservées aux administrateurs) par
+  `hass.callWS`. Pour le tester hors de Home Assistant : page qui importe
+  `panneau.js`, crée l'élément et lui donne un `hass` simulé (`callWS`,
+  `connection.subscribeMessage`, `themes.darkMode`).
+- **Tests et frontend de Home Assistant** : `frontend` et `panel_custom`
+  sont en `after_dependencies` et le panneau n'est enregistré que si le
+  frontend est chargé, ce qui évite d'installer le paquet du frontend de
+  Home Assistant dans l'environnement de test.

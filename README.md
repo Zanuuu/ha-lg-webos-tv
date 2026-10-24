@@ -1,34 +1,45 @@
 # LG webOS TV pour Home Assistant
 
-[![Ajouter le dépôt à Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FZanuuu%2Fha-lg-webos-tv)
+> **English** — A Home Assistant integration (HACS) for LG webOS TV
+> settings: picture, sound and general settings become Home Assistant
+> entities, synchronized in real time both ways (remote control → Home
+> Assistant, Home Assistant → TV, every write confirmed by the TV). It adds
+> actions for automations (set a setting only in a given picture mode,
+> apply a preset), an event when a setting is changed with the remote, an
+> ambient-light blueprint for OLED brightness, and a sidebar panel that
+> mirrors the TV's Settings menu with presets and undo history. Setting
+> names and the panel are in **French** (they mirror the French menu of the
+> LG OLED G5, webOS 25). Works with webOS 11.2 firmwares, where LG blocks
+> direct settings writes for unsigned clients.
 
-> **English** — A Home Assistant app (add-on) that brings the Settings menu
-> of LG webOS TVs into Home Assistant: browse and change picture, sound and
-> general settings in real time, save and restore presets, and undo changes
-> from the history. The interface is in **French** (it mirrors the French
-> menu of the LG OLED G5, webOS 25). Install it by adding this repository
-> to Home Assistant (button above), then set the TV's IP address in the
-> app's configuration.
+Les réglages de votre téléviseur LG dans Home Assistant : des entités
+synchronisées en temps réel dans les deux sens, des actions et un événement
+pour les automatisations, et le menu Réglages du téléviseur, en français,
+dans la barre latérale.
 
-Le menu Réglages de votre téléviseur LG, en français, dans la barre
-latérale de Home Assistant.
-
-![Aperçu de l'interface : réglages de luminosité](docs/images/apercu.png)
+![Aperçu du panneau : réglages de luminosité](docs/images/apercu.png)
 
 ## Fonctionnalités
 
-- **Arborescence du menu Réglages** reproduite à l'identique (Image, Son,
-  Général, Assistance), avec les libellés et descriptions du téléviseur.
-- **Réglages en temps réel** : une modification faite à la télécommande
-  apparaît aussitôt, une modification faite dans l'app est appliquée et
-  confirmée par relecture.
-- **Presets** : capturer l'état des réglages, le réappliquer, l'exporter ou
-  l'importer en JSON.
-- **Historique** de toutes les modifications, avec retour arrière.
-- Réglages non exposés par l'API affichés à leur place, avec la mention
-  « À régler sur la TV ».
-- Intégration par **Ingress** : authentification Home Assistant, aucun port
-  ouvert sur le réseau par défaut. Thème clair ou sombre selon le système.
+- **Entités** générées depuis l'arborescence du menu : curseurs (luminosité
+  des pixels OLED, contraste…), listes (mode d'image, TruMotion, économie
+  d'énergie…), interrupteurs, capteurs. Les réglages d'usage courant sont
+  activés d'emblée, les autres créés désactivés.
+- **Synchronisation bidirectionnelle** : un réglage fait à la télécommande
+  met l'entité à jour aussitôt ; une commande depuis Home Assistant est
+  appliquée puis confirmée par le téléviseur (l'état affiché est toujours
+  celui du téléviseur, jamais une valeur supposée).
+- **Automatisations** :
+  - action `lg_webos_tv.regler`, avec une garde facultative sur le mode
+    d'image ;
+  - action `lg_webos_tv.appliquer_preset` et un bouton par preset ;
+  - événement « Réglage modifié sur le téléviseur » quand un réglage est
+    changé à la télécommande, pour qu'une automatisation cède la main ;
+  - blueprint « luminosité OLED selon la lumière ambiante ».
+- **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
+  complet (y compris les réglages que l'API n'expose pas, affichés « À
+  régler sur la TV »), presets exportables en JSON, historique avec retour
+  arrière.
 
 ## Téléviseurs pris en charge
 
@@ -38,38 +49,146 @@ la plupart des réglages courants devraient fonctionner, mais l'arborescence
 peut différer. Les retours sur d'autres modèles sont bienvenus.
 
 Depuis webOS 11.2, le téléviseur réserve l'écriture directe des réglages aux
-applications signées par LG : l'app écrit alors par le pont des alertes
-système, et passe en **consultation** seulement si cette voie est fermée
-(détails dans [`docs/incidents-ecriture.md`](docs/incidents-ecriture.md)).
+applications signées par LG : l'intégration écrit alors par le pont des
+alertes système, et passe en **consultation** seulement si cette voie est
+fermée (détails dans [`docs/incidents-ecriture.md`](docs/incidents-ecriture.md)).
 
 ## Installation
 
-1. Ajouter le dépôt avec le bouton ci-dessus, ou manuellement :
-   Paramètres → Modules complémentaires → Boutique des modules → menu ⋮ →
-   Dépôts → `https://github.com/Zanuuu/ha-lg-webos-tv`.
-2. Installer « LG webOS TV ». Le Superviseur construit l'image sur place :
-   comptez quelques minutes la première fois.
-3. Onglet Configuration : renseigner l'**adresse IP du téléviseur**.
-4. Démarrer l'app, puis accepter la demande d'appairage affichée par le
-   téléviseur.
-5. Ouvrir « LG webOS TV » dans la barre latérale.
+Prérequis : Home Assistant 2026.10 ou plus récent, [HACS](https://hacs.xyz),
+téléviseur allumé et joignable, avec « LG Connect Apps » (contrôle réseau)
+autorisé. Une adresse IP fixe (réservation DHCP) est recommandée.
 
-Documentation complète (options, mode consultation, dépannage) :
-[`lg_webos_tv/DOCS.md`](lg_webos_tv/DOCS.md). Elle est aussi affichée dans
-l'onglet Documentation de l'app.
+1. HACS → menu ⋮ → Dépôts personnalisés → ajouter
+   `https://github.com/Zanuuu/ha-lg-webos-tv`, catégorie **Intégration**.
+2. Installer « LG webOS TV », puis redémarrer Home Assistant.
+3. Paramètres → Appareils et services → Ajouter une intégration →
+   « LG webOS TV » (le téléviseur peut aussi être découvert automatiquement).
+4. Saisir l'adresse du téléviseur, puis accepter la demande d'appairage
+   « Réglages TV (Home Assistant) » sur son écran (elle expire au bout de
+   deux minutes).
+
+Si le téléviseur refuse un jour la clé d'appairage (par exemple après une
+mise à jour de son logiciel), Home Assistant propose de refaire l'appairage.
+Changer d'adresse : menu ⋮ de l'intégration → Reconfigurer.
+
+## Entités
+
+Toutes appartiennent à l'appareil « LG webOS TV ». Les noms sont les
+libellés du menu du téléviseur ; un libellé ambigu hors de son écran est
+précédé de son menu (« Image — Mode Sélection », « Balance des blancs —
+Méthode »).
+
+| Type | Exemples | Remarque |
+|---|---|---|
+| Liste (`select`) | Mode Sélection (mode d'image), TruMotion, Fonction Économie d'énergie | options = libellés du menu |
+| Curseur (`number`) | Luminosité des pixels OLED, Ajuster le contraste, Niveau noir | bornes du menu |
+| Interrupteur (`switch`) | Protection des yeux, Compatibilité eARC, SIMPLINK | |
+| Capteur (`sensor`) | Son — Mode Sélection, Pays | réglages en lecture seule |
+| Bouton (`button`) | Appliquer le preset Soirée | un par preset |
+| Événement (`event`) | Réglage modifié sur le téléviseur | `manuel` ou `autre_application` |
+| Diagnostic | Connexion, Écriture des réglages impossible, Voie d'écriture | |
+
+**Réglages d'image et mode d'image.** Le téléviseur garde une valeur par
+mode d'image : une entité de réglage d'image montre et modifie la valeur du
+mode **actif**, indiqué par son attribut `mode_image`. Changer de mode met
+à jour toutes ces entités.
+
+N'est exposé que ce dont la correspondance avec l'API est entièrement
+connue ; le reste reste accessible dans le panneau.
+
+## Automatisations
+
+### Régler un réglage seulement dans un mode d'image
+
+```yaml
+action: lg_webos_tv.regler
+data:
+  entity_id: number.lg_webos_tv_luminosite_des_pixels_oled
+  valeur: 60
+  mode_image: cinema   # n'écrit que si le mode Cinéma est actif
+response_variable: resultat
+```
+
+Sans `mode_image`, la valeur s'applique au mode actif. Avec, l'action ne
+fait rien si un autre mode est actif et le dit dans sa réponse
+(`ok: false`) sans faire échouer l'automatisation. `valeur` accepte un
+nombre, un libellé du menu (`Cinéma`) ou une valeur API (`cinema`), on/off.
+
+### Appliquer un preset
+
+Créer le preset dans le panneau (« Presets & historique »), puis :
+
+```yaml
+action: lg_webos_tv.appliquer_preset
+data:
+  nom: Soirée
+```
+
+Le mode d'image du preset est appliqué en premier, puis les réglages
+capturés pour ce mode. La réponse liste les réglages appliqués et ceux en
+échec. Chaque preset a aussi son bouton.
+
+### Céder la main à la télécommande
+
+L'entité « Réglage modifié sur le téléviseur » émet un événement `manuel`
+quand un réglage est changé à la télécommande ou par les réglages rapides
+(une seule fois par réglage, à la fin d'un glissement de curseur), avec les
+attributs `entree_id`, `libelle`, `cle`, `valeur` et `mode_image`. Les
+changements faits par Home Assistant et les valeurs qui suivent un
+changement de mode ne le déclenchent pas.
+
+### Blueprint : luminosité OLED selon la lumière ambiante
+
+[`blueprints/automation/lg_webos_tv/luminosite_ambiante.yaml`](blueprints/automation/lg_webos_tv/luminosite_ambiante.yaml)
+— Paramètres → Automatisations → Blueprints → Importer, avec l'URL du
+fichier sur le dépôt.
+
+- échelle logarithmique entre une pièce sombre et une pièce lumineuse ;
+- changement ignoré sous un écart minimal ;
+- pause après un réglage à la télécommande, jusqu'à un délai choisi ou au
+  prochain allumage du téléviseur ;
+- réappliqué à chaque changement de mode d'image ; modes calibrés (FILMMAKER
+  MODE, Expert) laissés de côté par défaut.
+
+## Écriture sous webOS 11 et mode consultation
+
+Chaque modification est confirmée par la notification du téléviseur (ou,
+à défaut, une relecture) : une valeur refusée (hors plage) fait échouer
+l'action avec un message. Si le téléviseur n'autorise plus aucune voie
+d'écriture, l'intégration passe en consultation : les réglages restent
+suivis en temps réel, une alerte apparaît dans Paramètres → Réparations, et
+l'écriture se réactive d'elle-même si un logiciel ultérieur la rouvre.
+
+Certains réglages sont volontairement en lecture seule : leur écriture
+s'est révélée dangereuse lors des essais (le pays, notamment, réinitialise
+en cascade d'autres réglages).
+
+## Dépannage
+
+- **Entités indisponibles** : téléviseur éteint ou injoignable ; vérifier
+  l'adresse et « LG Connect Apps ». La connexion est retentée seule.
+- **Écriture refusée** : la valeur sort de la plage acceptée dans le mode
+  d'image actif.
+- **Diagnostics** : menu ⋮ de l'intégration → Télécharger les diagnostics
+  (adresse et clé masquées).
+
+## Données
+
+L'historique et les presets sont stockés dans `<config>/lg_webos_tv/`
+(inclus dans les sauvegardes de Home Assistant) ; la clé d'appairage dans
+l'entrée de configuration.
+
+**Venir de l'app (add-on) LG webOS TV 1.x** : exporter les presets depuis
+l'app (« Exporter »), installer l'intégration, les réimporter dans le
+panneau, puis désinstaller l'app.
 
 ## Développement
 
-Backend FastAPI (Python 3.12), frontend React / Vite, arborescence des
-menus en JSON déclaratif (`lg_webos_tv/menu-tree/`). Lancer en local,
-tests, publication, notes techniques : voir
+Intégration Python dans `custom_components/lg_webos_tv/`, panneau React /
+Vite dans `frontend/`, arborescence des menus en JSON déclaratif. Tests,
+build du panneau, publication, notes techniques :
 [`docs/developpement.md`](docs/developpement.md).
-
-```bash
-cd lg_webos_tv/backend && .venv/bin/python -m pytest
-LG_TV_HOST=<ip> .venv/bin/python -m uvicorn app.main:app --reload
-cd lg_webos_tv/frontend && npm run build
-```
 
 Les contributions sont bienvenues : signalements, corrections de
 l'arborescence pour d'autres modèles, traductions.

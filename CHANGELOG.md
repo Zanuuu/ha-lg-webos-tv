@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.0.0 — 2026-10-24
+
+L'app (add-on) devient une **intégration Home Assistant**, distribuée par
+HACS : les réglages du téléviseur deviennent des entités, synchronisées en
+temps réel dans les deux sens.
+
+- Entités générées depuis l'arborescence du menu (listes, curseurs,
+  interrupteurs, capteurs) ; réglages d'usage courant activés d'emblée.
+  L'état affiché est toujours celui confirmé par le téléviseur.
+- Actions `lg_webos_tv.regler` (garde facultative sur le mode d'image) et
+  `lg_webos_tv.appliquer_preset`, avec réponse ; un bouton par preset.
+- Événement « Réglage modifié sur le téléviseur » pour les réglages faits à
+  la télécommande ou par les réglages rapides (origine lue dans le champ
+  `caller` des notifications du téléviseur).
+- Blueprint « luminosité OLED selon la lumière ambiante ».
+- Le menu Réglages, les presets et l'historique deviennent un panneau de la
+  barre latérale ; thème clair ou sombre selon le profil Home Assistant ;
+  origine de chaque modification dans l'historique.
+- Configuration dans l'interface, avec découverte du téléviseur, appairage
+  guidé, réauthentification si le téléviseur refuse la clé, changement
+  d'adresse.
+- Écriture confirmée par la notification du téléviseur (≈ 0,15 s au lieu
+  de 0,5 s au moins) ; écritures rapprochées regroupées.
+- Alerte dans Réparations si le téléviseur ferme l'écriture ; diagnostics
+  téléchargeables.
+- Migration depuis l'app : exporter les presets, les réimporter dans le
+  panneau, désinstaller l'app.
+
 ## 1.3.0 — 2026-10-24
 
 Nouvelle interface et ouverture du projet à la communauté.
