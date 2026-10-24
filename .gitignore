@@ -7,7 +7,7 @@ __pycache__/
 
 # Node
 node_modules/
-lg_webos_tv/frontend/dist/
+frontend/dist/
 
 # Données locales du service (base SQLite, clé client TV)
 data/

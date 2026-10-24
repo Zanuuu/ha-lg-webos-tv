@@ -11,7 +11,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.typing import ConfigType
 
-from . import restauration, services
+from . import panneau, restauration, services, websocket
 from .const import CONF_CLE_CLIENT, DOMAIN
 from .ecritures import FileEcritures
 from .entite import descriptions
@@ -41,6 +41,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     # elles restent visibles (et expliquent leur échec) même si l'entrée
     # n'est pas chargée.
     services.async_enregistrer(hass)
+    websocket.async_enregistrer(hass)
     return True
 
 
@@ -87,6 +88,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
     donnees.televiseur.abonner(sur_evenement)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await panneau.async_enregistrer(hass)
     # Le téléviseur peut être éteint : l'entrée est prête sans attendre la
     # connexion, les entités restent indisponibles jusque-là.
     await donnees.televiseur.demarrer(
@@ -98,6 +100,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
 async def async_unload_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -> bool:
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
+    panneau.async_retirer(hass)
     await entry.runtime_data.ecritures.arreter()
     await entry.runtime_data.televiseur.arreter()
     return True

@@ -7,6 +7,14 @@ function formaterValeur(v) {
   return String(v)
 }
 
+// Valeurs de historique.ORIGINES côté intégration.
+const LIBELLES_ORIGINE = {
+  home_assistant: 'Home Assistant',
+  panneau: 'Panneau',
+  preset: 'Preset',
+  annulation: 'Retour arrière',
+}
+
 export default function VueHistorique({ index, lectureSeule }) {
   const [lignes, setLignes] = useState(null)
   const [message, setMessage] = useState(null)
@@ -65,6 +73,7 @@ export default function VueHistorique({ index, lectureSeule }) {
               <th>Réglage</th>
               <th>Valeur</th>
               <th>Mode d'image</th>
+              <th>Origine</th>
               <th></th>
             </tr>
           </thead>
@@ -75,6 +84,7 @@ export default function VueHistorique({ index, lectureSeule }) {
                 <td>{index?.get(l.entree_id)?.libelle || `${l.categorie}.${l.cle}`}</td>
                 <td>{formaterValeur(l.ancienne)} → {formaterValeur(l.nouvelle)}</td>
                 <td>{l.mode_image || '—'}</td>
+                <td>{LIBELLES_ORIGINE[l.origine] || l.origine || '—'}</td>
                 <td className="actions-historique">
                   {!lectureSeule && (
                     <>

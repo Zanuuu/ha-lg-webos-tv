@@ -4,8 +4,7 @@ const LIBELLES_CONNEXION = {
   connecte: 'Connecté',
   deconnecte: 'Déconnecté',
   connexion: 'Connexion…',
-  appairage: 'Appairage : acceptez la demande sur la TV',
-  non_configure: "Adresse du téléviseur à renseigner dans la configuration de l'app",
+  appairage_requis: 'Nouvel appairage nécessaire : voir Paramètres › Appareils et services',
 }
 
 export default function Entete({ connexion, modeImage, entreeModeImage, vue, onChangerVue }) {

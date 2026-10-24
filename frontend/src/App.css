@@ -25,23 +25,22 @@
   --police: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --noir: #ffffff;
-    --graphite: #f1f2f4;
-    --graphite-survol: #e6e8eb;
-    --trait: #dcdee2;
-    --blanc-ecran: #0e0f11;
-    --gris-texte: #5c6068;
-    --allume: #0e0f11;
-    --sur-allume: #ffffff;
-    --piste: #d3d6db;
-    /* Assombries pour tenir 4,5:1 sur fond blanc. */
-    --etat-ok: #13803f;
-    --etat-erreur: #c6282e;
-    --etat-attente: #9a6700;
-  }
+/* Thème clair : choisi dans le profil Home Assistant (panneau.jsx). */
+:root[data-theme="clair"] {
+  color-scheme: light;
+  --noir: #ffffff;
+  --graphite: #f1f2f4;
+  --graphite-survol: #e6e8eb;
+  --trait: #dcdee2;
+  --blanc-ecran: #0e0f11;
+  --gris-texte: #5c6068;
+  --allume: #0e0f11;
+  --sur-allume: #ffffff;
+  --piste: #d3d6db;
+  /* Assombries pour tenir 4,5:1 sur fond blanc. */
+  --etat-ok: #13803f;
+  --etat-erreur: #c6282e;
+  --etat-attente: #9a6700;
 }
 
 * {

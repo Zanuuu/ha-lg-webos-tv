@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import './App.css'
 import { indexerParId } from './arbre.js'
 import BarreLaterale from './components/BarreLaterale.jsx'
 import Entete from './components/Entete.jsx'
