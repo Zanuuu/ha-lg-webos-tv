@@ -49,7 +49,7 @@
             "Mise à jour du logiciel"
           ],
           "libelle": "Rechercher les mises à jour",
-          "description": "Lorsque vous recherchez les dernières versions des mises à jour, vous pouvez uniquement effectuer une mise à jour si un fichier de mise à jour ou une version plus récente est disponible.Le périphérique contrôle automatiquement votre version logicielle, mais, si nécessaire, vous pouvez effectuer une vérification manuelle.",
+          "description": "Lorsque vous recherchez les dernières versions des mises à jour, vous pouvez uniquement effectuer une mise à jour si un fichier de mise à jour ou une version plus récente est disponible. Le périphérique contrôle automatiquement votre version logicielle, mais, si nécessaire, vous pouvez effectuer une vérification manuelle.",
           "controle": "action",
           "source": {
             "guide": "6.15.1"

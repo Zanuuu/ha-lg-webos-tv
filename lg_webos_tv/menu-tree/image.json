@@ -12,7 +12,7 @@
         "Image"
       ],
       "libelle": "Mode Sélection",
-      "description": "Sélectionnez le mode image qui correspond le mieux à votre environnement, à vos préférences ou au type de vidéo que vous regardez.En ajustant et en définissant chaque élément plus en détail en fonction du mode, votre vidéo est mieux optimisée pour ses caractéristiques.",
+      "description": "Sélectionnez le mode image qui correspond le mieux à votre environnement, à vos préférences ou au type de vidéo que vous regardez. En ajustant et en définissant chaque élément plus en détail en fonction du mode, votre vidéo est mieux optimisée pour ses caractéristiques.",
       "notes": [
         "Le guide désigne aussi cette entrée par « Mode Image » (6.2.9) ; libellé exact à confirmer sur photo.",
         "La liste des modes disponibles dépend du signal (SDR/HDR/Dolby Vision) et de l'entrée.",
@@ -174,7 +174,7 @@
             "Format de l'image"
           ],
           "libelle": "Analyse du signal",
-          "description": "Si vous réglez cette fonction sur Activé, vous pouvez afficher le contenu dans le format de l’image qui se trouve dans le signal de diffusion ou le contenu source.Si le bord de l’écran n’est pas bien défini, réglez-la sur Désactivé.\nSi vous réglez cette fonction sur Auto, elle alterne entre les modes Activé ou Désactivé selon les informations contenues dans le signal vidéo.",
+          "description": "Si vous réglez cette fonction sur Activé, vous pouvez afficher le contenu dans le format de l’image qui se trouve dans le signal de diffusion ou le contenu source. Si le bord de l’écran n’est pas bien défini, réglez-la sur Désactivé.\nSi vous réglez cette fonction sur Auto, elle alterne entre les modes Activé ou Désactivé selon les informations contenues dans le signal vidéo.",
           "controle": "liste",
           "choix": [
             {
@@ -311,7 +311,7 @@
                 "Luminosité"
               ],
               "libelle": "Niveau noir",
-              "description": "Ajuste la luminosité des zones sombres de l'écran.Plus la valeur est proche de 100, plus l'écran devient clair.",
+              "description": "Ajuste la luminosité des zones sombres de l'écran. Plus la valeur est proche de 100, plus l'écran devient clair.",
               "controle": "curseur",
               "source": {
                 "guide": "6.2.4"
@@ -529,7 +529,7 @@
                 "Luminosité"
               ],
               "libelle": "Lumière ambiante du MODE FILMMAKER",
-              "description": "Réglez sur Activé.Optimisez la qualité de l'image en fonction de la luminosité détectée par le capteur de lumière ambiante.",
+              "description": "Réglez sur Activé. Optimisez la qualité de l'image en fonction de la luminosité détectée par le capteur de lumière ambiante.",
               "notes": [
                 "Pris en charge quand Mode Image est réglé sur FILMMAKER MODE."
               ],
@@ -573,7 +573,7 @@
                 "Luminosité"
               ],
               "libelle": "Plage vidéo",
-              "description": "Ajuste l'obscurité de l'écran afin d'afficher un noir parfait.Sélectionnez Plage vidéo pour correspondre à la plage de couleurs du périphérique d'entrée externe.",
+              "description": "Ajuste l'obscurité de l'écran afin d'afficher un noir parfait. Sélectionnez Plage vidéo pour correspondre à la plage de couleurs du périphérique d'entrée externe.",
               "notes": [
                 "Vous pouvez utiliser cette fonction lorsque vous regardez du contenu via une entrée externe.",
                 "[API] L'API renvoie un objet par type de signal (auto/low/high).",

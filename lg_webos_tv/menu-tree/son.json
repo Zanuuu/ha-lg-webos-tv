@@ -299,7 +299,7 @@
             "Paramètres avancés"
           ],
           "libelle": "Dolby Atmos",
-          "description": "Dolby Atmos est basé sur le concept d’objets audio.Des sons peuvent être combinés en un seul élément audio, à savoir un objet indépendamment placé dans un espace tridimensionnel.\nÀ l'aide des haut-parleurs internes, Dolby Atmos crée une expérience sonore immersive.\nLe menu fait fonction de bouton Activé/Désactivé. Par défaut, il est configuré sur Activé.",
+          "description": "Dolby Atmos est basé sur le concept d’objets audio. Des sons peuvent être combinés en un seul élément audio, à savoir un objet indépendamment placé dans un espace tridimensionnel.\nÀ l'aide des haut-parleurs internes, Dolby Atmos crée une expérience sonore immersive.\nLe menu fait fonction de bouton Activé/Désactivé. Par défaut, il est configuré sur Activé.",
           "notes": [
             "Certains contenus Dolby Atmos peuvent ne pas être lus."
           ],
@@ -425,7 +425,7 @@
                 "Diffusion sur Auracast™"
               ],
               "libelle": "Utiliser le code d'authentification",
-              "description": "Réglez sur Activé.Vous pouvez définir un Code d'authentification.\nEn raison de problèmes potentiels de droits d'auteur concernant la musique ou le contenu diffusé, il est recommandé d'utiliser un Code d'authentification pour réserver l'accès à un cercle restreint d'utilisateurs.",
+              "description": "Réglez sur Activé. Vous pouvez définir un Code d'authentification.\nEn raison de problèmes potentiels de droits d'auteur concernant la musique ou le contenu diffusé, il est recommandé d'utiliser un Code d'authentification pour réserver l'accès à un cercle restreint d'utilisateurs.",
               "controle": "interrupteur",
               "source": {
                 "guide": "6.3.13"
@@ -694,7 +694,7 @@
             "Paramètres avancés"
           ],
           "libelle": "Compatibilité eARC",
-          "description": "eARC est une technologie qui peut envoyer et recevoir plus rapidement des informations sonores grâce à sa bande passante plus large que celle de l'ARC classique.Vous pouvez profiter du son de l'appareil avec une qualité supérieure à celle du mode ARC via un appareil audio connecté.",
+          "description": "eARC est une technologie qui peut envoyer et recevoir plus rapidement des informations sonores grâce à sa bande passante plus large que celle de l'ARC classique. Vous pouvez profiter du son de l'appareil avec une qualité supérieure à celle du mode ARC via un appareil audio connecté.",
           "controle": "interrupteur",
           "source": {
             "guide": "6.3.22"
@@ -712,7 +712,7 @@
             "Paramètres avancés"
           ],
           "libelle": "Amélioration du dialogue AC-4",
-          "description": "Rend les dialogues plus clairs dans la vidéo grâce à l'audio AC-4.Cette fonction est utile lorsque vous regardez du contenu et que vous n'entendez pas bien les dialogues.",
+          "description": "Rend les dialogues plus clairs dans la vidéo grâce à l'audio AC-4. Cette fonction est utile lorsque vous regardez du contenu et que vous n'entendez pas bien les dialogues.",
           "controle": "interrupteur",
           "source": {
             "guide": "6.3.23",

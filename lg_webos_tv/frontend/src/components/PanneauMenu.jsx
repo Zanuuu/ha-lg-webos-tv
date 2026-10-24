@@ -5,7 +5,9 @@ export default function PanneauMenu({ chemin, reglages, lectureSeule, onEcrire, 
 
   return (
     <section className="panneau-menu">
-      <FilAriane chemin={chemin} onRevenir={onRevenir} />
+      {/* À la racine d'une section, le fil ne ferait que répéter le titre. */}
+      {chemin.length > 1 && <FilAriane chemin={chemin} onRevenir={onRevenir} />}
+      <h2 className="titre-noeud">{noeud.libelle}</h2>
       <div className="liste-reglages">
         {(noeud.enfants || []).map((enfant) => (
           <LigneReglage
