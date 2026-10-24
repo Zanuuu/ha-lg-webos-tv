@@ -126,3 +126,41 @@ firmware ultérieur rouvre la permission, l'écriture se réactive seule.
 Contournement écarté : réutiliser une autre signature LG non encore
 blacklistée — révocation volontaire de LG, liste noire actualisable à
 distance, solution sans garantie de durée.
+
+## 6. Mode développeur webOS : testé, insuffisant pour l'écriture (24/09/2026)
+
+**Objectif.** Après le passage en mode consultation (§ 5), vérifier sur le
+téléviseur si le **mode développeur** de webOS ouvre une voie d'écriture des
+réglages en contournant la passerelle SSAP, via un appel local au service de
+réglages (`luna://com.webos.settingsservice/setSystemSettings`).
+
+**Mise en place.** Compte LG, app *Developer Mode* activée, *Key Server* activé.
+Accès SSH `prisoner@<TV>:9922` avec la clé privée servie par la TV
+(`http://<TV>:9991/webos_rsa`, passphrase affichée dans l'app). OpenSSH récent
+exige de réautoriser l'algorithme de clé d'hôte hérité
+(`-o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa`).
+
+**Constat (bloquant).** L'utilisateur `prisoner` est **confiné au bus luna
+public** :
+
+| Élément | Observation |
+|---|---|
+| `/usr/bin/luna-send` (bus privé) | `-rwx------ root root` → non exécutable par `prisoner` (« Permission denied ») |
+| `/usr/bin/luna-send-pub` (bus public) | exécutable |
+| `luna-send-pub … settingsservice/getSystemSettings` | `{"returnValue":false,"errorText":"Access denied"}` |
+
+Le service de réglages est donc **inaccessible en lecture comme en écriture**
+depuis le bus public accordé au mode dev. Aucun accès privilégié n'est ouvert
+par le mode développeur, ni en SSH ni via une app/service qu'on y installerait
+(même sandbox de bus).
+
+**Conclusion.** Sur webOS 11.2, l'écriture des réglages exige soit un manifeste
+**signé** par LG (niveau `SECURE`, cf. § 5 et l'analyse de
+`com.webos.service.secondscreen.gateway` : `WRITE_SETTINGS` est `SECURE`, un
+manifeste non signé perd cette permission, la liste noire ne bloque que deux
+chaînes de signature précises), soit un **accès root** au bus privé. La
+signature est écartée (forger une signature avec la clé de LG). Le root n'est
+pas retenu sur ce téléviseur (récent, sous garantie ; dépend d'un exploit,
+cassable par MAJ). **L'app reste en mode consultation**, comportement déjà en
+place ; l'écriture se réactiverait seule si un accès privilégié devenait
+disponible.

@@ -16,6 +16,12 @@ Liste noire du manifeste d'appairage et écriture réservée aux clients
 signés par LG : voir `docs/incidents-ecriture.md` § 5. L'app fonctionne
 désormais en mode consultation sous ce firmware.
 
+Le **mode développeur** a été testé comme voie d'écriture alternative
+(SSH `prisoner`, appel local au service de réglages) : sans effet, `prisoner`
+étant confiné au bus luna public qui refuse le service de réglages
+(`docs/incidents-ecriture.md` § 6). Seul un accès root permettrait l'écriture ;
+non retenu. Mode consultation confirmé comme état de fonctionnement.
+
 ## 2. Clés lisibles (`valid-settings.js`, inventaire relancé)
 
 Aucune clé retirée. Clés ajoutées à la liste publique, confirmées lisibles
