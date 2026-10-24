@@ -150,3 +150,52 @@ référence exacte pour ces clés.
    l'utilisateur, ou preset limité au mode actif).
 4. Après toute mise à jour du firmware : relancer `explore_05_inventaire.py`
    et comparer `lg_webos_tv/backend/app/inventaire-api.json`.
+
+## Phase 7, étape 0 : origine des changements et cadence d'écriture (24/10/2026)
+
+Firmware 43.21.77, mode d'image Vif, script
+`lg_webos_tv/backend/scripts/diag_origine.py`.
+
+**Connexion avec la seule clé client.** `WebOsClient.create(…, client_key=…)`
+sans `key_file_path` : connexion et lecture conformes, le stockage
+sqlitedict de bscpylgtv n'est pas ouvert. bscpylgtv accepte aussi un
+stockage fourni (`storage=`, protocole `StorageProto`), utile pour
+l'appairage initial.
+
+**Écriture par alerte.** L'appel `createAlert` + `closeAlert` dure 0,02 à
+0,12 s ; la notification d'abonnement portant la nouvelle valeur arrive
+environ 0,1 s plus tard, la relecture la retrouve dès le premier essai
+(0,5 s). Dix écritures enchaînées sans attente (0,51 s au total) sont
+**toutes appliquées, dans l'ordre** : les dix valeurs notifiées sont
+exactement les dix demandées. Aucune perte, aucun réordonnancement.
+
+**Champ `caller` des notifications** : il distingue les origines.
+
+| Origine du changement | `caller` |
+|---|---|
+| Écriture par le pont `createAlert` (nos écritures) | `com.webos.app.starfish_flutter_systemui` |
+| Menu Réglages (télécommande) | `com.palm.app.settings` |
+| Réglages rapides (mode d'image, curseur de luminosité) | `com.webos.app.quicksettings` |
+| Valeurs du nouveau mode, après un changement de mode d'image | **absent** |
+
+**Cascade au changement de mode.** Chaque changement de `pictureMode`
+produit une notification avec `caller`, suivie 0,03 à 0,06 s plus tard d'un
+second delta **sans `caller`** portant les valeurs du nouveau mode
+(contrast, brightness, color, sharpness, backlight). Les types y sont
+mêlés : entiers ou chaînes selon le mode (`"contrast": "100"` en Sport,
+`"backlight": 100` entier dans le même delta en Jeu).
+
+**Curseur des réglages rapides.** Un glissement produit une rafale
+(≈ 25 notifications en 0,5 s), dont de nombreux doublons de la même valeur.
+
+Conséquences pour l'intégration :
+
+1. Confirmation d'écriture sur la notification (≈ 0,15 s) plutôt que par
+   relecture périodique ; relecture conservée en secours.
+2. File d'écriture : pas de perte à craindre, la coalescence (dernière valeur
+   gagnante) sert seulement à ne pas envoyer d'intermédiaires inutiles.
+3. Origine : notification d'une écriture en cours de notre part → la nôtre ;
+   sans `caller` → cascade de changement de mode ; sinon → changement
+   **manuel** sur le téléviseur. Pas de fenêtre temporelle à deviner.
+4. Événement « manuel » regroupé par clé (une rafale du curseur = un
+   événement) ; normalisation des types appliquée à la cascade.
