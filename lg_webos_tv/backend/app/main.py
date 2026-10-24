@@ -91,7 +91,7 @@ def creer_app(televiseur: Televiseur | None = None,
         finally:
             await app.state.televiseur.arreter()
 
-    app = FastAPI(title="Réglages LG OLED 65 G5", lifespan=cycle_de_vie)
+    app = FastAPI(title="LG webOS TV", lifespan=cycle_de_vie)
     app.add_middleware(FiltreIngress)
 
     @app.get("/api/health")

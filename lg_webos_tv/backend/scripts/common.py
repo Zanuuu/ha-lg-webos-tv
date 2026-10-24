@@ -5,11 +5,14 @@ appairage demande une confirmation sur l'écran du téléviseur, les exécutions
 suivantes sont silencieuses.
 """
 
+import os
+import sys
 from pathlib import Path
 
 from bscpylgtv import WebOsClient
 
-TV_IP = "192.168.1.50"
+TV_IP = os.environ.get("LG_TV_HOST") or sys.exit(
+    "Renseigner l'adresse du téléviseur : LG_TV_HOST=<ip> python scripts/<script>.py")
 KEY_DB = str(Path(__file__).resolve().parent.parent.parent / "data" / "bscpylgtv.sqlite")
 # Manifeste non signé de l'app : webOS 11 met en liste noire la signature du
 # manifeste par défaut de bscpylgtv (cf. docs/incidents-ecriture.md).

@@ -138,6 +138,12 @@ class Televiseur:
         return client
 
     async def demarrer(self) -> None:
+        if not self.hote:
+            # Sans adresse, la boucle de reconnexion tournerait à vide : on
+            # l'annonce une fois et l'interface invite à compléter la configuration.
+            log.warning("Adresse du téléviseur non configurée (option lg_tv_host)")
+            await self._changer_etat("non_configure")
+            return
         self._tache = asyncio.create_task(self._boucle_connexion())
 
     async def arreter(self) -> None:

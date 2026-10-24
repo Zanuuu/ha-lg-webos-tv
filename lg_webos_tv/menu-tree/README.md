@@ -1,6 +1,6 @@
 # Arbre des menus
 
-Fichiers JSON déclaratifs décrivant le menu Réglages du LG OLED 65 G5
+Fichiers JSON déclaratifs décrivant le menu Réglages du LG OLED G5
 (webOS 25, firmware 33.31.68), en français.
 
 ## Sources et méthode (phase 2)
@@ -12,7 +12,7 @@ Fichiers JSON déclaratifs décrivant le menu Réglages du LG OLED 65 G5
    chemins de menu indiqués dans le guide (« Entrez le chemin suivant »),
    pas sa numérotation de chapitres.
 2. **Passe 2** : rapprochement avec les clés API inventoriées en phase 1
-   (`docs/inventaire-api.json`).
+   (`backend/app/inventaire-api.json`).
 3. **Passe 3** : vérification contre les photos des menus réels ; le guide
    ne reflète pas toujours exactement le firmware installé.
 

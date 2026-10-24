@@ -20,7 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 MENU = ROOT / "menu-tree"
-RAPPORT = ROOT / "docs" / "ecarts-firmware.md"
+# Rapports de développement : dossier docs/ à la racine du dépôt, hors de l'app.
+RAPPORT = ROOT.parent / "docs" / "ecarts-firmware.md"
 FIRMWARE = "33.31.68"
 
 C = {

@@ -28,7 +28,9 @@ _options = _charger_options_ha()
 # Superviseur) : active le filtrage Ingress dans main.py.
 MODE_APP_HA = OPTIONS_HA.is_file()
 
-TV_HOST = os.environ.get("LG_TV_HOST") or _options.get("lg_tv_host") or "192.168.1.50"
+# Pas de valeur par défaut : l'adresse est propre à chaque installation
+# (option obligatoire côté app HA, LG_TV_HOST hors HA).
+TV_HOST = os.environ.get("LG_TV_HOST") or _options.get("lg_tv_host") or ""
 
 # Autorise l'accès hors Ingress (utilisateur ayant mappé le port direct).
 ACCES_LAN = bool(_options.get("acces_lan", False))
@@ -42,7 +44,7 @@ HISTORIQUE_DB = DATA_DIR / "historique.sqlite"
 PRESETS_DB = DATA_DIR / "presets.sqlite"
 
 MENU_TREE_DIR = Path(os.environ.get("LG_MENU_TREE_DIR", RACINE / "menu-tree"))
-INVENTAIRE = RACINE / "docs" / "inventaire-api.json"
+INVENTAIRE = Path(__file__).resolve().parent / "inventaire-api.json"
 
 # Reconnexion : première tentative rapide puis repli progressif.
 RECONNEXION_DELAI_MIN_S = 5

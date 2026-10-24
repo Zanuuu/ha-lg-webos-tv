@@ -1,0 +1,14 @@
+configuration:
+  lg_tv_host:
+    name: TV address
+    description: >-
+      IP address of the LG TV on the local network (for example
+      192.168.1.50). A fixed address (DHCP reservation) is recommended.
+  acces_lan:
+    name: Direct access without authentication
+    description: >-
+      Allows access through port 8000 without going through Home Assistant,
+      hence without authentication. Only enable it if the port is also mapped
+      in the Network section.
+network:
+  8000/tcp: Direct access without Ingress (also requires the "Direct access without authentication" option)

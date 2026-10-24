@@ -47,7 +47,7 @@ besoin se présente, avec une confirmation explicite dans l'interface le cas
 **Constat.** L'entrée « Plage vidéo » avait été rapprochée d'un choix simple
 (auto/low/high), mais l'API renvoie et attend en réalité un **objet** avec
 une valeur par norme de diffusion (`{"ntsc": "auto", "pal": "auto", …}`),
-comme déjà noté dans `docs/inventaire-api.json` en phase 1. L'écriture d'une
+comme déjà noté dans `lg_webos_tv/backend/app/inventaire-api.json` en phase 1. L'écriture d'une
 valeur simple a été rejetée côté validation avant même d'atteindre le
 téléviseur.
 

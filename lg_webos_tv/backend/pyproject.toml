@@ -1,7 +1,7 @@
 [project]
 name = "lg-settings-backend"
 version = "0.1.0"
-description = "Backend FastAPI du service de réglages LG OLED 65 G5"
+description = "Backend FastAPI de l'app LG webOS TV pour Home Assistant"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

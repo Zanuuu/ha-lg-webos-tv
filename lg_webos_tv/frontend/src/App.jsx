@@ -44,8 +44,8 @@ export default function App() {
       />
       {lectureSeule && (
         <p className="bandeau-consultation" role="status">
-          Modification impossible depuis la mise à jour webOS 11 du téléviseur : les réglages
-          restent consultables ici, mais sont à régler sur la TV.
+          Le téléviseur n'autorise pas la modification des réglages : ils restent consultables
+          ici, à régler sur la TV.
         </p>
       )}
       <div className="corps">

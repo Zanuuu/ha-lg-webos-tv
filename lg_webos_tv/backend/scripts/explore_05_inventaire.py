@@ -5,7 +5,7 @@ Pour chaque catégorie et chaque clé candidate (candidats.json) :
 - getSystemSettingDesc -> son descripteur (type, bornes, choix, dimensions).
 
 Les clés rejetées sont retirées par lots grâce à l'errorText qui les nomme.
-Résultat : docs/inventaire-api.json (versionné, base de la phase 2).
+Résultat : backend/app/inventaire-api.json (versionné, base de la phase 2).
 """
 
 import asyncio
@@ -18,7 +18,7 @@ from bscpylgtv.exceptions import PyLGTVCmdError, PyLGTVServiceNotFoundError
 from common import make_client
 
 CANDIDATES_FILE = Path(__file__).parent / "candidats.json"
-OUTPUT_FILE = Path(__file__).resolve().parent.parent.parent / "docs" / "inventaire-api.json"
+OUTPUT_FILE = Path(__file__).resolve().parent.parent / "app" / "inventaire-api.json"
 BATCH_SIZE = 20
 REQUEST_TIMEOUT = 15
 

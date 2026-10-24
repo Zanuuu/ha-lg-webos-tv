@@ -209,3 +209,20 @@ async def test_etat_inchange_avec_cle_stockee(monkeypatch):
     await televiseur._changer_etat("connexion")
     await televiseur._creer_client()
     assert etats_pendant_connect == ["connexion"]
+
+
+async def test_sans_adresse_aucune_connexion(monkeypatch, faux_client):
+    import app.televiseur as module
+
+    monkeypatch.setattr(module.config, "TV_HOST", "")
+    tentatives = []
+
+    async def fabrique(forcer_appairage=False):
+        tentatives.append(forcer_appairage)
+        return faux_client
+
+    televiseur = module.Televiseur(fabrique_client=fabrique)
+    await televiseur.demarrer()
+    assert televiseur.etat_connexion == "non_configure"
+    assert televiseur._tache is None
+    assert tentatives == []

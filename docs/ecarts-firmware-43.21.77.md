@@ -2,7 +2,7 @@
 
 Relevé du 24/09/2026. Firmware `lib32-starfish-global-secured-o24n-qilian-3706-43.21.77`,
 otaID `HE_DTV_W25O_AFABATAA` (même plateforme G5), webOS **11.2.0**
-(33.31.68 : webOS 10.3.1). Extraction dans `<copie locale du firmware>`
+(33.31.68 : webOS 10.3.1). Extraction dans une copie locale hors dépôt
 (clé AES `o24n`, même chaîne que `COMPTE-RENDU-extraction.md`) ; copies utiles
 dans `data/firmware/43.21.77/` (hors git).
 
@@ -26,7 +26,7 @@ non retenu. (Conclusion dépassée par le pont `createAlert`, § 7.)
 ## 2. Clés lisibles (`valid-settings.js`, inventaire relancé)
 
 Aucune clé retirée. Clés ajoutées à la liste publique, confirmées lisibles
-sur le téléviseur (`docs/inventaire-api.json`) :
+sur le téléviseur (`lg_webos_tv/backend/app/inventaire-api.json`) :
 
 | Catégorie | Nouvelles clés |
 |---|---|

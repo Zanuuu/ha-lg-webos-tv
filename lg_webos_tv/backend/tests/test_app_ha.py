@@ -52,7 +52,7 @@ def test_sans_options_ha_mode_dev_et_defaut(monkeypatch, tmp_path):
         monkeypatch.delenv("LG_TV_HOST", raising=False)
         conf = _recharger_config(monkeypatch, tmp_path, options=None)
         assert conf.MODE_APP_HA is False
-        assert conf.TV_HOST == "192.168.1.50"
+        assert conf.TV_HOST == ""
         assert conf.ACCES_LAN is False
     finally:
         _restaurer_config()

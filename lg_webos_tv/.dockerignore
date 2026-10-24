@@ -6,9 +6,6 @@ backend/scripts/
 backend/tests/
 frontend/node_modules/
 frontend/dist/
-# Seul l'inventaire API est nécessaire au runtime (televiseur.py).
-docs/*
-!docs/inventaire-api.json
 **/__pycache__/
 *.py[cod]
 .pytest_cache/

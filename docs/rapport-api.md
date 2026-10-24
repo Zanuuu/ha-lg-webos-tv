@@ -1,4 +1,4 @@
-# Rapport de phase 1 — Exploration de l'API du LG OLED 65 G5
+# Rapport de phase 1 — Exploration de l'API du LG OLED G5
 
 ## Téléviseur testé
 
@@ -12,7 +12,7 @@ scripts `backend/scripts/explore_*.py` (voir méthodologie).
 
 ### Mise à jour 43.21.77 (webOS 11.2) — 24 septembre 2026
 
-- Inventaire relancé (`explore_05`) : `docs/inventaire-api.json` reflète
+- Inventaire relancé (`explore_05`) : `lg_webos_tv/backend/app/inventaire-api.json` reflète
   désormais le 43.21.77. Aucune clé perdue, 14 ajoutées (détail :
   `docs/ecarts-firmware-43.21.77.md`). Mode d'image au moment du relevé :
   `filmMaker`. Champ `firmware` vide : la version logicielle n'est plus
@@ -32,7 +32,7 @@ documentation communautaire bscpylgtv pour le G5 (`available_settings_G5.md`,
 relevé sur firmware 33.21.81), extraites par `extraire_candidats.py`, et teste
 chaque clé contre notre téléviseur : l'API nomme les clés rejetées dans son
 message d'erreur, ce qui permet un sondage par lots avec retrait itératif.
-Résultat brut complet : `docs/inventaire-api.json`.
+Résultat brut complet : `lg_webos_tv/backend/app/inventaire-api.json`.
 
 ## Réglages lisibles (`getSystemSettings`)
 
@@ -134,7 +134,7 @@ rafraîchissement périodique reste en filet de sécurité (reconnexions).
 
 Conséquence : pour la majorité des réglages, bornes et listes de choix seront
 saisies à la main dans l'arbre des menus (phase 2), comme prévu en repli. Les
-33 descripteurs obtenus sont dans `docs/inventaire-api.json` et serviront de
+33 descripteurs obtenus sont dans `lg_webos_tv/backend/app/inventaire-api.json` et serviront de
 référence exacte pour ces clés.
 
 ## Décisions découlant de la phase
@@ -149,4 +149,4 @@ référence exacte pour ces clés.
    actif. À traiter en phase 5 (capture mode par mode en guidant
    l'utilisateur, ou preset limité au mode actif).
 4. Après toute mise à jour du firmware : relancer `explore_05_inventaire.py`
-   et comparer `docs/inventaire-api.json`.
+   et comparer `lg_webos_tv/backend/app/inventaire-api.json`.

@@ -4,7 +4,7 @@ menu-tree/*.json.
 La table CORRESPONDANCES est la source unique du rapprochement : id d'entrée
 -> {categorie, cle, acces, bornes?, valeurs?, note?}. Les bornes viennent des
 descripteurs getSystemSettingDesc relevés sur NOTRE téléviseur
-(docs/inventaire-api.json) ; les énumérations de valeurs API viennent de la
+(backend/app/inventaire-api.json) ; les énumérations de valeurs API viennent de la
 doc communautaire bscpylgtv G5, à confirmer à l'usage (chaque écriture est
 suivie d'une relecture).
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.3.0 — 2026-10-24
+
+Nouvelle interface et ouverture du projet à la communauté.
+
+- Interface refondue « écran OLED » : l'élément sélectionné s'allume comme
+  sur le téléviseur, curseurs en barre de réglage avec la valeur en grand,
+  titre du sous-menu courant, police Atkinson Hyperlegible Next.
+- Thème clair ou sombre selon le système.
+- Navigation au clavier visible partout (focus « allumé »).
+- Espaces manquants corrigés dans plusieurs descriptions de réglages.
+- L'adresse du téléviseur (`lg_tv_host`) n'a plus de valeur par défaut :
+  elle est obligatoire pour une nouvelle installation. Les installations
+  existantes conservent leur configuration.
+- Libellés des options traduits (français, anglais) dans l'onglet
+  Configuration.
+- Documentation : section « Téléviseurs pris en charge » et « Dépannage »,
+  licence MIT, notes de développement déplacées dans `docs/` à la racine du
+  dépôt.
+
 ## 1.2.0 — 2026-10-24
 
 Écriture des réglages rétablie sous le firmware 43.21.77 (webOS 11.2).

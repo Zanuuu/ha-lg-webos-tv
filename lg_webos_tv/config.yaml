@@ -1,7 +1,7 @@
 name: LG webOS TV
-version: "1.2.0"
+version: "1.3.0"
 slug: lg_webos_tv
-description: Réplique du menu Réglages du téléviseur LG OLED 65 G5 — consultation des réglages en temps réel, presets, historique.
+description: Menu Réglages des téléviseurs LG webOS dans Home Assistant — réglages en temps réel, modification, presets, historique avec retour arrière.
 url: https://github.com/Zanuuu/ha-lg-webos-tv
 arch:
   - amd64
@@ -15,11 +15,11 @@ panel_icon: mdi:television
 # (et activer l'option acces_lan) pour un accès sans authentification HA.
 ports:
   8000/tcp: null
-ports_description:
-  8000/tcp: Accès direct sans Ingress (nécessite aussi l'option acces_lan)
 webui: http://[HOST]:[PORT:8000]/
+# lg_tv_host à null : option obligatoire, à renseigner avant le premier
+# démarrage (aucune adresse par défaut ne vaut pour toutes les installations).
 options:
-  lg_tv_host: "192.168.1.50"
+  lg_tv_host: null
   acces_lan: false
 schema:
   lg_tv_host: str

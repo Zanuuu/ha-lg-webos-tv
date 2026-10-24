@@ -17,7 +17,6 @@ COPY backend/pyproject.toml backend/
 COPY backend/app backend/app
 RUN pip install --no-cache-dir ./backend
 COPY menu-tree/ menu-tree/
-COPY docs/inventaire-api.json docs/
 COPY --from=frontend-build /build/dist frontend/dist
 # /data : bases SQLite et clé client TV. En app Home Assistant, le Superviseur
 # y monte le stockage persistant ; hors HA, monter un volume.
