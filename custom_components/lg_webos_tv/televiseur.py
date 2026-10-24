@@ -141,6 +141,10 @@ class _CleEnMemoire:
     async def get_key(self, key):
         return self.cles.get(key)
 
+    async def list_keys(self):
+        # Exigée par le protocole (vérifié par isinstance), inutilisée ici.
+        return dict(self.cles)
+
 
 async def appairer(hote: str) -> str:
     """Demande l'appairage (acceptation sur l'écran du téléviseur) et renvoie
@@ -157,9 +161,12 @@ async def appairer(hote: str) -> str:
         await client.request("settings/getSystemSettings",
                              {"category": "picture", "keys": ["pictureMode"]})
         return client.client_key
-    except AppairageEchoue:
+    except AppairageEchoue as exc:
+        log.warning("Appairage avec %s impossible : %s", hote, exc)
         raise
     except Exception as exc:  # noqa: BLE001 — refus, expiration, réseau…
+        log.warning("Appairage avec %s impossible : %s: %s", hote,
+                    type(exc).__name__, _texte_erreur(exc))
         raise AppairageEchoue(_texte_erreur(exc)) from exc
     finally:
         if client is not None:

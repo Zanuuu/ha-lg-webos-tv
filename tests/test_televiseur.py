@@ -311,3 +311,15 @@ async def test_notification_tardive_de_notre_ecriture(televiseur, faux_client):
         "picture", {"sharpness": "25"}, caller="com.webos.app.starfish_flutter_systemui"))
     assert evenements == [("application", {"sharpness": 25})]
     await televiseur.arreter()
+
+
+async def test_stockage_de_cle_accepte_par_bscpylgtv():
+    """bscpylgtv vérifie le stockage fourni par isinstance(StorageProto) :
+    construit avec le vrai client (sans connexion), il doit être accepté."""
+    from custom_components.lg_webos_tv.televiseur import (_CleEnMemoire,
+                                                          _construire_client)
+
+    stockage = _CleEnMemoire()
+    client = await _construire_client("192.0.2.10", storage=stockage)
+    assert client.storage is stockage
+    assert client.client_key is None
