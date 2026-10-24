@@ -37,6 +37,36 @@
       "reconfigure_successful": "Address updated."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Adaptive brightness",
+        "description": "Sets the OLED pixel brightness from an ambient light sensor, on a logarithmic scale close to how the eye perceives light. A brightness change made elsewhere (remote, Home Assistant, preset) pauses the feature. Without a sensor, the feature is off.",
+        "data": {
+          "capteur_lux": "Ambient light sensor",
+          "lux_min": "Dark room",
+          "lux_max": "Bright room",
+          "luminosite_min": "Minimum brightness",
+          "luminosite_max": "Maximum brightness",
+          "ecart_minimal": "Minimum change",
+          "pause": "Pause after a manual change",
+          "modes_exclus": "Picture modes left alone"
+        },
+        "data_description": {
+          "capteur_lux": "Leave empty to turn the feature off and remove its entities.",
+          "lux_min": "Below this, the minimum brightness applies.",
+          "lux_max": "Above this, the maximum brightness applies.",
+          "ecart_minimal": "Smaller changes are ignored, so the TV does not follow every flicker of the sensor.",
+          "pause": "The pause also ends the next time the TV is turned on, or with the Resume button.",
+          "modes_exclus": "Modes where brightness is never changed (calibrated modes)."
+        }
+      }
+    },
+    "error": {
+      "lux_max_trop_bas": "Must be above the dark room value.",
+      "luminosite_max_trop_basse": "Must be at least the minimum brightness."
+    }
+  },
   "entity": {
     "binary_sensor": {
       "connexion": {
@@ -53,6 +83,18 @@
           "ssap": "Direct (setSystemSettings)",
           "alerte": "Alert bridge (createAlert)",
           "aucune": "None (read-only)"
+        }
+      },
+      "luminosite_adaptative_etat": {
+        "name": "Adaptive brightness status",
+        "state": {
+          "desactivee": "Off",
+          "televiseur_deconnecte": "TV disconnected",
+          "consultation": "Write unavailable",
+          "pause": "Paused (manual change)",
+          "mode_exclu": "Picture mode left alone",
+          "capteur_indisponible": "Sensor unavailable",
+          "active": "Active"
         }
       }
     },
@@ -72,6 +114,14 @@
     "button": {
       "appliquer_preset": {
         "name": "Apply preset {nom}"
+      },
+      "luminosite_adaptative_reprendre": {
+        "name": "Resume adaptive brightness"
+      }
+    },
+    "switch": {
+      "luminosite_adaptative": {
+        "name": "Adaptive brightness"
       }
     }
   },
@@ -125,6 +175,22 @@
         "filmMaker": "FILMMAKER MODE",
         "expert1": "Expert (bright space, daytime)",
         "expert2": "Expert (dark space, night)"
+      }
+    },
+    "modes_exclus": {
+      "options": {
+        "personalized": "Image personnalisée",
+        "vivid": "Vivid",
+        "normal": "Standard",
+        "eco": "Eco",
+        "hdrCinemaBright": "Accueil cinéma",
+        "cinema": "Cinema",
+        "sports": "Sports",
+        "game": "Game optimizer",
+        "filmMaker": "FILMMAKER MODE",
+        "expert1": "Expert (bright space, daytime)",
+        "expert2": "Expert (dark space, night)",
+        "hdr": "HDR and Dolby Vision content"
       }
     }
   },

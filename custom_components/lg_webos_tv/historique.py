@@ -10,11 +10,14 @@ import asyncio
 import json
 import sqlite3
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 # D'où vient une écriture : réglage depuis une entité ou une action Home
-# Assistant, depuis le panneau, application d'un preset, retour arrière.
-ORIGINES = ("home_assistant", "panneau", "preset", "annulation")
+# Assistant, depuis le panneau, application d'un preset, retour arrière,
+# luminosité adaptative.
+ORIGINES = ("home_assistant", "panneau", "preset", "annulation",
+            "luminosite_adaptative")
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS ecritures (
@@ -38,6 +41,16 @@ class Historique:
         self.chemin.parent.mkdir(parents=True, exist_ok=True)
         with self._connexion() as co:
             co.executescript(_SCHEMA)
+        # Prévenus après chaque écriture enregistrée : seul point qui voit
+        # toutes les écritures avec leur origine, presets et retours arrière
+        # compris (luminosité adaptative).
+        self._ecouteurs: list[Callable[[dict], None]] = []
+
+    def ecouter(self, ecouteur: Callable[[dict], None]) -> Callable[[], None]:
+        """Abonne `ecouteur` aux écritures enregistrées ; renvoie de quoi le
+        désabonner."""
+        self._ecouteurs.append(ecouteur)
+        return lambda: self._ecouteurs.remove(ecouteur)
 
     def _connexion(self) -> sqlite3.Connection:
         co = sqlite3.connect(self.chemin)
@@ -61,9 +74,15 @@ class Historique:
     async def enregistrer(self, entree_id: str | None, categorie: str, cle: str,
                           ancienne, nouvelle, mode_image: str | None,
                           origine: str) -> int:
-        return await asyncio.to_thread(
+        id_ = await asyncio.to_thread(
             self._enregistrer_sync, entree_id, categorie, cle,
             ancienne, nouvelle, mode_image, origine)
+        ecriture = {"id": id_, "entree_id": entree_id, "categorie": categorie,
+                    "cle": cle, "nouvelle": nouvelle, "mode_image": mode_image,
+                    "origine": origine}
+        for ecouteur in list(self._ecouteurs):
+            ecouteur(ecriture)
+        return id_
 
     def _lister_sync(self, limite: int) -> list[dict]:
         with self._connexion() as co:

@@ -13,6 +13,7 @@ const LIBELLES_ORIGINE = {
   panneau: 'Panneau',
   preset: 'Preset',
   annulation: 'Retour arrière',
+  luminosite_adaptative: 'Luminosité adaptative',
 }
 
 export default function VueHistorique({ index, lectureSeule }) {

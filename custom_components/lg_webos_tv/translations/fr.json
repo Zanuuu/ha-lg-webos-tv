@@ -37,6 +37,36 @@
       "reconfigure_successful": "Adresse mise à jour."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Luminosité adaptative",
+        "description": "Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une échelle logarithmique proche de la perception de l'œil. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset) met la fonction en pause. Sans capteur, la fonction est désactivée.",
+        "data": {
+          "capteur_lux": "Capteur de luminosité ambiante",
+          "lux_min": "Pièce sombre",
+          "lux_max": "Pièce lumineuse",
+          "luminosite_min": "Luminosité minimale",
+          "luminosite_max": "Luminosité maximale",
+          "ecart_minimal": "Écart minimal",
+          "pause": "Pause après un réglage manuel",
+          "modes_exclus": "Modes d'image laissés de côté"
+        },
+        "data_description": {
+          "capteur_lux": "Laisser vide pour désactiver la fonction et retirer ses entités.",
+          "lux_min": "En dessous, la luminosité minimale s'applique.",
+          "lux_max": "Au-dessus, la luminosité maximale s'applique.",
+          "ecart_minimal": "Changement ignoré s'il est plus petit, pour ne pas suivre chaque frémissement du capteur.",
+          "pause": "La pause prend fin aussi au prochain allumage du téléviseur, ou avec le bouton « Reprendre ».",
+          "modes_exclus": "Modes où la luminosité n'est jamais modifiée (modes calibrés)."
+        }
+      }
+    },
+    "error": {
+      "lux_max_trop_bas": "Doit dépasser la valeur « Pièce sombre ».",
+      "luminosite_max_trop_basse": "Doit être au moins égale à la luminosité minimale."
+    }
+  },
   "entity": {
     "binary_sensor": {
       "connexion": {
@@ -53,6 +83,18 @@
           "ssap": "Directe (setSystemSettings)",
           "alerte": "Pont d'alerte (createAlert)",
           "aucune": "Aucune (consultation)"
+        }
+      },
+      "luminosite_adaptative_etat": {
+        "name": "État de la luminosité adaptative",
+        "state": {
+          "desactivee": "Désactivée",
+          "televiseur_deconnecte": "Téléviseur déconnecté",
+          "consultation": "Écriture impossible",
+          "pause": "En pause (réglage manuel)",
+          "mode_exclu": "Mode d'image laissé de côté",
+          "capteur_indisponible": "Capteur indisponible",
+          "active": "Active"
         }
       }
     },
@@ -72,6 +114,14 @@
     "button": {
       "appliquer_preset": {
         "name": "Appliquer le preset {nom}"
+      },
+      "luminosite_adaptative_reprendre": {
+        "name": "Reprendre la luminosité adaptative"
+      }
+    },
+    "switch": {
+      "luminosite_adaptative": {
+        "name": "Luminosité adaptative"
       }
     }
   },
@@ -125,6 +175,22 @@
         "filmMaker": "FILMMAKER MODE",
         "expert1": "Expert (pièce lumineuse, journée)",
         "expert2": "Expert (pièce sombre, nuit)"
+      }
+    },
+    "modes_exclus": {
+      "options": {
+        "personalized": "Image personnalisée",
+        "vivid": "Vif",
+        "normal": "Standard",
+        "eco": "Éco",
+        "hdrCinemaBright": "Accueil cinéma",
+        "cinema": "Cinéma",
+        "sports": "Sport",
+        "game": "Optimiseur de jeu",
+        "filmMaker": "FILMMAKER MODE",
+        "expert1": "Expert (pièce lumineuse, journée)",
+        "expert2": "Expert (pièce sombre, nuit)",
+        "hdr": "Contenus HDR et Dolby Vision"
       }
     }
   },

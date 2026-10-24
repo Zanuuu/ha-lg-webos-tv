@@ -1,5 +1,6 @@
 """Un bouton par preset : application depuis une automatisation, une scène
-ou un tableau de bord. Les boutons suivent la liste des presets."""
+ou un tableau de bord. Les boutons suivent la liste des presets. Plus le
+bouton de reprise de la luminosité adaptative."""
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.core import HomeAssistant, callback
@@ -38,6 +39,8 @@ async def async_setup_entry(hass: HomeAssistant, entry,
 
     await synchroniser()
     entry.async_on_unload(presets.ecouter(presets_modifies))
+    if entry.runtime_data.luminosite_adaptative is not None:
+        async_add_entities([ReprendreLuminositeAdaptative(entry)])
 
 
 class BoutonPreset(EntiteTeleviseur, ButtonEntity):
@@ -64,3 +67,25 @@ class BoutonPreset(EntiteTeleviseur, ButtonEntity):
                 translation_placeholders={
                     "nom": self.nom, "appliques": str(len(resultat["appliques"])),
                     "echecs": str(len(resultat["echecs"])), "details": details})
+
+
+class ReprendreLuminositeAdaptative(EntiteTeleviseur, ButtonEntity):
+    """Lève la pause après un réglage manuel et réapplique tout de suite."""
+
+    _attr_translation_key = "luminosite_adaptative_reprendre"
+
+    def __init__(self, entry) -> None:
+        super().__init__(entry)
+        self._attr_unique_id = "luminosite_adaptative_reprendre"
+        self._fonction = entry.runtime_data.luminosite_adaptative
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(self._fonction.ecouter(self.async_write_ha_state))
+
+    @property
+    def available(self) -> bool:
+        return self._fonction.active
+
+    async def async_press(self) -> None:
+        self._fonction.reprendre()

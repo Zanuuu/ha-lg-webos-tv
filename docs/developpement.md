@@ -14,6 +14,9 @@ Le dépôt est une **intégration Home Assistant distribuée par HACS**
     des menus, écritures validées et historisées, presets, retour arrière.
   - `ecritures.py` : file d'écriture coalescente, partagée par les entités,
     les actions et le panneau.
+  - `luminosite_adaptative.py` : luminosité OLED selon un capteur de lux
+    (options de l'entrée) ; reprise en main détectée par l'origine des
+    notifications du téléviseur et par l'écoute de l'historique.
   - `entite.py` et plateformes (`number.py`, `select.py`…) : entités
     dérivées de l'arbre.
   - `services.py` (actions), `websocket.py` (API du panneau), `panneau.py`
@@ -23,7 +26,6 @@ Le dépôt est une **intégration Home Assistant distribuée par HACS**
     lu au démarrage ; `manifeste-ssap.json` : manifeste d'appairage.
   - `frontend/` : **build** du panneau (commité, pas de CI).
 - `frontend/` : sources React / Vite du panneau.
-- `blueprints/` : blueprints d'automatisation.
 - `tests/` : tests pytest sous Home Assistant
   (`pytest-homeassistant-custom-component`).
 - `docs/` : notes de développement (exploration de l'API, incidents

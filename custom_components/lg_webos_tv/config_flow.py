@@ -1,6 +1,7 @@
 """Flux de configuration : adresse du téléviseur (saisie ou découverte SSDP),
 appairage avec acceptation sur l'écran, réauthentification quand le
-téléviseur refuse la clé, changement d'adresse."""
+téléviseur refuse la clé, changement d'adresse. Options : luminosité
+adaptative."""
 
 import asyncio
 from typing import Any
@@ -8,13 +9,25 @@ from urllib.parse import urlparse
 
 import voluptuous as vol
 
-from homeassistant.config_entries import (SOURCE_REAUTH, ConfigFlow,
-                                          ConfigFlowResult)
+from homeassistant.config_entries import (SOURCE_REAUTH, ConfigEntry,
+                                          ConfigFlow, ConfigFlowResult,
+                                          OptionsFlowWithReload)
 from homeassistant.const import CONF_HOST
+from homeassistant.core import callback
+from homeassistant.helpers.selector import (EntitySelector,
+                                            EntitySelectorConfig,
+                                            NumberSelector,
+                                            NumberSelectorConfig,
+                                            NumberSelectorMode, SelectSelector,
+                                            SelectSelectorConfig)
 from homeassistant.helpers.service_info.ssdp import (ATTR_UPNP_FRIENDLY_NAME,
                                                      SsdpServiceInfo)
 
-from .const import CONF_CLE_CLIENT, DOMAIN
+from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_ECART_MINIMAL,
+                    CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
+                    CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN, DOMAIN,
+                    OPTIONS_LUMINOSITE_DEFAUT)
+from .luminosite_adaptative import modes_proposes
 from .televiseur import AppairageEchoue, appairer
 
 TITRE_DEFAUT = "LG webOS TV"
@@ -22,6 +35,11 @@ TITRE_DEFAUT = "LG webOS TV"
 
 class LgWebosTvConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> "OptionsLgWebosTv":
+        return OptionsLgWebosTv()
 
     def __init__(self) -> None:
         self._hote: str | None = None
@@ -133,3 +151,53 @@ class LgWebosTvConfigFlow(ConfigFlow, domain=DOMAIN):
                 vol.Schema({vol.Required(CONF_HOST): str}),
                 {CONF_HOST: entree.data[CONF_HOST]}),
         )
+
+
+def _nombre(minimum: float, maximum: float, unite: str | None = None) -> NumberSelector:
+    config = NumberSelectorConfig(min=minimum, max=maximum, step=1,
+                                  mode=NumberSelectorMode.BOX)
+    if unite is not None:
+        config["unit_of_measurement"] = unite
+    return NumberSelector(config)
+
+
+class OptionsLgWebosTv(OptionsFlowWithReload):
+    """Luminosité adaptative. L'entrée est rechargée à l'enregistrement : la
+    fonction et ses entités n'existent que si un capteur est choisi."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        erreurs = {}
+        if user_input is not None:
+            if user_input[CONF_LUX_MAX] <= user_input[CONF_LUX_MIN]:
+                erreurs[CONF_LUX_MAX] = "lux_max_trop_bas"
+            if user_input[CONF_LUMINOSITE_MAX] < user_input[CONF_LUMINOSITE_MIN]:
+                erreurs[CONF_LUMINOSITE_MAX] = "luminosite_max_trop_basse"
+            if not erreurs:
+                # Les sélecteurs numériques rendent des flottants ; le
+                # téléviseur n'accepte que des entiers.
+                for cle in (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX,
+                            CONF_ECART_MINIMAL, CONF_PAUSE_MIN):
+                    user_input[cle] = int(user_input[cle])
+                return self.async_create_entry(data=user_input)
+
+        # Lecture de l'arbre (en cache une fois l'entrée chargée).
+        modes = await self.hass.async_add_executor_job(modes_proposes)
+        schema = vol.Schema({
+            vol.Optional(CONF_CAPTEUR_LUX): EntitySelector(EntitySelectorConfig(
+                domain="sensor", device_class="illuminance")),
+            vol.Required(CONF_LUX_MIN): _nombre(1, 1000, "lx"),
+            vol.Required(CONF_LUX_MAX): _nombre(2, 100000, "lx"),
+            vol.Required(CONF_LUMINOSITE_MIN): _nombre(0, 100),
+            vol.Required(CONF_LUMINOSITE_MAX): _nombre(0, 100),
+            vol.Required(CONF_ECART_MINIMAL): _nombre(1, 20),
+            vol.Required(CONF_PAUSE_MIN): _nombre(5, 720, "min"),
+            vol.Required(CONF_MODES_EXCLUS): SelectSelector(SelectSelectorConfig(
+                options=modes, multiple=True, translation_key=CONF_MODES_EXCLUS)),
+        })
+        valeurs = {**OPTIONS_LUMINOSITE_DEFAUT, **self.config_entry.options,
+                   **(user_input or {})}
+        return self.async_show_form(
+            step_id="init", errors=erreurs,
+            data_schema=self.add_suggested_values_to_schema(schema, valeurs))

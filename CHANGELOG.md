@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.1.0 — 2026-10-25
+
+- **Luminosité adaptative** intégrée (options de l'intégration) : remplace
+  le blueprint « luminosité OLED selon la lumière ambiante », retiré.
+  Supprimer l'automatisation créée depuis le blueprint avant d'activer la
+  fonction, sinon les deux se disputent la luminosité.
+  - La pause ne dépend plus que de la luminosité OLED : régler un autre
+    réglage à la télécommande ne la lève plus.
+  - Les changements faits depuis Home Assistant (entité, panneau, preset,
+    retour arrière) mettent aussi en pause.
+  - Réappliquée au changement d'entrée, pas seulement de mode d'image.
+  - Contenus HDR / Dolby Vision et modes inconnus du menu laissés de côté.
+  - Pause conservée au redémarrage de Home Assistant.
+- Historique : origine « Luminosité adaptative ».
+
 ## 2.0.0 — 2026-10-24
 
 L'app (add-on) devient une **intégration Home Assistant**, distribuée par

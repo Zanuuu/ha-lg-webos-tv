@@ -1,7 +1,7 @@
 """Événement « réglage modifié sur le téléviseur » : signale les changements
 qui ne viennent pas de cette intégration (télécommande, réglages rapides, ou
 une autre application). Sert aux automatisations qui doivent céder la main à
-un réglage manuel, comme le blueprint de luminosité ambiante."""
+un réglage manuel."""
 
 from functools import partial
 from typing import Any

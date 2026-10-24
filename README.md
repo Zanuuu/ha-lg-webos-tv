@@ -5,8 +5,9 @@
 > entities, synchronized in real time both ways (remote control → Home
 > Assistant, Home Assistant → TV, every write confirmed by the TV). It adds
 > actions for automations (set a setting only in a given picture mode,
-> apply a preset), an event when a setting is changed with the remote, an
-> ambient-light blueprint for OLED brightness, and a sidebar panel that
+> apply a preset), an event when a setting is changed with the remote,
+> adaptive OLED brightness driven by an ambient light sensor, and a sidebar
+> panel that
 > mirrors the TV's Settings menu with presets and undo history. Setting
 > names and the panel are in **French** (they mirror the French menu of the
 > LG OLED G5, webOS 25). Works with webOS 11.2 firmwares, where LG blocks
@@ -34,8 +35,9 @@ dans la barre latérale.
     d'image ;
   - action `lg_webos_tv.appliquer_preset` et un bouton par preset ;
   - événement « Réglage modifié sur le téléviseur » quand un réglage est
-    changé à la télécommande, pour qu'une automatisation cède la main ;
-  - blueprint « luminosité OLED selon la lumière ambiante ».
+    changé à la télécommande, pour qu'une automatisation cède la main.
+- **Luminosité adaptative** : la luminosité des pixels OLED suit un capteur
+  de lumière ambiante, et cède la main à tout réglage manuel.
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
   régler sur la TV »), presets exportables en JSON, historique avec retour
@@ -86,6 +88,7 @@ Méthode »).
 | Interrupteur (`switch`) | Protection des yeux, Compatibilité eARC, SIMPLINK | |
 | Capteur (`sensor`) | Son — Mode Sélection, Pays | réglages en lecture seule |
 | Bouton (`button`) | Appliquer le preset Soirée | un par preset |
+| Luminosité adaptative | Luminosité adaptative (`switch`), État de la luminosité adaptative (`sensor`), Reprendre la luminosité adaptative (`button`) | si un capteur de lux est configuré |
 | Événement (`event`) | Réglage modifié sur le téléviseur | `manuel` ou `autre_application` |
 | Diagnostic | Connexion, Écriture des réglages impossible, Voie d'écriture | |
 
@@ -138,18 +141,32 @@ attributs `entree_id`, `libelle`, `cle`, `valeur` et `mode_image`. Les
 changements faits par Home Assistant et les valeurs qui suivent un
 changement de mode ne le déclenchent pas.
 
-### Blueprint : luminosité OLED selon la lumière ambiante
+## Luminosité adaptative
 
-[`blueprints/automation/lg_webos_tv/luminosite_ambiante.yaml`](blueprints/automation/lg_webos_tv/luminosite_ambiante.yaml)
-— Paramètres → Automatisations → Blueprints → Importer, avec l'URL du
-fichier sur le dépôt.
+Paramètres → Appareils et services → LG webOS TV → **Configurer** : choisir
+un capteur de luminosité ambiante (lux) active la fonction et crée ses
+trois entités ; effacer le capteur la retire.
 
-- échelle logarithmique entre une pièce sombre et une pièce lumineuse ;
-- changement ignoré sous un écart minimal ;
-- pause après un réglage à la télécommande, jusqu'à un délai choisi ou au
-  prochain allumage du téléviseur ;
-- réappliqué à chaque changement de mode d'image ; modes calibrés (FILMMAKER
-  MODE, Expert) laissés de côté par défaut.
+- Échelle logarithmique, proche de la perception de l'œil, entre une pièce
+  sombre (luminosité minimale) et une pièce lumineuse (luminosité
+  maximale) ; changement ignoré sous un écart minimal.
+- Réappliquée quand le téléviseur rappelle une autre luminosité : il en
+  garde une par mode d'image **et par entrée**.
+- **Pause** dès que la luminosité OLED est réglée ailleurs : télécommande,
+  réglages rapides, autre application, entité ou panneau Home Assistant,
+  preset, retour arrière. Les autres réglages ne comptent pas. La pause
+  dure le délai choisi (120 min par défaut), ou jusqu'au prochain allumage
+  du téléviseur ou au bouton « Reprendre » ; elle survit à un redémarrage
+  de Home Assistant.
+- **Modes laissés de côté** (par défaut FILMMAKER MODE, Expert et les
+  contenus HDR / Dolby Vision) : la luminosité n'y est jamais modifiée. Un
+  mode absent de la liste (« Créateur » par exemple) est aussi laissé de
+  côté.
+- L'entité « État de la luminosité adaptative » dit ce que fait la
+  fonction (`active`, `pause`, `mode_exclu`, `capteur_indisponible`…), avec
+  les attributs `lux`, `cible`, `fin_pause` et `derniere_erreur`. Ses
+  écritures apparaissent dans l'historique du panneau (origine
+  « Luminosité adaptative »), et peuvent y être annulées.
 
 ## Écriture sous webOS 11 et mode consultation
 

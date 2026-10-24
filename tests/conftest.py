@@ -175,10 +175,18 @@ async def attendre(condition, delai=2.0):
 
 
 @pytest.fixture
-async def installe(hass: HomeAssistant, tmp_path, faux_client):
+def options_entree():
+    """Options de l'entrée installée ; redéfinie par les tests de la
+    luminosité adaptative."""
+    return {}
+
+
+@pytest.fixture
+async def installe(hass: HomeAssistant, tmp_path, faux_client, options_entree):
     hass.config.config_dir = str(tmp_path)
     entree = MockConfigEntry(domain=DOMAIN, title="LG webOS TV",
-                             data={CONF_HOST: "192.0.2.10", CONF_CLE_CLIENT: "cle"})
+                             data={CONF_HOST: "192.0.2.10", CONF_CLE_CLIENT: "cle"},
+                             options=options_entree)
     entree.add_to_hass(hass)
 
     async def construire(hote, **options):

@@ -12,10 +12,11 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.typing import ConfigType
 
 from . import panneau, restauration, services, websocket
-from .const import CONF_CLE_CLIENT, DOMAIN
+from .const import CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, DOMAIN
 from .ecritures import FileEcritures
 from .entite import descriptions
 from .historique import Historique
+from .luminosite_adaptative import LuminositeAdaptative, retirer_entites
 from .presets import Presets
 from .televiseur import Televiseur
 
@@ -31,6 +32,8 @@ class DonneesLgWebosTv:
     historique: Historique
     presets: Presets
     ecritures: FileEcritures
+    # Absente tant qu'aucun capteur de lux n'est choisi dans les options.
+    luminosite_adaptative: LuminositeAdaptative | None = None
 
 
 type LgWebosTvConfigEntry = ConfigEntry[DonneesLgWebosTv]
@@ -87,6 +90,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
 
     donnees.televiseur.abonner(sur_evenement)
 
+    if entry.options.get(CONF_CAPTEUR_LUX):
+        donnees.luminosite_adaptative = LuminositeAdaptative(
+            hass, donnees, dict(entry.options))
+        donnees.luminosite_adaptative.demarrer()
+    else:
+        retirer_entites(hass)
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await panneau.async_enregistrer(hass)
     # Le téléviseur peut être éteint : l'entrée est prête sans attendre la
@@ -101,6 +111,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     panneau.async_retirer(hass)
+    if entry.runtime_data.luminosite_adaptative is not None:
+        entry.runtime_data.luminosite_adaptative.arreter()
     await entry.runtime_data.ecritures.arreter()
     await entry.runtime_data.televiseur.arreter()
     return True

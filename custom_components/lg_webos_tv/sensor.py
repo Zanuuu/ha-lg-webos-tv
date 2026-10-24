@@ -1,4 +1,5 @@
-"""Capteurs : réglages en lecture seule du menu, voie d'écriture (diagnostic)."""
+"""Capteurs : réglages en lecture seule du menu, voie d'écriture (diagnostic),
+état de la luminosité adaptative."""
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import EntityCategory
@@ -6,15 +7,19 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entite import EntiteReglage, EntiteTeleviseur, descriptions
+from .luminosite_adaptative import ETATS
 
 
 async def async_setup_entry(hass: HomeAssistant, entry,
                             async_add_entities: AddConfigEntryEntitiesCallback) -> None:
-    async_add_entities([
+    entites = [
         *(ReglageLectureSeule(entry, d) for d in descriptions()
           if d.plateforme == "sensor"),
         VoieEcriture(entry),
-    ])
+    ]
+    if entry.runtime_data.luminosite_adaptative is not None:
+        entites.append(EtatLuminositeAdaptative(entry))
+    async_add_entities(entites)
 
 
 class ReglageLectureSeule(EntiteReglage, SensorEntity):
@@ -56,3 +61,29 @@ class VoieEcriture(EntiteTeleviseur, SensorEntity):
         if self._tv.ecriture_possible is None:
             return None
         return self._tv.voie_ecriture or "aucune"
+
+
+class EtatLuminositeAdaptative(EntiteTeleviseur, SensorEntity):
+    """Ce que fait la luminosité adaptative et pourquoi : active, en pause
+    après un réglage manuel, mode d'image laissé de côté…"""
+
+    _attr_translation_key = "luminosite_adaptative_etat"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ETATS
+
+    def __init__(self, entry) -> None:
+        super().__init__(entry)
+        self._attr_unique_id = "luminosite_adaptative_etat"
+        self._fonction = entry.runtime_data.luminosite_adaptative
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(self._fonction.ecouter(self.async_write_ha_state))
+
+    @property
+    def native_value(self) -> str:
+        return self._fonction.etat
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return self._fonction.attributs()
