@@ -1,0 +1,38 @@
+regler:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: lg_webos_tv
+          domain:
+            - number
+            - select
+            - switch
+    valeur:
+      required: true
+      example: 30
+      selector:
+        object:
+    mode_image:
+      selector:
+        select:
+          translation_key: mode_image
+          options:
+            - personalized
+            - vivid
+            - normal
+            - eco
+            - hdrCinemaBright
+            - cinema
+            - sports
+            - game
+            - filmMaker
+            - expert1
+            - expert2
+appliquer_preset:
+  fields:
+    nom:
+      required: true
+      selector:
+        text:

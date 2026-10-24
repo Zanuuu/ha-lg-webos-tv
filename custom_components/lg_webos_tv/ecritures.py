@@ -14,26 +14,29 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-Ecrire = Callable[[str, Any], Awaitable[dict]]
+# (entree_id, valeur, origine, mode_attendu) → résultat de restauration.ecrire
+Ecrire = Callable[[str, Any, str, str | None], Awaitable[dict]]
 
 
 class FileEcritures:
     def __init__(self, ecrire: Ecrire):
         self._ecrire = ecrire
-        # Entrée → (dernière valeur demandée, futurs des demandeurs), dans
-        # l'ordre d'arrivée de la première demande.
-        self._en_attente: dict[str, tuple[Any, list[asyncio.Future]]] = {}
+        # Entrée → (paramètres de la dernière demande, futurs des
+        # demandeurs), dans l'ordre d'arrivée de la première demande.
+        self._en_attente: dict[str, tuple[tuple, list[asyncio.Future]]] = {}
         self._travailleur: asyncio.Task | None = None
 
-    async def demander(self, entree_id: str, valeur: Any) -> dict:
+    async def demander(self, entree_id: str, valeur: Any, origine: str,
+                       mode_attendu: str | None = None) -> dict:
         """Écrit `valeur` (ou une valeur plus récente demandée entre-temps
         pour la même entrée) et renvoie le résultat de restauration.ecrire."""
         futur = asyncio.get_running_loop().create_future()
+        parametres = (valeur, origine, mode_attendu)
         if entree_id in self._en_attente:
             _, futurs = self._en_attente[entree_id]
-            self._en_attente[entree_id] = (valeur, [*futurs, futur])
+            self._en_attente[entree_id] = (parametres, [*futurs, futur])
         else:
-            self._en_attente[entree_id] = (valeur, [futur])
+            self._en_attente[entree_id] = (parametres, [futur])
         if self._travailleur is None or self._travailleur.done():
             self._travailleur = asyncio.create_task(self._travailler())
         return await futur
@@ -41,9 +44,9 @@ class FileEcritures:
     async def _travailler(self) -> None:
         while self._en_attente:
             entree_id = next(iter(self._en_attente))
-            valeur, futurs = self._en_attente.pop(entree_id)
+            parametres, futurs = self._en_attente.pop(entree_id)
             try:
-                resultat = await self._ecrire(entree_id, valeur)
+                resultat = await self._ecrire(entree_id, *parametres)
             except asyncio.CancelledError:
                 for futur in futurs:
                     futur.cancel()

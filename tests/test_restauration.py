@@ -36,7 +36,7 @@ async def creer_preset(tv, presets, nom, entrees=None):
 # --------------------------------------------------------------- historique
 
 async def test_annuler_ecriture(tv, historique):
-    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 25)
+    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 25, "panneau")
     id_ecriture = (await historique.lister())[0]["id"]
 
     resultat = await restauration.annuler_ecriture(tv, historique, id_ecriture)
@@ -46,10 +46,11 @@ async def test_annuler_ecriture(tv, historique):
     histo = await historique.lister()
     assert len(histo) == 2
     assert histo[0]["ancienne"] == 25 and histo[0]["nouvelle"] == 10
+    assert [h["origine"] for h in histo] == ["annulation", "panneau"]
 
 
 async def test_annuler_refuse_si_mode_image_different(tv, historique, faux_client):
-    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 25)
+    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 25, "panneau")
     id_ecriture = (await historique.lister())[0]["id"]
     changer_mode(tv, faux_client, "expert1")
 
@@ -66,9 +67,9 @@ async def test_annuler_entree_inconnue(tv, historique):
 
 async def test_revenir_a_un_instant(tv, historique):
     repere = time.time()
-    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 20)
-    await restauration.ecrire_par_entree(tv, historique, ID_CONTRASTE, 90)
-    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 30)
+    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 20, "panneau")
+    await restauration.ecrire_par_entree(tv, historique, ID_CONTRASTE, 90, "panneau")
+    await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 30, "panneau")
 
     resultats = await restauration.revenir_a(tv, historique, repere)
     assert len(resultats) == 3
@@ -79,7 +80,7 @@ async def test_revenir_a_un_instant(tv, historique):
 
 async def test_ecriture_refusee_non_historisee(tv, historique, faux_client):
     faux_client.refuser.add(("picture", "sharpness"))
-    resultat = await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 12)
+    resultat = await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 12, "panneau")
     assert resultat["ok"] is False
     assert "refusée par le téléviseur" in resultat["raison"]
     assert await historique.lister() == []
@@ -148,6 +149,7 @@ async def test_appliquer_preset_complet_bascule_le_mode_si_necessaire(
     assert {"pictureMode", "sharpness"} <= {e["cle"] for e in resultat["appliques"]}
     assert tv.mode_image == "expert2"
     assert tv.etat["picture"]["sharpness"] == 10
+    assert {h["origine"] for h in await historique.lister()} == {"preset"}
 
 
 async def test_preset_avec_une_entree_refusee_continue(tv, historique, presets, faux_client):

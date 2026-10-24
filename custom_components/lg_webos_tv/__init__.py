@@ -7,9 +7,11 @@ from pathlib import Path
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.typing import ConfigType
 
-from . import restauration
+from . import restauration, services
 from .const import CONF_CLE_CLIENT, DOMAIN
 from .ecritures import FileEcritures
 from .entite import descriptions
@@ -17,8 +19,9 @@ from .historique import Historique
 from .presets import Presets
 from .televiseur import Televiseur
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.NUMBER, Platform.SELECT,
-             Platform.SENSOR, Platform.SWITCH]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.EVENT,
+             Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 PROBLEME_ECRITURE = "ecriture_impossible"
 
 
@@ -31,6 +34,14 @@ class DonneesLgWebosTv:
 
 
 type LgWebosTvConfigEntry = ConfigEntry[DonneesLgWebosTv]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    # Actions enregistrées une fois pour l'intégration, et non par entrée :
+    # elles restent visibles (et expliquent leur échec) même si l'entrée
+    # n'est pas chargée.
+    services.async_enregistrer(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -> bool:
@@ -46,9 +57,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
         televiseur = Televiseur(entry.data[CONF_HOST], entry.data[CONF_CLE_CLIENT])
         historique = Historique(dossier / "historique.sqlite")
 
-        async def ecrire(entree_id, valeur):
+        async def ecrire(entree_id, valeur, origine, mode_attendu):
             return await restauration.ecrire_par_entree(
-                televiseur, historique, entree_id, valeur)
+                televiseur, historique, entree_id, valeur, origine, mode_attendu)
 
         return DonneesLgWebosTv(
             televiseur=televiseur, historique=historique,

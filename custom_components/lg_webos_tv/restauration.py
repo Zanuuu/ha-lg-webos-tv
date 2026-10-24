@@ -19,9 +19,10 @@ RAISON_ECRITURE_IMPOSSIBLE = ("modification impossible : le téléviseur n'autor
 
 
 async def ecrire(tv: Televiseur, historique: Historique, entree_id: str | None,
-                 categorie: str, cle: str, valeur: Any,
+                 categorie: str, cle: str, valeur: Any, origine: str,
                  mode_attendu: str | None = None) -> dict:
-    """Écrit un réglage et historise l'écriture réussie.
+    """Écrit un réglage et historise l'écriture réussie avec son `origine`
+    (historique.ORIGINES).
 
     `mode_attendu`, s'il est fourni, exige que ce mode d'image soit actif
     pour les réglages qui en dépendent (`arbre.mode_dependant`) : utilisé par
@@ -51,15 +52,18 @@ async def ecrire(tv: Televiseur, historique: Historique, entree_id: str | None,
                 **resultat}
     await historique.enregistrer(entree_id, categorie, cle,
                                  resultat["ancienne"], resultat["nouvelle"],
-                                 resultat["mode_image"])
+                                 resultat["mode_image"], origine)
     return {**base, "ok": True, **resultat}
 
 
 async def ecrire_par_entree(tv: Televiseur, historique: Historique,
-                            entree_id: str, valeur: Any) -> dict:
-    """Écriture directe (UI), validée par l'arbre : bornes, choix."""
+                            entree_id: str, valeur: Any, origine: str,
+                            mode_attendu: str | None = None) -> dict:
+    """Écriture directe (entité, action, panneau), validée par l'arbre :
+    bornes, choix."""
     categorie, cle, valeur = arbre.preparer_ecriture(entree_id, valeur)
-    return await ecrire(tv, historique, entree_id, categorie, cle, valeur)
+    return await ecrire(tv, historique, entree_id, categorie, cle, valeur,
+                        origine, mode_attendu)
 
 
 async def annuler_ecriture(tv: Televiseur, historique: Historique, id_: int) -> dict:
@@ -68,7 +72,7 @@ async def annuler_ecriture(tv: Televiseur, historique: Historique, id_: int) -> 
     if ligne is None:
         return {"ok": False, "raison": "entrée d'historique introuvable"}
     return await ecrire(tv, historique, ligne["entree_id"], ligne["categorie"],
-                        ligne["cle"], ligne["ancienne"],
+                        ligne["cle"], ligne["ancienne"], "annulation",
                         mode_attendu=ligne["mode_image"])
 
 
@@ -82,7 +86,7 @@ async def revenir_a(tv: Televiseur, historique: Historique, horodatage: float) -
     for ligne in lignes:
         resultats.append(await ecrire(
             tv, historique, ligne["entree_id"], ligne["categorie"], ligne["cle"],
-            ligne["ancienne"], mode_attendu=ligne["mode_image"]))
+            ligne["ancienne"], "annulation", mode_attendu=ligne["mode_image"]))
     return resultats
 
 
@@ -108,7 +112,7 @@ async def appliquer_preset(tv: Televiseur, historique: Historique,
             echecs.append({**item, "raison": f"{type(exc).__name__} : {exc}"})
             continue
         resultat = await ecrire(tv, historique, entree_id, categorie, cle, valeur,
-                                mode_attendu=item.get("mode_image"))
+                                "preset", mode_attendu=item.get("mode_image"))
         if resultat["ok"]:
             appliques.append(item)
         else:

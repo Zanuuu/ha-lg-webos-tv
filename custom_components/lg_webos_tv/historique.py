@@ -2,7 +2,8 @@
 
 Chaque écriture réussie est enregistrée avec l'horodatage, l'entrée (id de
 l'arbre si connue), la catégorie et la clé API, l'ancienne et la nouvelle
-valeur (JSON), et le mode d'image actif au moment de l'écriture.
+valeur (JSON), le mode d'image actif au moment de l'écriture, et son
+origine (ORIGINES).
 """
 
 import asyncio
@@ -10,6 +11,10 @@ import json
 import sqlite3
 import time
 from pathlib import Path
+
+# D'où vient une écriture : réglage depuis une entité ou une action Home
+# Assistant, depuis le panneau, application d'un preset, retour arrière.
+ORIGINES = ("home_assistant", "panneau", "preset", "annulation")
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS ecritures (
@@ -20,7 +25,8 @@ CREATE TABLE IF NOT EXISTS ecritures (
     cle TEXT NOT NULL,
     ancienne TEXT,
     nouvelle TEXT,
-    mode_image TEXT
+    mode_image TEXT,
+    origine TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ecritures_horodatage ON ecritures(horodatage);
 """
@@ -39,22 +45,25 @@ class Historique:
         return co
 
     def _enregistrer_sync(self, entree_id: str | None, categorie: str, cle: str,
-                          ancienne, nouvelle, mode_image: str | None) -> int:
+                          ancienne, nouvelle, mode_image: str | None,
+                          origine: str) -> int:
         with self._connexion() as co:
             cur = co.execute(
                 "INSERT INTO ecritures (horodatage, entree_id, categorie, cle,"
-                " ancienne, nouvelle, mode_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                " ancienne, nouvelle, mode_image, origine)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (time.time(), entree_id, categorie, cle,
                  json.dumps(ancienne, ensure_ascii=False),
-                 json.dumps(nouvelle, ensure_ascii=False), mode_image),
+                 json.dumps(nouvelle, ensure_ascii=False), mode_image, origine),
             )
             return cur.lastrowid
 
     async def enregistrer(self, entree_id: str | None, categorie: str, cle: str,
-                          ancienne, nouvelle, mode_image: str | None) -> int:
+                          ancienne, nouvelle, mode_image: str | None,
+                          origine: str) -> int:
         return await asyncio.to_thread(
             self._enregistrer_sync, entree_id, categorie, cle,
-            ancienne, nouvelle, mode_image)
+            ancienne, nouvelle, mode_image, origine)
 
     def _lister_sync(self, limite: int) -> list[dict]:
         with self._connexion() as co:
@@ -77,6 +86,7 @@ class Historique:
             "ancienne": json.loads(ligne["ancienne"]),
             "nouvelle": json.loads(ligne["nouvelle"]),
             "mode_image": ligne["mode_image"],
+            "origine": ligne["origine"],
         }
 
     def _recuperer_sync(self, id_: int) -> dict | None:

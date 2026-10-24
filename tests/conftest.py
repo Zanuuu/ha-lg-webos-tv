@@ -1,9 +1,16 @@
 """Fixtures communes : téléviseur simulé, activation de l'intégration."""
 
 import asyncio
+from unittest.mock import patch
 
 import pytest
 from bscpylgtv.exceptions import PyLGTVCmdError
+from homeassistant.const import CONF_HOST
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.lg_webos_tv.const import CONF_CLE_CLIENT, DOMAIN
 
 from custom_components.lg_webos_tv.historique import Historique
 from custom_components.lg_webos_tv.presets import Presets
@@ -85,7 +92,8 @@ class FauxClient:
             rappel = self.rappels.get(categorie)
             if rappel is not None:
                 await rappel({"settings": dict(payload["settings"]),
-                              "returnValue": True})
+                              "returnValue": True,
+                              "caller": "com.webos.service.apiadapter"})
             return {"returnValue": True}
         if uri == "system.notifications/closeAlert":
             self._verifier_alerte()
@@ -109,7 +117,8 @@ class FauxClient:
         self.valeurs.setdefault(categorie, {}).update(params["settings"])
         rappel = self.rappels.get(categorie)
         if rappel is not None:
-            await rappel({"settings": dict(params["settings"]), "returnValue": True})
+            await rappel({"settings": dict(params["settings"]), "returnValue": True,
+                          "caller": "com.webos.app.starfish_flutter_systemui"})
         return {"returnValue": True}
 
     async def connect(self):
@@ -118,10 +127,15 @@ class FauxClient:
     async def disconnect(self):
         pass
 
-    async def notifier(self, categorie, reglages):
-        """Simule une notification (changement fait à la télécommande)."""
+    async def notifier(self, categorie, reglages, caller="com.palm.app.settings"):
+        """Simule une notification : par défaut un changement fait à la
+        télécommande (menu Réglages) ; caller=None pour les valeurs envoyées
+        après un changement de mode d'image."""
         self.valeurs.setdefault(categorie, {}).update(reglages)
-        await self.rappels[categorie]({"settings": reglages, "returnValue": True})
+        charge = {"settings": reglages, "returnValue": True}
+        if caller is not None:
+            charge["caller"] = caller
+        await self.rappels[categorie](charge)
 
 
 @pytest.fixture
@@ -158,3 +172,29 @@ async def attendre(condition, delai=2.0):
             return True
         await asyncio.sleep(0.01)
     return condition()
+
+
+@pytest.fixture
+async def installe(hass: HomeAssistant, tmp_path, faux_client):
+    hass.config.config_dir = str(tmp_path)
+    entree = MockConfigEntry(domain=DOMAIN, title="LG webOS TV",
+                             data={CONF_HOST: "192.0.2.10", CONF_CLE_CLIENT: "cle"})
+    entree.add_to_hass(hass)
+
+    async def construire(hote, **options):
+        return faux_client
+
+    with patch("custom_components.lg_webos_tv.televiseur._construire_client", construire):
+        assert await hass.config_entries.async_setup(entree.entry_id)
+        tv = entree.runtime_data.televiseur
+        tv.delai_notification = 0.05
+        tv.intervalle_relecture = 0
+        assert await attendre(lambda: tv.etat_connexion == "connecte")
+        await hass.async_block_till_done()
+        yield entree
+        await hass.config_entries.async_unload(entree.entry_id)
+
+
+def entite(hass, plateforme, unique_id):
+    return er.async_get(hass).async_get_entity_id(plateforme, DOMAIN, unique_id)
+

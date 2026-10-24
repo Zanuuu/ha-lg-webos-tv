@@ -13,6 +13,7 @@ import asyncio
 import json
 import sqlite3
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 from . import arbre
@@ -68,6 +69,19 @@ class Presets:
         self.chemin.parent.mkdir(parents=True, exist_ok=True)
         with self._connexion() as co:
             co.executescript(_SCHEMA)
+        # Prévenus après chaque création, import ou suppression (boutons
+        # d'application des presets dans Home Assistant).
+        self._ecouteurs: list[Callable[[], None]] = []
+
+    def ecouter(self, ecouteur: Callable[[], None]) -> Callable[[], None]:
+        """Abonne `ecouteur` aux changements de la liste ; renvoie de quoi
+        le désabonner."""
+        self._ecouteurs.append(ecouteur)
+        return lambda: self._ecouteurs.remove(ecouteur)
+
+    def _prevenir(self) -> None:
+        for ecouteur in list(self._ecouteurs):
+            ecouteur()
 
     def _connexion(self) -> sqlite3.Connection:
         co = sqlite3.connect(self.chemin)
@@ -90,7 +104,9 @@ class Presets:
             return {"nom": nom, "cree_le": cree_le, "entrees": entrees}
 
     async def sauvegarder(self, nom: str, entrees: list[dict], remplacer: bool = False) -> dict:
-        return await asyncio.to_thread(self._sauvegarder_sync, nom, entrees, remplacer)
+        preset = await asyncio.to_thread(self._sauvegarder_sync, nom, entrees, remplacer)
+        self._prevenir()
+        return preset
 
     def _lister_sync(self) -> list[dict]:
         with self._connexion() as co:
@@ -124,4 +140,7 @@ class Presets:
             return co.execute("DELETE FROM presets WHERE nom = ?", (nom,)).rowcount > 0
 
     async def supprimer(self, nom: str) -> bool:
-        return await asyncio.to_thread(self._supprimer_sync, nom)
+        supprime = await asyncio.to_thread(self._supprimer_sync, nom)
+        if supprime:
+            self._prevenir()
+        return supprime

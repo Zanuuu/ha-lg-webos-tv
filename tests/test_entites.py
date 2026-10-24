@@ -1,7 +1,6 @@
 """Entités dérivées de l'arbre : génération, état poussé par le téléviseur,
 écriture depuis Home Assistant, diagnostics et réparations."""
 
-from unittest.mock import patch
 
 import pytest
 
@@ -10,7 +9,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.lg_webos_tv import arbre
 from custom_components.lg_webos_tv.const import CONF_CLE_CLIENT, DOMAIN
@@ -19,7 +17,7 @@ from custom_components.lg_webos_tv.diagnostics import \
 from custom_components.lg_webos_tv.entite import (ACTIVES_PAR_DEFAUT,
                                                   descriptions)
 
-from .conftest import attendre
+from .conftest import entite
 
 ID_MODE = "image.mode-selection"
 ID_OLED = "image.parametres-avances.luminosite.luminosite-pixels-oled"
@@ -86,31 +84,6 @@ def test_actives_par_defaut_existent():
 
 # --------------------------------------------------------- intégration HA
 
-@pytest.fixture
-async def installe(hass: HomeAssistant, tmp_path, faux_client):
-    hass.config.config_dir = str(tmp_path)
-    entree = MockConfigEntry(domain=DOMAIN, title="LG webOS TV",
-                             data={CONF_HOST: "192.0.2.10", CONF_CLE_CLIENT: "cle"})
-    entree.add_to_hass(hass)
-
-    async def construire(hote, **options):
-        return faux_client
-
-    with patch("custom_components.lg_webos_tv.televiseur._construire_client", construire):
-        assert await hass.config_entries.async_setup(entree.entry_id)
-        tv = entree.runtime_data.televiseur
-        tv.delai_notification = 0.05
-        tv.intervalle_relecture = 0
-        assert await attendre(lambda: tv.etat_connexion == "connecte")
-        await hass.async_block_till_done()
-        yield entree
-        await hass.config_entries.async_unload(entree.entry_id)
-
-
-def entite(hass, plateforme, unique_id):
-    return er.async_get(hass).async_get_entity_id(plateforme, DOMAIN, unique_id)
-
-
 async def test_etat_initial_et_mode_image(hass: HomeAssistant, installe):
     etat = hass.states.get(entite(hass, "select", ID_MODE))
     assert etat.state == "Expert (pièce sombre, nuit)"
@@ -162,6 +135,7 @@ async def test_ecriture_depuis_home_assistant(hass: HomeAssistant, installe, fau
 
     historique = await installe.runtime_data.historique.lister()
     assert [h["cle"] for h in historique] == ["motionEyeCare", "energySaving", "backlight"]
+    assert {h["origine"] for h in historique} == {"home_assistant"}
 
 
 async def test_ecriture_refusee_leve_une_erreur(hass: HomeAssistant, installe, faux_client):

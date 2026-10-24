@@ -55,12 +55,100 @@
           "aucune": "None (read-only)"
         }
       }
+    },
+    "event": {
+      "reglage_modifie": {
+        "name": "Setting changed on the TV",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "manuel": "Manual (remote)",
+              "autre_application": "Other application"
+            }
+          }
+        }
+      }
+    },
+    "button": {
+      "appliquer_preset": {
+        "name": "Apply preset {nom}"
+      }
     }
   },
   "issues": {
     "ecriture_impossible": {
       "title": "The TV refuses settings changes",
       "description": "The TV no longer grants the integration any way to write settings, probably after a software update. Settings remain readable in real time but can no longer be changed from Home Assistant. Writing will come back by itself if a later software version allows it again."
+    }
+  },
+  "services": {
+    "regler": {
+      "name": "Set",
+      "description": "Writes a TV setting, optionally only when a given picture mode is active (picture settings belong to the active mode only). The response gives the old and new value.",
+      "fields": {
+        "entity_id": {
+          "name": "Setting",
+          "description": "Setting entity (slider, list or switch)."
+        },
+        "valeur": {
+          "name": "Value",
+          "description": "Number for a slider, menu label (or API value) for a list, on/off for a switch."
+        },
+        "mode_image": {
+          "name": "Only in picture mode",
+          "description": "Writes only when this picture mode is active; otherwise the action does nothing and says so in its response."
+        }
+      }
+    },
+    "appliquer_preset": {
+      "name": "Apply a preset",
+      "description": "Applies a saved preset: picture mode first, then the settings captured for that mode. The response lists applied and failed settings.",
+      "fields": {
+        "nom": {
+          "name": "Name",
+          "description": "Preset name."
+        }
+      }
+    }
+  },
+  "selector": {
+    "mode_image": {
+      "options": {
+        "personalized": "Image personnalisée",
+        "vivid": "Vivid",
+        "normal": "Standard",
+        "eco": "Eco",
+        "hdrCinemaBright": "Accueil cinéma",
+        "cinema": "Cinema",
+        "sports": "Sports",
+        "game": "Game optimizer",
+        "filmMaker": "FILMMAKER MODE",
+        "expert1": "Expert (bright space, daytime)",
+        "expert2": "Expert (dark space, night)"
+      }
+    }
+  },
+  "exceptions": {
+    "non_chargee": {
+      "message": "The LG webOS TV integration is not loaded."
+    },
+    "entite_inconnue": {
+      "message": "{entite} is not an LG webOS TV setting."
+    },
+    "valeur_invalide": {
+      "message": "Invalid value \"{valeur}\" (expected: {attendu})."
+    },
+    "lecture_seule": {
+      "message": "\"{reglage}\" is read-only."
+    },
+    "ecriture_echouee": {
+      "message": "\"{reglage}\": {raison}."
+    },
+    "preset_inconnu": {
+      "message": "Unknown preset: \"{nom}\"."
+    },
+    "preset_partiel": {
+      "message": "Preset \"{nom}\": {appliques} setting(s) applied, {echecs} failed — {details}."
     }
   }
 }

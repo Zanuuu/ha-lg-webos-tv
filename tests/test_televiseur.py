@@ -33,6 +33,7 @@ async def test_notification_normalise_les_types(televiseur, faux_client):
     assert changements == [{
         "type": "changement", "categorie": "picture",
         "reglages": {"contrast": 85, "pictureMode": "expert1"},
+        "origine": "manuel",
     }]
     await televiseur.arreter()
 
@@ -243,4 +244,70 @@ async def test_ecriture_par_alerte_confirmee_par_la_notification(televiseur, fau
     assert resultat["nouvelle"] == 25
     assert lectures == []
     assert televiseur._attentes == {}
+    await televiseur.arreter()
+
+
+# ------------------------------------------------------- origine des changements
+
+async def origines_pendant(televiseur, action):
+    evenements = []
+
+    async def espion(evt):
+        if evt["type"] == "changement":
+            evenements.append((evt["origine"], dict(evt["reglages"])))
+
+    televiseur.abonner(espion)
+    await action()
+    televiseur.desabonner(espion)
+    return evenements
+
+
+@pytest.mark.parametrize("voie_alerte", [False, True])
+async def test_nos_ecritures_sont_reconnues(televiseur, faux_client, voie_alerte):
+    faux_client.permission_ecriture = not voie_alerte
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    evenements = await origines_pendant(
+        televiseur, lambda: televiseur.ecrire("picture", "sharpness", 25))
+    assert evenements == [("application", {"sharpness": 25})]
+    await televiseur.arreter()
+
+
+async def test_telecommande_reglages_rapides_et_cascade(televiseur, faux_client):
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+
+    async def scenario():
+        await faux_client.notifier("picture", {"backlight": "60"})
+        await faux_client.notifier("picture", {"pictureMode": "cinema"},
+                                   caller="com.webos.app.quicksettings")
+        await faux_client.notifier("picture", {"backlight": "40", "contrast": "85"},
+                                   caller=None)
+        await faux_client.notifier("picture", {"backlight": 41},
+                                   caller="com.webos.app.starfish_flutter_systemui")
+
+    evenements = await origines_pendant(televiseur, scenario)
+    assert evenements == [
+        ("manuel", {"backlight": 60}),
+        ("manuel", {"pictureMode": "cinema"}),
+        ("cascade", {"backlight": 40, "contrast": 85}),
+        # Pont d'alerte d'un autre client que nous.
+        ("autre_application", {"backlight": 41}),
+    ]
+    await televiseur.arreter()
+
+
+async def test_notification_tardive_de_notre_ecriture(televiseur, faux_client):
+    """Une écriture non confirmée à temps, appliquée plus tard par le
+    téléviseur, reste reconnue comme nôtre (et non comme une autre
+    application) quand sa notification arrive enfin."""
+    faux_client.permission_ecriture = False
+    faux_client.refuser.add(("picture", "sharpness"))  # rien n'arrive à temps
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    resultat = await televiseur.ecrire("picture", "sharpness", 25)
+    assert resultat["confirme"] is False
+    evenements = await origines_pendant(televiseur, lambda: faux_client.notifier(
+        "picture", {"sharpness": "25"}, caller="com.webos.app.starfish_flutter_systemui"))
+    assert evenements == [("application", {"sharpness": 25})]
     await televiseur.arreter()

@@ -218,7 +218,7 @@ class EntiteReglage(EntiteTeleviseur):
     async def _ecrire(self, valeur: Any) -> None:
         try:
             resultat = await self._donnees.ecritures.demander(
-                self.description_reglage.entree_id, valeur)
+                self.description_reglage.entree_id, valeur, "home_assistant")
         except arbre.ValeurInvalide as exc:
             raise ServiceValidationError(f"{self.name} : {exc}") from exc
         if not resultat["ok"]:

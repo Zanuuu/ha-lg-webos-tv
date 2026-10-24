@@ -55,12 +55,100 @@
           "aucune": "Aucune (consultation)"
         }
       }
+    },
+    "event": {
+      "reglage_modifie": {
+        "name": "Réglage modifié sur le téléviseur",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "manuel": "Manuel (télécommande)",
+              "autre_application": "Autre application"
+            }
+          }
+        }
+      }
+    },
+    "button": {
+      "appliquer_preset": {
+        "name": "Appliquer le preset {nom}"
+      }
     }
   },
   "issues": {
     "ecriture_impossible": {
       "title": "Le téléviseur refuse l'écriture des réglages",
       "description": "Le téléviseur n'accorde plus aucune voie d'écriture à l'intégration, probablement après une mise à jour de son logiciel. Les réglages restent consultables en temps réel, mais ne peuvent plus être modifiés depuis Home Assistant. L'écriture se réactivera d'elle-même si un logiciel ultérieur la rouvre."
+    }
+  },
+  "services": {
+    "regler": {
+      "name": "Régler",
+      "description": "Écrit un réglage du téléviseur, éventuellement seulement si un mode d'image donné est actif (les réglages d'image n'appartiennent qu'au mode actif). La réponse indique l'ancienne et la nouvelle valeur.",
+      "fields": {
+        "entity_id": {
+          "name": "Réglage",
+          "description": "Entité du réglage (curseur, liste ou interrupteur)."
+        },
+        "valeur": {
+          "name": "Valeur",
+          "description": "Nombre pour un curseur, libellé du menu (ou valeur API) pour une liste, on/off pour un interrupteur."
+        },
+        "mode_image": {
+          "name": "Seulement en mode d'image",
+          "description": "N'écrit que si ce mode d'image est actif ; sinon l'action ne fait rien et le signale dans sa réponse."
+        }
+      }
+    },
+    "appliquer_preset": {
+      "name": "Appliquer un preset",
+      "description": "Applique un preset enregistré : le mode d'image d'abord, puis les réglages capturés pour ce mode. La réponse liste les réglages appliqués et ceux en échec.",
+      "fields": {
+        "nom": {
+          "name": "Nom",
+          "description": "Nom du preset."
+        }
+      }
+    }
+  },
+  "selector": {
+    "mode_image": {
+      "options": {
+        "personalized": "Image personnalisée",
+        "vivid": "Vif",
+        "normal": "Standard",
+        "eco": "Éco",
+        "hdrCinemaBright": "Accueil cinéma",
+        "cinema": "Cinéma",
+        "sports": "Sport",
+        "game": "Optimiseur de jeu",
+        "filmMaker": "FILMMAKER MODE",
+        "expert1": "Expert (pièce lumineuse, journée)",
+        "expert2": "Expert (pièce sombre, nuit)"
+      }
+    }
+  },
+  "exceptions": {
+    "non_chargee": {
+      "message": "L'intégration LG webOS TV n'est pas chargée."
+    },
+    "entite_inconnue": {
+      "message": "{entite} n'est pas un réglage de l'intégration LG webOS TV."
+    },
+    "valeur_invalide": {
+      "message": "Valeur « {valeur} » invalide (attendu : {attendu})."
+    },
+    "lecture_seule": {
+      "message": "« {reglage} » est en lecture seule."
+    },
+    "ecriture_echouee": {
+      "message": "« {reglage} » : {raison}."
+    },
+    "preset_inconnu": {
+      "message": "Preset inconnu : « {nom} »."
+    },
+    "preset_partiel": {
+      "message": "Preset « {nom} » : {appliques} réglage(s) appliqué(s), {echecs} en échec — {details}."
     }
   }
 }

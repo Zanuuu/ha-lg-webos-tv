@@ -21,6 +21,7 @@ d'appairage lui est fournie par l'entrée de configuration.
 import asyncio
 import json
 import logging
+import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -36,7 +37,9 @@ log = logging.getLogger(__name__)
 #   {"type": "connexion",
 #    "etat": "connecte" | "deconnecte" | "connexion" | "appairage_requis"}
 #   {"type": "ecriture", "possible": bool}
-#   {"type": "changement", "categorie": str, "reglages": {cle: valeur}}
+#   {"type": "changement", "categorie": str, "reglages": {cle: valeur},
+#    "origine": "application" | "manuel" | "autre_application" | "cascade"
+#               | "relecture"}
 Abonne = Callable[[dict], Awaitable[None]]
 
 # Clé absente de la liste des clés modifiables du firmware : l'adaptateur
@@ -61,6 +64,16 @@ DELAI_ALERTE_S = 5.0
 # identique à l'actuelle, ou refusée car hors plage), la relecture tranche.
 DELAI_NOTIFICATION_S = 1.0
 RELECTURES_ALERTE = 6
+
+# Origine d'un changement d'après le champ `caller` des notifications
+# (43.21.77, docs/rapport-api.md phase 7) : écritures par l'API (directe ou
+# pont d'alerte) d'un côté ; menu Réglages et réglages rapides, c'est-à-dire
+# la télécommande, de l'autre ; sans `caller`, les valeurs que le téléviseur
+# envoie de lui-même après un changement de mode d'image.
+CALLERS_API = {"com.webos.service.apiadapter", "com.webos.app.starfish_flutter_systemui"}
+# Une notification de nos écritures peut arriver après leur confirmation par
+# relecture : elle reste reconnue comme nôtre pendant ce délai.
+MEMOIRE_ECRITURES_S = 2.0
 INTERVALLE_RELECTURE_S = 0.5
 
 
@@ -177,9 +190,11 @@ class Televiseur:
         self.voie_ecriture: str | None = None
         self.intervalle_relecture = INTERVALLE_RELECTURE_S
         self.delai_notification = DELAI_NOTIFICATION_S
-        # Écritures en attente de leur notification : (catégorie, clé) →
-        # [(valeur attendue, futur)].
+        # Écritures en cours, en attente de leur notification : (catégorie,
+        # clé) → [(valeur attendue, futur)].
         self._attentes: dict[tuple[str, str], list[tuple[Any, asyncio.Future]]] = {}
+        # Écritures récentes : (catégorie, clé) → (valeur en texte, échéance).
+        self._recentes: dict[tuple[str, str], tuple[str, float]] = {}
 
     # ------------------------------------------------------------------ cycle
     async def _creer_client(self):
@@ -346,27 +361,45 @@ class Televiseur:
 
     async def _sur_notification(self, categorie: str, charge: dict) -> None:
         reglages = charge.get("settings") or {}
-        if not reglages:
-            return
+        if reglages:
+            await self._appliquer(categorie, reglages, charge.get("caller"),
+                                  notification=True)
+
+    async def _appliquer(self, categorie: str, reglages: dict, caller: str | None,
+                         notification: bool) -> None:
+        """Met le cache à jour (notification ou relecture) et diffuse le
+        changement avec son origine. Une relecture passe aussi par ici : sans
+        quoi une valeur relue avant sa notification ne serait jamais diffusée."""
         cache = self.etat.setdefault(categorie, {})
         delta: dict[str, Any] = {}
+        nos_cles = set()
         for cle, valeur in reglages.items():
             valeur = _normaliser(cache.get(cle), valeur)
-            self._resoudre_attentes(categorie, cle, valeur)
+            if self._est_notre_ecriture(categorie, cle, valeur):
+                nos_cles.add(cle)
             if cache.get(cle) != valeur:
                 cache[cle] = valeur
                 delta[cle] = valeur
         if delta:
             await self._diffuser({
                 "type": "changement", "categorie": categorie, "reglages": delta,
+                "origine": _origine(set(delta) <= nos_cles, caller, notification),
             })
 
-    def _resoudre_attentes(self, categorie: str, cle: str, valeur: Any) -> None:
+    def _est_notre_ecriture(self, categorie: str, cle: str, valeur: Any) -> bool:
+        # Comparaison textuelle : les notifications mêlent entiers et chaînes
+        # selon le mode d'image.
+        texte = str(valeur)
+        trouvee = False
         for attendue, futur in self._attentes.get((categorie, cle), []):
-            # Comparaison textuelle : les notifications mêlent entiers et
-            # chaînes selon le mode d'image.
-            if str(attendue) == str(valeur) and not futur.done():
-                futur.set_result(None)
+            if str(attendue) == texte:
+                trouvee = True
+                if not futur.done():
+                    futur.set_result(None)
+        recente = self._recentes.get((categorie, cle))
+        if recente and recente[0] == texte and recente[1] > time.monotonic():
+            trouvee = True
+        return trouvee
 
     # ------------------------------------------------------ lecture/écriture
     @property
@@ -388,9 +421,8 @@ class Televiseur:
             "settings/getSystemSettings", {"category": categorie, "keys": cles},
         )
         valeurs = res.get("settings", {})
-        cache = self.etat.setdefault(categorie, {})
-        cache.update(valeurs)
-        return valeurs
+        await self._appliquer(categorie, valeurs, None, notification=False)
+        return {cle: self.etat[categorie][cle] for cle in valeurs}
 
     async def ecrire(self, categorie: str, cle: str, valeur: Any) -> dict:
         """Écrit un réglage puis relit pour confirmer.
@@ -405,6 +437,9 @@ class Televiseur:
             raise EcritureImpossible
         async with self._verrou_ecriture:
             mode_image = self.mode_image
+            futur = asyncio.get_running_loop().create_future()
+            attentes = self._attentes.setdefault((categorie, cle), [])
+            attentes.append((valeur, futur))
             try:
                 ancienne = self.etat.get(categorie, {}).get(cle)
                 if ancienne is None:
@@ -412,7 +447,8 @@ class Televiseur:
                     ancienne = lu.get(cle)
                 charge = {"category": categorie, "settings": {cle: valeur}}
                 if self.voie_ecriture == "alerte":
-                    relue = await self._ecrire_par_alerte(categorie, cle, valeur, charge)
+                    relue = await self._ecrire_par_alerte(
+                        categorie, cle, valeur, charge, futur)
                 else:
                     await self.client.request("settings/setSystemSettings", charge)
                     relue = (await self.lire(categorie, [cle])).get(cle)
@@ -428,6 +464,13 @@ class Televiseur:
                 if isinstance(message, dict):
                     message = message.get("payload", {}).get("errorText", str(message))
                 raise EcritureRefusee(str(message)) from exc
+            finally:
+                attentes.remove((valeur, futur))
+                if not attentes:
+                    del self._attentes[(categorie, cle)]
+                futur.cancel()
+                self._recentes[(categorie, cle)] = (
+                    str(valeur), time.monotonic() + MEMOIRE_ECRITURES_S)
             return {
                 "ancienne": ancienne,
                 "nouvelle": relue,
@@ -436,41 +479,44 @@ class Televiseur:
             }
 
     async def _ecrire_par_alerte(self, categorie: str, cle: str, valeur: Any,
-                                 charge: dict) -> Any:
+                                 charge: dict, futur: asyncio.Future) -> Any:
         """Écrit via le pont createAlert et renvoie la valeur relue.
 
         Le téléviseur ne renvoie ni succès ni erreur : une valeur refusée
         (hors plage, clé non acceptée) se traduit par une relecture
         inchangée, donc une écriture non confirmée.
         """
-        futur = asyncio.get_running_loop().create_future()
-        attentes = self._attentes.setdefault((categorie, cle), [])
-        attentes.append((valeur, futur))
         try:
-            try:
-                await asyncio.wait_for(
-                    self.client.luna_request(LUNA_ECRITURE, charge),
-                    timeout=DELAI_ALERTE_S)
-            except asyncio.TimeoutError:
-                log.warning("Pas de réponse à closeAlert pour %s.%s : vérification "
-                            "par relecture", categorie, cle)
-            try:
-                await asyncio.wait_for(asyncio.shield(futur), self.delai_notification)
-                return self.etat.get(categorie, {}).get(cle)
-            except asyncio.TimeoutError:
-                pass
-            relue = None
-            for _ in range(RELECTURES_ALERTE):
-                relue = (await self.lire(categorie, [cle])).get(cle)
-                if relue == valeur:
-                    break
-                await asyncio.sleep(self.intervalle_relecture)
-            return relue
-        finally:
-            attentes.remove((valeur, futur))
-            if not attentes:
-                del self._attentes[(categorie, cle)]
-            futur.cancel()
+            await asyncio.wait_for(
+                self.client.luna_request(LUNA_ECRITURE, charge),
+                timeout=DELAI_ALERTE_S)
+        except asyncio.TimeoutError:
+            log.warning("Pas de réponse à closeAlert pour %s.%s : vérification "
+                        "par relecture", categorie, cle)
+        try:
+            await asyncio.wait_for(asyncio.shield(futur), self.delai_notification)
+            return self.etat.get(categorie, {}).get(cle)
+        except asyncio.TimeoutError:
+            pass
+        relue = None
+        for _ in range(RELECTURES_ALERTE):
+            relue = (await self.lire(categorie, [cle])).get(cle)
+            if relue == valeur:
+                break
+            await asyncio.sleep(self.intervalle_relecture)
+        return relue
+
+
+def _origine(notre: bool, caller: str | None, notification: bool) -> str:
+    if notre:
+        return "application"
+    if not notification:
+        return "relecture"
+    if caller is None:
+        return "cascade"
+    if caller in CALLERS_API:
+        return "autre_application"
+    return "manuel"
 
 
 class ConnexionTvPerdue(Exception):
