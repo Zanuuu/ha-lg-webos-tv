@@ -3,7 +3,7 @@
 Réplique en français du menu Réglages d'un LG OLED 65 G5 (webOS 25) :
 consultation et modification des réglages du téléviseur, presets
 exportables/importables, historique des modifications avec retour arrière.
-Sous webOS 11, consultation seule (voir « Mode consultation »).
+Compatible webOS 11 (voir « Écriture sous webOS 11 »).
 
 ## Prérequis
 
@@ -15,12 +15,23 @@ Sous webOS 11, consultation seule (voir « Mode consultation »).
   trois minutes, l'en-tête affiche « Appairage »). La clé d'appairage est
   conservée dans le stockage persistant de l'app.
 
-## Mode consultation (webOS 11)
+## Écriture sous webOS 11
 
-Depuis le firmware 43.21.77 (webOS 11.2), le téléviseur n'autorise plus
-l'écriture des réglages aux applications tierces : LG la réserve aux
-clients qu'il a lui-même signés. L'app le détecte à chaque connexion et
-passe en mode consultation, signalé par un bandeau :
+Depuis le firmware 43.21.77 (webOS 11.2), le téléviseur réserve l'écriture
+directe des réglages aux clients signés par LG. L'app écrit alors par une
+autre voie : une alerte système, fermée aussitôt, dont l'action exécute le
+changement sur le téléviseur. Chaque modification est relue pour
+confirmation ; une valeur refusée par le téléviseur (hors plage) apparaît
+comme « non confirmée », sans message détaillé.
+
+Une alerte peut s'afficher très brièvement à l'écran lors d'une
+modification.
+
+## Mode consultation
+
+Si le téléviseur n'autorise aucune des deux voies d'écriture (par exemple
+après une mise à jour qui fermerait celle des alertes), l'app le détecte à
+chaque connexion et passe en mode consultation, signalé par un bandeau :
 
 - les réglages restent affichés et suivis en temps réel ;
 - l'historique enregistre toujours les changements faits à la
@@ -28,8 +39,7 @@ passe en mode consultation, signalé par un bandeau :
 - la modification, l'application d'un preset et le retour arrière sont
   désactivés.
 
-Si une mise à jour ultérieure du téléviseur rouvre l'écriture, l'app la
-réactive d'elle-même.
+Si l'écriture redevient possible, l'app la réactive d'elle-même.
 
 ## Options
 

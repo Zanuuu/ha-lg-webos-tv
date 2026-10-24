@@ -30,6 +30,9 @@ class FauxClient:
         self.non_enregistre = False
         # webOS 11 : WRITE_SETTINGS refusée aux manifestes non signés.
         self.permission_ecriture = True
+        # Pont createAlert (WRITE_NOTIFICATION_TOAST, accordée sans signature).
+        self.permission_alerte = True
+        self.appels_luna = []
 
     def _verifier_enregistrement(self, ident):
         if self.non_enregistre:
@@ -75,7 +78,30 @@ class FauxClient:
                 await rappel({"settings": dict(payload["settings"]),
                               "returnValue": True})
             return {"returnValue": True}
+        if uri == "system.notifications/closeAlert":
+            self._verifier_alerte()
+            # Comme le firmware pour un identifiant d'alerte inconnu.
+            raise PyLGTVCmdError({"error": "500 Application error",
+                                  "payload": {"errorText": "Alert Id parse error"}})
         raise RuntimeError(f"uri non simulée : {uri}")
+
+    def _verifier_alerte(self):
+        if not self.permission_alerte:
+            raise PyLGTVCmdError({"type": "error", "id": 0, "payload": {},
+                                  "error": "401 insufficient permissions"})
+
+    async def luna_request(self, uri, params):
+        """Pont createAlert : muet, une valeur refusée est ignorée."""
+        self._verifier_alerte()
+        self.appels_luna.append((uri, params))
+        categorie = params["category"]
+        if any((categorie, cle) in self.refuser for cle in params["settings"]):
+            return {"returnValue": True}
+        self.valeurs.setdefault(categorie, {}).update(params["settings"])
+        rappel = self.rappels.get(categorie)
+        if rappel is not None:
+            await rappel({"settings": dict(params["settings"]), "returnValue": True})
+        return {"returnValue": True}
 
     async def disconnect(self):
         pass

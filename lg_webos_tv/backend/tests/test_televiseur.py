@@ -101,10 +101,11 @@ async def test_tous_les_abonnements_en_echec_nannonce_pas_connecte(faux_client):
 
 
 async def test_permission_ecriture_refusee_passe_en_consultation(televiseur, faux_client):
-    """webOS 11 : lecture accordée, écriture refusée au manifeste non signé."""
+    """Ni setSystemSettings ni alertes accordés : lecture seule."""
     from app.televiseur import EcritureImpossible
 
     faux_client.permission_ecriture = False
+    faux_client.permission_alerte = False
     evenements = []
 
     async def espion(evt):
@@ -122,6 +123,38 @@ async def test_permission_ecriture_refusee_passe_en_consultation(televiseur, fau
     except EcritureImpossible:
         pass
     assert faux_client.valeurs["picture"]["sharpness"] == 10
+    await televiseur.arreter()
+
+
+async def test_ecriture_par_alerte_sous_webos_11(televiseur, faux_client):
+    """webOS 11 : setSystemSettings refusé, écriture par le pont createAlert."""
+    faux_client.permission_ecriture = False
+    televiseur.intervalle_relecture = 0
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    assert televiseur.instantane()["ecriture_possible"] is True
+    assert televiseur.voie_ecriture == "alerte"
+    resultat = await televiseur.ecrire("picture", "sharpness", 25)
+    assert resultat == {
+        "ancienne": 10, "nouvelle": 25, "confirme": True, "mode_image": "expert2",
+    }
+    assert faux_client.appels_luna == [
+        ("com.webos.settingsservice/setSystemSettings",
+         {"category": "picture", "settings": {"sharpness": 25}}),
+    ]
+    await televiseur.arreter()
+
+
+async def test_valeur_ignoree_par_alerte_non_confirmee(televiseur, faux_client):
+    """Le pont est muet : une valeur refusée n'apparaît pas à la relecture."""
+    faux_client.permission_ecriture = False
+    faux_client.refuser.add(("picture", "contrast"))
+    televiseur.intervalle_relecture = 0
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    resultat = await televiseur.ecrire("picture", "contrast", 999)
+    assert resultat["confirme"] is False
+    assert resultat["nouvelle"] == 100
     await televiseur.arreter()
 
 

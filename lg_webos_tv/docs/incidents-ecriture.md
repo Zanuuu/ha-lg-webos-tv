@@ -103,7 +103,7 @@ passerelle n'en retient que les permissions dont le niveau d'accès n'est pas
 |---|---|---|---|
 | `settings/getSystemSettings`, `getSystemSettingDesc`, abonnements | `READ_SETTINGS` | PROTECTED | accordée |
 | `settings/setSystemSettings`, `resetSystemSettings` | `WRITE_SETTINGS` | SECURE | **refusée** (`401 insufficient permissions`) |
-| `system.notifications/createAlert` (contournement des scripts HA) | `WRITE_NOTIFICATION_ALERT` | SECURE | refusée |
+| `system.notifications/createAlert`, `closeAlert` | `WRITE_NOTIFICATION_TOAST` | PROTECTED | accordée (rectifié le 24/10/2026, cf. § 7) |
 | `com.webos.service.update/getCurrentSWInformation` | `READ_UPDATE_INFO` | SECURE | refusée |
 
 Vérifié sur le téléviseur (`backend/scripts/diag_enregistrement.py`) :
@@ -164,3 +164,57 @@ pas retenu sur ce téléviseur (récent, sous garantie ; dépend d'un exploit,
 cassable par MAJ). **L'app reste en mode consultation**, comportement déjà en
 place ; l'écriture se réactiverait seule si un accès privilégié devenait
 disponible.
+
+*Conclusion révisée le 24/10/2026 : l'écriture passe par le pont
+`createAlert`, sans signature ni root (§ 7).*
+
+## 7. Firmware 43.21.77 : écriture rétablie par le pont `createAlert` (24/10/2026)
+
+**Origine.** Contournement employé par la communauté Home Assistant depuis
+août 2026 (home-assistant/core#180025, zedr32/lg_webos_brightness_adjustment,
+bscpylgtv `luna_request`), signalé fonctionnel sur 43.21.60 à 43.21.73.
+
+**Principe.** `system.notifications/createAlert` accepte des actions
+`onclose` / `onfail` / bouton sous forme d'URI `luna://`. Une alerte dont le
+`onclose` vaut `luna://com.webos.settingsservice/setSystemSettings`, fermée
+aussitôt par `closeAlert`, fait exécuter l'écriture par le téléviseur
+lui-même, hors du contrôle de permission SSAP de `setSystemSettings`.
+
+**Pourquoi le § 5 l'avait écarté à tort.** Le tableau du § 5 associait
+`createAlert` à `WRITE_NOTIFICATION_ALERT` (SECURE) d'après le nom de la
+permission, sans essai. Les interfaces de la passerelle
+(`interfaces/com.webos.service.apiadapter.interface` et `….pub.interface`,
+rootfs 10.3.1 extrait) exigent en réalité `WRITE_NOTIFICATION_TOAST`, de
+niveau **PROTECTED**, donc retenue pour un manifeste non signé. Le
+manifeste de l'app ne la demandait pas.
+
+**Vérifié sur le téléviseur** (`backend/scripts/diag_alerte.py`, firmware
+43.21.77, mode d'image Vif) :
+
+| Essai | Résultat |
+|---|---|
+| Manifeste + `WRITE_NOTIFICATION_TOAST`, clé existante | accepté, sans nouvelle demande d'appairage |
+| `closeAlert` sur un `alertId` inexistant (sonde) | `500 Alert Id parse error` → permission accordée |
+| `contrast` 100 → 99 par alerte | appliqué, visible à la relecture en < 0,5 s |
+| `contrast` → 999 (hors plage) | **ignoré sans erreur**, valeur inchangée |
+| `contrast` → 100 (restauration) | appliqué |
+
+Un essai antérieur le même jour a échoué sur un tout autre motif : la
+passerelle refusait toute connexion (`1008 Try Again Later (EWS)`, blocage
+« alerte d'urgence » posé par `com.webos.app.inputcommon`), levé par un
+redémarrage du téléviseur.
+
+**Correction (version 1.2.0).** Le manifeste demande
+`WRITE_NOTIFICATION_TOAST`. À chaque connexion, `televiseur.py` sonde
+d'abord `setSystemSettings`, puis `closeAlert` ; la voie retenue
+(`voie_ecriture` : `ssap`, `alerte` ou aucune) détermine l'écriture.
+Par alerte, l'appel ne renvoie ni succès ni erreur : la valeur est relue
+jusqu'à six fois à 0,5 s d'intervalle, et une valeur non retrouvée donne
+une écriture non confirmée (refus présenté comme tel dans l'interface,
+rien n'est inscrit à l'historique). Le mode consultation ne s'applique plus
+que si aucune des deux voies n'est accordée.
+
+**Limites.** Le message d'erreur du téléviseur (hors plage, clé refusée)
+est perdu. LG peut fermer la voie par une mise à jour (relèvement du niveau
+de `WRITE_NOTIFICATION_TOAST`, filtrage des URI `luna://` des alertes) :
+l'app repasserait alors d'elle-même en mode consultation.

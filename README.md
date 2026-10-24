@@ -6,9 +6,10 @@ l'arborescence et suivis en temps réel, presets exportables, historique
 des changements. Intégration par Ingress (entrée dans la barre latérale,
 authentification Home Assistant).
 
-Depuis webOS 11 (firmware 43.21.77), le téléviseur réserve l'écriture des
-réglages aux applications signées par LG : l'app fonctionne alors en
-**consultation**. Détails dans
+Depuis webOS 11 (firmware 43.21.77), le téléviseur réserve l'écriture
+directe des réglages aux applications signées par LG : l'app écrit alors par
+le pont des alertes système (`createAlert`), et ne passe en **consultation**
+que si cette voie est fermée. Détails dans
 [`lg_webos_tv/docs/incidents-ecriture.md`](lg_webos_tv/docs/incidents-ecriture.md).
 
 ## Installation

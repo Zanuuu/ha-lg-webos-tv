@@ -5,9 +5,11 @@ Responsabilités :
 - abonnements aux changements de réglages par catégorie (validés en phase 1) ;
 - cache de l'état courant, avec normalisation des types (les notifications
   livrent parfois les nombres sous forme de chaînes, cf. rapport phase 1) ;
-- écriture d'un réglage puis relecture de confirmation ;
-- vérification, à chaque connexion, de l'appairage et de la permission
-  d'écriture (webOS 11 refuse l'écriture aux clients non signés par LG) ;
+- écriture d'un réglage puis relecture de confirmation, directe ou, sous
+  webOS 11, par le pont createAlert (setSystemSettings refusé aux clients
+  non signés par LG) ;
+- vérification, à chaque connexion, de l'appairage et de la voie
+  d'écriture disponible ;
 - diffusion des événements (changements, état de connexion) aux abonnés
   internes (canal WebSocket du frontend, historique).
 """
@@ -36,6 +38,23 @@ Abonne = Callable[[dict], Awaitable[None]]
 # settings la rejette avant toute écriture (« Some keys are not allowed »),
 # ce qui permet de tester la permission WRITE_SETTINGS sans rien modifier.
 CLE_SONDE_ECRITURE = "sondePermissionEcriture"
+
+# webOS 11 refuse WRITE_SETTINGS aux manifestes non signés, mais accorde
+# WRITE_NOTIFICATION_TOAST (PROTECTED), seule permission exigée par
+# createAlert/closeAlert : une alerte dont le `onclose` appelle le service de
+# réglages fait écrire le téléviseur lui-même (docs/incidents-ecriture.md § 7).
+LUNA_ECRITURE = "com.webos.settingsservice/setSystemSettings"
+# alertId mal formé : sans la permission, la passerelle répond 401 ; avec,
+# l'adaptateur rejette l'identifiant sans rien fermer.
+ALERTE_SONDE = "sondePermissionAlerte"
+# closeAlert est resté une fois sans réponse sur 43.21.71 (bscpylgtv PR #9) ;
+# la relecture tranche de toute façon.
+DELAI_ALERTE_S = 5.0
+# L'appel luna est muet et asynchrone : la valeur est visible à la relecture
+# en moins de 0,5 s sur 43.21.77 ; une valeur refusée (hors plage) ne
+# l'est jamais.
+RELECTURES_ALERTE = 6
+INTERVALLE_RELECTURE_S = 0.5
 
 
 def _texte_erreur(exc: Exception) -> str:
@@ -95,6 +114,9 @@ class Televiseur:
         self._verrou_ecriture = asyncio.Lock()
         # None tant qu'aucune connexion n'a permis de le vérifier.
         self.ecriture_possible: bool | None = None
+        # "ssap" (setSystemSettings direct) ou "alerte" (pont createAlert).
+        self.voie_ecriture: str | None = None
+        self.intervalle_relecture = INTERVALLE_RELECTURE_S
         self._forcer_appairage = False
         self.delai_appairage = config.APPAIRAGE_DELAI_S
 
@@ -158,20 +180,33 @@ class Televiseur:
                 "settings/setSystemSettings",
                 {"category": "picture", "settings": {CLE_SONDE_ECRITURE: 0}},
             )
-            possible = True  # improbable : clé sonde acceptée
+            await self._changer_ecriture("ssap")  # improbable : clé sonde acceptée
+            return
         except PyLGTVCmdException as exc:
             # Toute autre erreur que le refus de permission signifie que la
             # requête a atteint l'adaptateur, qui a rejeté la clé sonde.
-            possible = not _permission_refusee(exc)
-        await self._changer_ecriture(possible)
+            if not _permission_refusee(exc):
+                await self._changer_ecriture("ssap")
+                return
+        try:
+            await self.client.request("system.notifications/closeAlert",
+                                      {"alertId": ALERTE_SONDE})
+            voie = "alerte"
+        except PyLGTVCmdException as exc:
+            voie = None if _permission_refusee(exc) else "alerte"
+        await self._changer_ecriture(voie)
 
-    async def _changer_ecriture(self, possible: bool) -> None:
+    async def _changer_ecriture(self, voie: str | None) -> None:
+        if voie != self.voie_ecriture:
+            log.info("Voie d'écriture des réglages : %s", voie or "aucune")
+        self.voie_ecriture = voie
+        possible = voie is not None
         if possible != self.ecriture_possible:
             self.ecriture_possible = possible
             if not possible:
                 log.warning("Le téléviseur refuse l'écriture des réglages à ce "
-                            "client (webOS 11 : manifeste non signé par LG) : "
-                            "mode consultation")
+                            "client (ni setSystemSettings ni alertes "
+                            "autorisés) : mode consultation")
             await self._diffuser({"type": "ecriture", "possible": possible})
 
     async def _boucle_connexion(self) -> None:
@@ -323,14 +358,15 @@ class Televiseur:
                 if ancienne is None:
                     lu = await self.lire(categorie, [cle])
                     ancienne = lu.get(cle)
-                await self.client.request(
-                    "settings/setSystemSettings",
-                    {"category": categorie, "settings": {cle: valeur}},
-                )
-                relue = (await self.lire(categorie, [cle])).get(cle)
+                charge = {"category": categorie, "settings": {cle: valeur}}
+                if self.voie_ecriture == "alerte":
+                    relue = await self._ecrire_par_alerte(categorie, cle, valeur, charge)
+                else:
+                    await self.client.request("settings/setSystemSettings", charge)
+                    relue = (await self.lire(categorie, [cle])).get(cle)
             except PyLGTVCmdException as exc:
                 if _permission_refusee(exc):
-                    await self._changer_ecriture(False)
+                    await self._changer_ecriture(None)
                     raise EcritureImpossible from exc
                 # Refus applicatif du téléviseur (valeur hors plage, clé non
                 # acceptée dans ce contexte…) : à distinguer d'une perte de
@@ -347,6 +383,28 @@ class Televiseur:
                 "mode_image": mode_image,
             }
 
+    async def _ecrire_par_alerte(self, categorie: str, cle: str, valeur: Any,
+                                 charge: dict) -> Any:
+        """Écrit via le pont createAlert et renvoie la valeur relue.
+
+        Le téléviseur ne renvoie ni succès ni erreur : une valeur refusée
+        (hors plage, clé non acceptée) se traduit par une relecture
+        inchangée, donc une écriture non confirmée.
+        """
+        try:
+            await asyncio.wait_for(self.client.luna_request(LUNA_ECRITURE, charge),
+                                   timeout=DELAI_ALERTE_S)
+        except asyncio.TimeoutError:
+            log.warning("Pas de réponse à closeAlert pour %s.%s : vérification "
+                        "par relecture", categorie, cle)
+        relue = None
+        for _ in range(RELECTURES_ALERTE):
+            await asyncio.sleep(self.intervalle_relecture)
+            relue = (await self.lire(categorie, [cle])).get(cle)
+            if relue == valeur:
+                break
+        return relue
+
 
 class ConnexionTvPerdue(Exception):
     """Le téléviseur n'est pas joignable."""
@@ -358,8 +416,8 @@ class AppairageRequis(Exception):
 
 
 class EcritureImpossible(Exception):
-    """Le téléviseur n'accorde pas la permission d'écriture à ce client
-    (webOS 11 : réservée aux manifestes signés par LG)."""
+    """Le téléviseur n'accorde à ce client ni setSystemSettings (webOS 11 :
+    réservé aux manifestes signés par LG) ni les alertes."""
 
 
 class EcritureRefusee(Exception):

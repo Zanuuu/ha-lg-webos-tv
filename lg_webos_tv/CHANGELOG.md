@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.2.0 — 2026-10-24
+
+Écriture des réglages rétablie sous le firmware 43.21.77 (webOS 11.2).
+
+- Le téléviseur refuse toujours `setSystemSettings` aux clients non
+  signés ; l'app écrit désormais par une alerte système dont l'action
+  appelle le service de réglages (contournement de la communauté Home
+  Assistant). Modification, presets et retour arrière fonctionnent de
+  nouveau.
+- Le manifeste d'appairage demande la permission `WRITE_NOTIFICATION_TOAST`
+  (clé d'appairage existante conservée, pas de nouvelle demande à l'écran).
+- Chaque écriture est confirmée par relecture : une valeur refusée par le
+  téléviseur est signalée « non confirmée ».
+- Mode consultation conservé si aucune voie d'écriture n'est accordée.
+
 ## 1.1.1 — 2026-09-24
 
 - L'en-tête affiche « Appairage : acceptez la demande sur la TV » dès que

@@ -14,13 +14,14 @@ pour le 33.31.68 ; ce fichier-ci est rédigé à la main et **ne modifie pas
 
 Liste noire du manifeste d'appairage et écriture réservée aux clients
 signés par LG : voir `docs/incidents-ecriture.md` § 5. L'app fonctionne
-désormais en mode consultation sous ce firmware.
+en mode consultation sous ce firmware jusqu'à la version 1.1.1 ; depuis la
+1.2.0, l'écriture passe par le pont `createAlert` (§ 7 du même document).
 
 Le **mode développeur** a été testé comme voie d'écriture alternative
 (SSH `prisoner`, appel local au service de réglages) : sans effet, `prisoner`
 étant confiné au bus luna public qui refuse le service de réglages
 (`docs/incidents-ecriture.md` § 6). Seul un accès root permettrait l'écriture ;
-non retenu. Mode consultation confirmé comme état de fonctionnement.
+non retenu. (Conclusion dépassée par le pont `createAlert`, § 7.)
 
 ## 2. Clés lisibles (`valid-settings.js`, inventaire relancé)
 

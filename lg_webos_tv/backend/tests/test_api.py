@@ -75,6 +75,7 @@ def test_websocket_instantane_et_changement(application):
 
 def test_ecriture_en_mode_consultation_refusee_403(application, faux_client):
     faux_client.permission_ecriture = False
+    faux_client.permission_alerte = False
     with TestClient(application) as client:
         assert client.get("/api/reglages").json()["ecriture_possible"] is False
         reponse = client.post(f"/api/reglages/{ID_NETTETE}", json={"valeur": 25})

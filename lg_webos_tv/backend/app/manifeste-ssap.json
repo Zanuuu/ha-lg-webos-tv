@@ -5,5 +5,5 @@
   "vendorId": "io.github.zanuuu",
   "localizedAppNames": {"": "Réglages TV (Home Assistant)"},
   "localizedVendorNames": {"": "Home Assistant"},
-  "permissions": ["READ_SETTINGS", "WRITE_SETTINGS"]
+  "permissions": ["READ_SETTINGS", "WRITE_SETTINGS", "WRITE_NOTIFICATION_TOAST"]
 }

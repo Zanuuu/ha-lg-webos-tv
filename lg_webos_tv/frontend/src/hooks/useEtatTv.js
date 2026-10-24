@@ -12,8 +12,8 @@ export function useEtatTv() {
   const [reglages, setReglages] = useState({})
   const [connexion, setConnexion] = useState('connexion')
   const [modeImage, setModeImage] = useState(null)
-  // null tant que le service ne l'a pas vérifié ; false sous webOS 11
-  // (écriture réservée par le téléviseur aux clients signés par LG).
+  // null tant que le service ne l'a pas vérifié ; false si le téléviseur
+  // n'accorde ni l'écriture directe ni le pont par alerte.
   const [ecriturePossible, setEcriturePossible] = useState(null)
   const canalRef = useRef(null)
 
