@@ -1,0 +1,6 @@
+# Outillage de développement de l'intégration (tests) ; l'intégration
+# elle-même est décrite par custom_components/lg_webos_tv/manifest.json.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

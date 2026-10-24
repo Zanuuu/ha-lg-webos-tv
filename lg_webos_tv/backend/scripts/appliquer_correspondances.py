@@ -15,7 +15,7 @@ TV »). Le script est idempotent.
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent / "menu-tree"
+ROOT = Path(__file__).resolve().parents[3] / "custom_components" / "lg_webos_tv" / "menu_tree"
 
 RW = "lecture_ecriture"
 RO = "lecture_seule"

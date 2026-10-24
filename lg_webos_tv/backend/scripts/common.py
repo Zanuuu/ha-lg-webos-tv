@@ -16,7 +16,7 @@ TV_IP = os.environ.get("LG_TV_HOST") or sys.exit(
 KEY_DB = str(Path(__file__).resolve().parent.parent.parent / "data" / "bscpylgtv.sqlite")
 # Manifeste non signé de l'app : webOS 11 met en liste noire la signature du
 # manifeste par défaut de bscpylgtv (cf. docs/incidents-ecriture.md).
-MANIFESTE = str(Path(__file__).resolve().parent.parent / "app" / "manifeste-ssap.json")
+MANIFESTE = str(Path(__file__).resolve().parents[3] / "custom_components" / "lg_webos_tv" / "manifeste-ssap.json")
 
 
 async def make_client() -> WebOsClient:

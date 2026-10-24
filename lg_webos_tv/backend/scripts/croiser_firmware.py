@@ -18,10 +18,10 @@ aussi le rapport docs/ecarts-firmware.md. Idempotent.
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent
-MENU = ROOT / "menu-tree"
-# Rapports de développement : dossier docs/ à la racine du dépôt, hors de l'app.
-RAPPORT = ROOT.parent / "docs" / "ecarts-firmware.md"
+ROOT = Path(__file__).resolve().parents[3]
+MENU = ROOT / "custom_components" / "lg_webos_tv" / "menu_tree"
+# Rapports de développement : dossier docs/ à la racine du dépôt.
+RAPPORT = ROOT / "docs" / "ecarts-firmware.md"
 FIRMWARE = "33.31.68"
 
 C = {

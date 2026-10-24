@@ -1,0 +1,36 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "TV address",
+        "description": "IP address or host name of the LG TV. A fixed address (DHCP reservation) is recommended.",
+        "data": {"host": "Address"}
+      },
+      "confirmer_decouverte": {
+        "title": "TV discovered",
+        "description": "Set up {name} ({host})? A pairing request will then appear on its screen."
+      },
+      "reauth_confirm": {
+        "title": "New pairing required",
+        "description": "The TV ({host}) no longer accepts the pairing key, for example after a software update. Stand in front of the screen, then submit: a pairing request will appear on it."
+      },
+      "reconfigure": {
+        "title": "Change the TV address",
+        "data": {"host": "Address"}
+      }
+    },
+    "progress": {
+      "appairage": "Accept the pairing request shown on the TV screen ({host}). It expires after two minutes."
+    },
+    "error": {
+      "appairage_echoue": "Pairing failed: request declined or expired, or TV unreachable (it must be on)."
+    },
+    "abort": {
+      "single_instance_allowed": "A TV is already configured.",
+      "cannot_connect": "TV address missing from the network announcement.",
+      "reauth_successful": "Pairing renewed.",
+      "reconfigure_successful": "Address updated."
+    }
+  }
+}

@@ -1,0 +1,3 @@
+# Environnement de test : uv venv --python 3.14 .venv && uv pip install -r requirements-dev.txt
+pytest-homeassistant-custom-component==0.13.374
+bscpylgtv==0.5.2

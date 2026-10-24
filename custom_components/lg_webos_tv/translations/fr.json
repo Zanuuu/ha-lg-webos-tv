@@ -1,0 +1,36 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Adresse du téléviseur",
+        "description": "Adresse IP ou nom d'hôte du téléviseur LG. Une adresse fixe (réservation DHCP) est recommandée.",
+        "data": {"host": "Adresse"}
+      },
+      "confirmer_decouverte": {
+        "title": "Téléviseur découvert",
+        "description": "Configurer {name} ({host}) ? Une demande d'appairage s'affichera ensuite sur son écran."
+      },
+      "reauth_confirm": {
+        "title": "Nouvel appairage nécessaire",
+        "description": "Le téléviseur ({host}) ne reconnaît plus la clé d'appairage, par exemple après une mise à jour de son logiciel. Placez-vous devant l'écran, puis validez : une demande d'appairage s'y affichera."
+      },
+      "reconfigure": {
+        "title": "Changer l'adresse du téléviseur",
+        "data": {"host": "Adresse"}
+      }
+    },
+    "progress": {
+      "appairage": "Acceptez la demande d'appairage affichée sur l'écran du téléviseur ({host}). Elle expire au bout de deux minutes."
+    },
+    "error": {
+      "appairage_echoue": "Appairage impossible : demande refusée ou expirée, ou téléviseur injoignable (il doit être allumé)."
+    },
+    "abort": {
+      "single_instance_allowed": "Un téléviseur est déjà configuré.",
+      "cannot_connect": "Adresse du téléviseur introuvable dans l'annonce réseau.",
+      "reauth_successful": "Appairage renouvelé.",
+      "reconfigure_successful": "Adresse mise à jour."
+    }
+  }
+}
