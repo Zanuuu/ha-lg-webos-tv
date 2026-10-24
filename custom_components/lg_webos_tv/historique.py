@@ -89,7 +89,7 @@ class Historique:
             lignes = co.execute(
                 "SELECT * FROM ecritures ORDER BY id DESC LIMIT ?", (limite,)
             ).fetchall()
-        return [self._ligne_vers_dict(l) for l in lignes]
+        return [self._ligne_vers_dict(ligne) for ligne in lignes]
 
     async def lister(self, limite: int = 100) -> list[dict]:
         return await asyncio.to_thread(self._lister_sync, limite)
@@ -124,7 +124,7 @@ class Historique:
                 "SELECT * FROM ecritures WHERE horodatage > ? ORDER BY horodatage DESC",
                 (horodatage,),
             ).fetchall()
-        return [self._ligne_vers_dict(l) for l in lignes]
+        return [self._ligne_vers_dict(ligne) for ligne in lignes]
 
     async def lister_depuis(self, horodatage: float) -> list[dict]:
         """Écritures postérieures à `horodatage`, les plus récentes d'abord —

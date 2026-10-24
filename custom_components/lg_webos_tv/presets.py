@@ -114,9 +114,9 @@ class Presets:
                 "SELECT nom, cree_le, donnees FROM presets ORDER BY nom"
             ).fetchall()
         return [
-            {"nom": l["nom"], "cree_le": l["cree_le"],
-             "nombre_reglages": len(json.loads(l["donnees"])["entrees"])}
-            for l in lignes
+            {"nom": ligne["nom"], "cree_le": ligne["cree_le"],
+             "nombre_reglages": len(json.loads(ligne["donnees"])["entrees"])}
+            for ligne in lignes
         ]
 
     async def lister(self) -> list[dict]:
