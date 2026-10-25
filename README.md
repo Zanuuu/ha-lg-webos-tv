@@ -18,7 +18,7 @@ synchronisées en temps réel dans les deux sens, des actions et un événement
 pour les automatisations, et le menu Réglages du téléviseur, en français,
 dans la barre latérale.
 
-![Aperçu du panneau : réglages de luminosité](docs/images/apercu.png)
+![Aperçu du panneau : réglages de luminosité, avec l'état de la luminosité adaptative sur la ligne des pixels OLED](docs/images/apercu.png)
 
 ## Fonctionnalités
 
@@ -40,7 +40,10 @@ dans la barre latérale.
   de lumière ambiante, et cède la main à tout réglage manuel.
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
-  régler sur la TV »), presets exportables en JSON et appliqués après
+  régler sur la TV »), recherche d'un réglage (sans tenir compte des
+  accents, réglable directement depuis les résultats), état de la
+  luminosité adaptative sur la ligne des pixels OLED (avec « Reprendre »
+  pendant une pause), presets exportables en JSON et appliqués après
   aperçu des changements, historique avec retour arrière ; reste
   consultable quand le téléviseur est éteint (dernières valeurs connues).
 

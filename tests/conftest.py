@@ -206,3 +206,19 @@ async def installe(hass: HomeAssistant, tmp_path, faux_client, options_entree):
 def entite(hass, plateforme, unique_id):
     return er.async_get(hass).async_get_entity_id(plateforme, DOMAIN, unique_id)
 
+
+
+@pytest.fixture
+async def ws(hass: HomeAssistant, installe, hass_ws_client):
+    """Client websocket : `await ws("arbre")` envoie `lg_webos_tv/arbre` et
+    renvoie la première réponse reçue."""
+    client = await hass_ws_client(hass)
+    compteur = iter(range(1, 10_000))
+
+    async def envoyer(type_, **donnees):
+        await client.send_json({"id": next(compteur), "type": f"lg_webos_tv/{type_}", **donnees})
+        return await client.receive_json()
+
+    envoyer.client = client
+    envoyer.compteur = compteur
+    return envoyer

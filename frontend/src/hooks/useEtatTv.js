@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ecrireReglage, ouvrirCanal, recupererArbre, recupererReglages } from '../api.js'
+import {
+  ecrireReglage, ouvrirCanal, recupererArbre, recupererReglages, reprendreLuminosite,
+} from '../api.js'
 
 // Rafraîchissement périodique en filet de sécurité, indépendant du canal
 // temps réel (décidé en phase 1 : abonnement fonctionnel + repli par lecture
@@ -20,6 +22,8 @@ export function useEtatTv() {
   // Incrémentées quand l'intégration signale un changement de l'historique
   // ou des presets : les vues concernées relisent leur liste.
   const [revisions, setRevisions] = useState({ historique: 0, presets: 0 })
+  // Résumé de la luminosité adaptative ; null si elle n'est pas configurée.
+  const [luminosite, setLuminosite] = useState(null)
 
   useEffect(() => {
     let annule = false
@@ -45,6 +49,7 @@ export function useEtatTv() {
           setEcriturePossible(msg.ecriture_possible)
           setModeImage(msg.mode_image)
           setReglages(msg.reglages)
+          setLuminosite(msg.luminosite_adaptative)
         } else if (msg.type === 'connexion') {
           setConnexion(msg.etat)
         } else if (msg.type === 'ecriture') {
@@ -59,6 +64,9 @@ export function useEtatTv() {
           }
         } else if (msg.type === 'historique' || msg.type === 'presets') {
           setRevisions((prev) => ({ ...prev, [msg.type]: prev[msg.type] + 1 }))
+        } else if (msg.type === 'luminosite_adaptative') {
+          const { type: _type, ...resume } = msg
+          setLuminosite(resume)
         }
       },
     })
@@ -67,6 +75,7 @@ export function useEtatTv() {
       try {
         const r = await recupererReglages()
         setReglages(r.reglages)
+        setLuminosite(r.luminosite_adaptative)
       } catch {
         // Le canal WebSocket gère déjà l'indicateur de connexion.
       }
@@ -88,10 +97,12 @@ export function useEtatTv() {
     return resultat
   }, [])
 
+  const reprendre = useCallback(async () => setLuminosite(await reprendreLuminosite()), [])
+
   const rechargerArbre = useCallback(() => setTentativeArbre((n) => n + 1), [])
 
   return {
     arbre, erreurArbre, rechargerArbre, reglages, connexion, modeImage, ecriturePossible,
-    revisions, ecrire,
+    revisions, ecrire, luminosite, reprendre,
   }
 }

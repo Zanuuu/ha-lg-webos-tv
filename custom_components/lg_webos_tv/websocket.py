@@ -59,8 +59,18 @@ async def _arbre(hass, connection, msg, donnees) -> None:
     connection.send_result(msg["id"], arbre.charger())
 
 
+def _luminosite(donnees) -> dict | None:
+    fonction = donnees.luminosite_adaptative
+    return fonction.resume() if fonction is not None else None
+
+
+def _instantane(donnees) -> dict:
+    return {**donnees.televiseur.instantane(),
+            "luminosite_adaptative": _luminosite(donnees)}
+
+
 async def _reglages(hass, connection, msg, donnees) -> None:
-    connection.send_result(msg["id"], donnees.televiseur.instantane())
+    connection.send_result(msg["id"], _instantane(donnees))
 
 
 async def _ecrire(hass, connection, msg, donnees) -> None:
@@ -152,6 +162,15 @@ async def _appliquer_preset(hass, connection, msg, donnees) -> None:
         connection.send_error(msg["id"], "introuvable", f"Preset inconnu : {msg['nom']}")
 
 
+async def _reprendre_luminosite(hass, connection, msg, donnees) -> None:
+    if donnees.luminosite_adaptative is None:
+        connection.send_error(msg["id"], "non_configuree",
+                              "La luminosité adaptative n'est pas configurée")
+        return
+    donnees.luminosite_adaptative.reprendre()
+    connection.send_result(msg["id"], _luminosite(donnees))
+
+
 async def _abonner(hass, connection, msg, donnees) -> None:
     """Flux temps réel : instantané initial puis événements du téléviseur."""
     tv = donnees.televiseur
@@ -165,11 +184,26 @@ async def _abonner(hass, connection, msg, donnees) -> None:
         # les libellés et le tri qu'elle applique déjà.
         connection.send_message(websocket_api.event_message(msg["id"], {"type": type_}))
 
+    dernier_resume = _luminosite(donnees)
+
+    @callback
+    def signaler_luminosite() -> None:
+        # La fonction prévient à chaque mesure du capteur : on ne relaie que
+        # les changements visibles dans le panneau.
+        nonlocal dernier_resume
+        resume = _luminosite(donnees)
+        if resume != dernier_resume:
+            dernier_resume = resume
+            connection.send_message(websocket_api.event_message(
+                msg["id"], {"type": "luminosite_adaptative", **resume}))
+
     tv.abonner(relayer)
-    ne_plus_ecouter = (
+    ne_plus_ecouter = [
         donnees.historique.ecouter(lambda _ecriture: signaler("historique")),
         donnees.presets.ecouter(lambda: signaler("presets")),
-    )
+    ]
+    if donnees.luminosite_adaptative is not None:
+        ne_plus_ecouter.append(donnees.luminosite_adaptative.ecouter(signaler_luminosite))
 
     @callback
     def desabonner() -> None:
@@ -180,7 +214,7 @@ async def _abonner(hass, connection, msg, donnees) -> None:
     connection.subscriptions[msg["id"]] = desabonner
     connection.send_result(msg["id"])
     connection.send_message(websocket_api.event_message(
-        msg["id"], {"type": "instantane", **tv.instantane()}))
+        msg["id"], {"type": "instantane", **_instantane(donnees)}))
 
 
 def _type(nom: str) -> dict:
@@ -205,6 +239,7 @@ COMMANDES = [
                vol.Optional("remplacer", default=False): bool}, _importer_preset),
     _commande({**_type("presets/supprimer"), vol.Required("nom"): str}, _supprimer_preset),
     _commande({**_type("presets/appliquer"), vol.Required("nom"): str}, _appliquer_preset),
+    _commande(_type("luminosite_adaptative/reprendre"), _reprendre_luminosite),
     _commande(_type("abonner"), _abonner),
 ]
 

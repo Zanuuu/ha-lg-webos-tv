@@ -242,6 +242,52 @@ async def test_interrupteur_et_bouton_reprendre(hass: HomeAssistant, fonction, f
     assert etat(hass).state == "active"
 
 
+async def commande(ws, type_, **donnees) -> tuple[list[dict], dict]:
+    """Envoie une commande ; renvoie les événements reçus avant sa réponse,
+    et la réponse."""
+    await ws.client.send_json({"id": next(ws.compteur), "type": type_, **donnees})
+    evenements = []
+    while (message := await ws.client.receive_json()).get("type") != "result":
+        evenements.append(message["event"])
+    return evenements, message
+
+
+def etats_luminosite(evenements: list[dict]) -> list[str]:
+    return [e["etat"] for e in evenements if e["type"] == "luminosite_adaptative"]
+
+
+async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, faux_client, ws):
+    abonnement = await ws("abonner")
+    assert abonnement["success"]
+    instantane = (await ws.client.receive_json())["event"]
+    assert instantane["luminosite_adaptative"] == {
+        "etat": "active", "entree_id": ID_OLED, "cible": 60, "fin_pause": None}
+
+    await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    evenements, _ = await commande(ws, "lg_webos_tv/reglages")
+    assert etats_luminosite(evenements) == ["pause"]
+    pause = next(e for e in evenements if e["type"] == "luminosite_adaptative")
+    assert pause["fin_pause"] is not None
+
+    # Nouvelle mesure, même cible : rien à relayer au panneau.
+    await regler_lux(hass, 19.5)
+    evenements, _ = await commande(ws, "lg_webos_tv/reglages")
+    assert etats_luminosite(evenements) == []
+
+    evenements, reponse = await commande(ws, "lg_webos_tv/luminosite_adaptative/reprendre")
+    assert etats_luminosite(evenements) == ["active"]
+    assert reponse["result"]["etat"] == "active" and reponse["result"]["fin_pause"] is None
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert luminosite(faux_client) == 60
+
+    # Désabonnement : l'écouteur de la fonction est retiré.
+    ecouteurs = fonction.runtime_data.luminosite_adaptative._ecouteurs
+    avant = len(ecouteurs)
+    await commande(ws, "unsubscribe_events", subscription=abonnement["id"])
+    assert len(ecouteurs) == avant - 1
+
+
 async def test_consultation(hass: HomeAssistant, fonction):
     await fonction.runtime_data.televiseur._changer_ecriture(None)
     await hass.async_block_till_done()

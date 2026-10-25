@@ -1,18 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { estLisible, estPilotable, valeurDe } from '../arbre.js'
+import BadgeLuminosite from './BadgeLuminosite.jsx'
 import Curseur from './controles/Curseur.jsx'
 import Interrupteur from './controles/Interrupteur.jsx'
 import Liste from './controles/Liste.jsx'
 import NonPilotable from './controles/NonPilotable.jsx'
 import Texte from './controles/Texte.jsx'
 
-export default function LigneReglage({ entree, reglages, lectureSeule, horsLigne, onEcrire, onEntrer }) {
+export default function LigneReglage({
+  entree, reglages, lectureSeule, horsLigne, luminosite, revelee, onEcrire, onReprendre, onEntrer,
+}) {
   const [erreur, setErreur] = useState(null)
   const [envoi, setEnvoi] = useState(false)
   // Change à chaque échec : le contrôle est recréé et repart de la valeur du
   // téléviseur au lieu de garder celle qui a été refusée.
   const [generation, setGeneration] = useState(0)
   const api = entree.api
+  const ligneRef = useRef(null)
+
+  // Arrivée depuis la recherche : la ligne est amenée à l'écran et reçoit le
+  // focus, qui sinon se perdrait avec le résultat cliqué.
+  useEffect(() => {
+    if (!revelee) return
+    ligneRef.current?.scrollIntoView({ block: 'center' })
+    ligneRef.current?.focus({ preventScroll: true })
+  }, [revelee])
 
   async function ecrire(valeur) {
     setErreur(null)
@@ -29,7 +41,12 @@ export default function LigneReglage({ entree, reglages, lectureSeule, horsLigne
 
   if (entree.controle === 'sous-menu') {
     return (
-      <button type="button" className="ligne-reglage ligne-navigable" onClick={() => onEntrer(entree)}>
+      <button
+        type="button"
+        ref={ligneRef}
+        className={`ligne-reglage ligne-navigable${revelee ? ' ligne-revelee' : ''}`}
+        onClick={() => onEntrer(entree)}
+      >
         <Libelle entree={entree} />
         <span className="fleche" aria-hidden="true">›</span>
       </button>
@@ -64,10 +81,17 @@ export default function LigneReglage({ entree, reglages, lectureSeule, horsLigne
   }
 
   return (
-    <div className="ligne-reglage">
+    <div
+      ref={ligneRef}
+      className={`ligne-reglage${revelee ? ' ligne-revelee' : ''}`}
+      tabIndex={revelee ? -1 : undefined}
+    >
       <Libelle entree={entree}>
         {/* Toujours présent : une zone live n'est annoncée que si elle existait déjà. */}
         <span className="etat-envoi" aria-live="polite">{envoi ? 'Envoi…' : ''}</span>
+        {luminosite && entree.id === luminosite.entree_id && (
+          <BadgeLuminosite luminosite={luminosite} lectureSeule={lectureSeule} onReprendre={onReprendre} />
+        )}
       </Libelle>
       <div className="controle">{controle()}</div>
       {erreur && <p className="erreur-reglage" role="alert">{erreur}</p>}

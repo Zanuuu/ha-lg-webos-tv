@@ -331,6 +331,16 @@ class LuminositeAdaptative:
                      cible, self.derniere_erreur)
         self._prevenir()
 
+    def resume(self) -> dict[str, Any]:
+        """État transmis au panneau. Sans le lux : il change à chaque mesure
+        du capteur, et le panneau n'est prévenu que si le résumé change."""
+        return {
+            "etat": self.etat,
+            "entree_id": ID_OLED,
+            "cible": self.cible,
+            "fin_pause": self.fin_pause.isoformat() if self.fin_pause else None,
+        }
+
     def attributs(self) -> dict[str, Any]:
         return {
             "lux": self.lux,

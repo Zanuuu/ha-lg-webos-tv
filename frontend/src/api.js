@@ -26,6 +26,8 @@ export const importerPreset = (donnees, remplacer = false) =>
 export const supprimerPreset = (nom) => commande('presets/supprimer', { nom })
 export const appliquerPreset = (nom) => commande('presets/appliquer', { nom })
 
+export const reprendreLuminosite = () => commande('luminosite_adaptative/reprendre')
+
 export const recupererHistorique = (limite = 100) => commande('historique', { limite })
 export const annulerEcriture = (id) => commande('historique/annuler', { ecriture_id: id })
 export const revenirA = (horodatage) => commande('historique/revenir', { horodatage })

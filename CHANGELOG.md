@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.3.0 — 2026-10-25
+
+Panneau :
+
+- **Luminosité adaptative** : son état s'affiche sur la ligne « Luminosité
+  des pixels OLED » (active avec la valeur visée, en pause jusqu'à
+  l'heure de reprise, mode d'image laissé de côté, capteur indisponible) ;
+  bouton **Reprendre** pendant une pause. Le passage en pause qui suit un
+  réglage du curseur est visible et annoncé.
+- **Recherche d'un réglage** au-dessus de la barre latérale (touche `/`) :
+  sans tenir compte des accents ni de la casse, sur le libellé, le chemin
+  dans le menu, les choix proposés et la description. Les résultats se
+  règlent sur place ; leur chemin ouvre le menu à cet endroit, ligne mise
+  en évidence. Échap vide la recherche.
+- Capture du README mise à jour.
+
+Intégration : l'état de la luminosité adaptative est transmis au panneau
+(instantané et flux temps réel, seulement quand il change) ; nouvelle
+commande websocket `lg_webos_tv/luminosite_adaptative/reprendre`.
+
 ## 2.2.0 — 2026-10-25
 
 Panneau :

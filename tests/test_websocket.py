@@ -3,28 +3,12 @@
 import time
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
 from homeassistant.core import HomeAssistant
 
 from custom_components.lg_webos_tv import panneau
 
 ID_NETTETE = "image.parametres-avances.clarte.ajuster-nettete"
 ID_CONTRASTE = "image.parametres-avances.luminosite.ajuster-le-contraste"
-
-
-@pytest.fixture
-async def ws(hass: HomeAssistant, installe, hass_ws_client):
-    client = await hass_ws_client(hass)
-    compteur = iter(range(1, 10_000))
-
-    async def envoyer(type_, **donnees):
-        await client.send_json({"id": next(compteur), "type": f"lg_webos_tv/{type_}", **donnees})
-        return await client.receive_json()
-
-    envoyer.client = client
-    envoyer.compteur = compteur
-    return envoyer
 
 
 async def test_arbre_et_reglages(ws):
@@ -34,6 +18,9 @@ async def test_arbre_et_reglages(ws):
     rep = await ws("reglages")
     assert rep["result"]["connexion"] == "connecte"
     assert rep["result"]["mode_image"] == "expert2"
+    # Sans capteur de lumière, pas de luminosité adaptative.
+    assert rep["result"]["luminosite_adaptative"] is None
+    assert (await ws("luminosite_adaptative/reprendre"))["error"]["code"] == "non_configuree"
 
 
 async def test_ecrire_et_historique(ws, faux_client):
