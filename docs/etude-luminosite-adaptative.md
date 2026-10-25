@@ -1235,6 +1235,36 @@ celle-ci réutilise leurs détections.
   diagnostic reste en observation.
 - Aucune nouvelle Réparation (arbitrage A6).
 
+**Lot 4 livré en 2.8.0 : choix de mise en œuvre.**
+
+- Module pur `courbe.py` : courbe à 2 ou 3 points, linéaire par morceaux
+  sur ln(lux), plate au-delà des extrémités, monotone (plateaux permis) ;
+  `point_intermediaire` facultatif (`[lux, luminosité]`), sans migration.
+  Copie JS alignée par des vecteurs partagés (`tests/vecteurs_courbe.json`,
+  pytest et `npm test`).
+- Point d'ancrage à un point : antécédent de la valeur sur la courbe (le
+  plus proche du lux mesuré sur un plateau, donc aucun déplacement dans
+  une partie plate), puis translation de tous les lux, point
+  intermédiaire compris : forme et pente conservées.
+- Deux points : transformation affine de ln(lux) qui envoie les deux
+  antécédents sur les deux lux mesurés ; le point intermédiaire garde sa
+  position relative. Combinés seulement à un facteur 4 au moins de lux
+  (sinon le nouveau remplace l'ancien), au plus deux conservés.
+- Arbitrages de l'utilisateur (25/10/2026) : valeur hors des bornes →
+  borne élargie ; courbe poussée sous 1 lx ou au-delà de 100 000 lx →
+  partie hors d'atteinte coupée (comportement identique pour tout lux
+  mesurable) ; courbe retouchée → ancrages oubliés ; deuxième point
+  contradictoire → le nouveau seul.
+- Lux de la courbe au dixième sous 100 lx (à l'unité, un ancrage à 3 lx
+  déplaçait la courbe de deux points) ; arrondi choisi pour rester au
+  plus près des ancrages (écart ≤ 1 point).
+- Pendant la mise en route (abonnement websocket, lié à la connexion) :
+  état `mise_en_route`, aucune écriture de la fonction, toute
+  modification de la luminosité (curseur, télécommande) ignorée par la
+  reprise en main et les statistiques. L'ancrage lit la valeur notifiée
+  par le téléviseur, jamais celle du curseur ; refusé dans un mode laissé
+  de côté. Abandon sans ancrage : la fonction reprend sa courbe.
+
 ---
 
 ## 8. Points ouverts

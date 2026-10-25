@@ -51,6 +51,7 @@ Panneau (Node 22 ou plus) :
 cd frontend
 npm install
 npm run build   # écrit dans custom_components/lg_webos_tv/frontend/
+npm test        # copie JS de la courbe, mêmes vecteurs que tests/test_courbe.py
 ```
 
 Le build doit être refait et commité à chaque modification de

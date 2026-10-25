@@ -32,6 +32,7 @@ export const pauseLuminosite = (minutes) => commande('luminosite_adaptative/paus
 export const recupererConfigLuminosite = () => commande('luminosite_adaptative/configuration')
 export const configurerLuminosite = (options) =>
   commande('luminosite_adaptative/configurer', { options })
+export const ancrerLuminosite = () => commande('luminosite_adaptative/ancrer')
 export const desactiverEconomieEnergie = () =>
   commande('luminosite_adaptative/desactiver_economie_energie')
 
@@ -66,3 +67,7 @@ export const ouvrirCanal = (gestionnaires) => abonner('abonner', gestionnaires.o
 // ouverte.
 export const suivreLuminosite = (onMessage, onErreur) =>
   abonner('luminosite_adaptative/suivre', onMessage, onErreur)
+
+// Assistant de mise en route ouvert : la fonction n'écrit pas et ne se met
+// pas en pause tant que l'abonnement dure.
+export const suivreMiseEnRoute = () => abonner('luminosite_adaptative/mise_en_route', () => {})

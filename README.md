@@ -37,9 +37,10 @@ dans la barre latérale.
   - événement « Réglage modifié sur le téléviseur » quand un réglage est
     changé à la télécommande, pour qu'une automatisation cède la main.
 - **Luminosité adaptative** : la luminosité des pixels OLED suit un capteur
-  de lumière ambiante, en transitions douces, cède la main à tout
-  réglage manuel, et dit ce qui gagnerait à être changé dans
-  l'installation (capteur, emplacement, courbe).
+  de lumière ambiante, en transitions douces, se cale sur votre
+  préférence par une mise en route guidée, cède la main à tout réglage
+  manuel, et dit ce qui gagnerait à être changé dans l'installation
+  (capteur, emplacement, courbe).
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
   régler sur la TV »), recherche d'un réglage (sans tenir compte des
@@ -154,12 +155,40 @@ Appareils et services → LG webOS TV → **Configurer** : choisir un capteur
 de luminosité ambiante (lux) active la fonction et crée ses trois entités ;
 effacer le capteur la retire (l'intégration est alors rechargée).
 
+### Mise en route guidée
+
+Sans capteur configuré, la page ouvre un parcours en cinq étapes,
+relançable ensuite (« Relancer la mise en route ») :
+
+1. **Capteur** : ceux de la pièce du téléviseur d'abord, puis ceux qui
+   ont donné une mesure dans l'heure, avec leur valeur, l'âge de la
+   dernière mesure et le profil pressenti d'après leur intégration ;
+2. **Emplacement** du capteur, sur le schéma de la pièce ; les
+   emplacements déconseillés sont signalés tout de suite ;
+3. **Vérifications** : téléviseur connecté et modifiable, économie
+   d'énergie ou mode Éco (bouton pour la désactiver), mode d'image actuel
+   laissé de côté, capteur qui répond ;
+4. **Point d'ancrage** : « réglez la luminosité qui vous convient
+   maintenant », au curseur ou à la télécommande. Pendant ce réglage, la
+   fonction n'écrit rien et ne se met pas en pause. La courbe est alors
+   décalée (sur l'échelle logarithmique, pente conservée) pour donner
+   cette luminosité au lux mesuré ; une valeur hors des luminosités
+   minimale et maximale les élargit, et la partie de la courbe hors de
+   portée du capteur (sous 1 lx, au-delà de 100 000 lx) est coupée ;
+5. **Activation**.
+
+Plus tard, le soir dans le noir, la page invite à **refaire le réglage** :
+ce deuxième point, pris dans une lumière au moins 4 fois plus faible, cale
+aussi la pente de la courbe. Les points d'ancrage apparaissent en losanges
+sur la courbe ; ils sont oubliés si la courbe est retouchée à la main.
+
 La page du panneau montre l'état en direct (lux lissé et dernière mesure,
 profil du capteur, luminosité calculée, luminosité du téléviseur,
 transition en cours et sa progression, mode d'image), la **cause d'une
 pause** et son heure de fin, avec « Reprendre »
-ou « Pause 1 h » ; la **courbe** lux → luminosité, dont on déplace les deux
-points à la souris, au doigt ou au clavier ; l'**emplacement du capteur**
+ou « Pause 1 h » ; la **courbe** lux → luminosité, dont on déplace les
+points à la souris, au doigt ou au clavier, avec un **point intermédiaire**
+facultatif (« Ajouter un point intermédiaire ») ; l'**emplacement du capteur**
 avec un schéma de la pièce ; les autres réglages (capteur, durée de pause,
 modes laissés de côté, réglages avancés repliés), appliqués sans recharger
 l'intégration ; et un **journal** des 50 derniers événements (transitions,
@@ -168,7 +197,9 @@ depuis le démarrage de Home Assistant.
 
 - Échelle logarithmique, proche de la perception de l'œil, entre une pièce
   sombre (luminosité minimale) et une pièce lumineuse (luminosité
-  maximale).
+  maximale), avec un point intermédiaire facultatif (une soirée sous les
+  lampes, par exemple) : la courbe reste croissante entre ses points, et
+  plate au-delà des extrémités.
 - **Mesure fiabilisée** : le lux est lissé (plus vite quand la lumière
   monte que quand elle baisse), la luminosité n'est recalculée que si la
   lumière a changé d'au moins +10 % / −20 % depuis la dernière
@@ -214,7 +245,8 @@ depuis le démarrage de Home Assistant.
   mode absent de la liste (« Créateur » par exemple) est aussi laissé de
   côté.
 - L'entité « État de la luminosité adaptative » dit ce que fait la
-  fonction (`active`, `pause`, `mode_exclu`, `conflit_economie_energie`,
+  fonction (`active`, `pause`, `mise_en_route`, `mode_exclu`,
+  `conflit_economie_energie`,
   `capteur_indisponible`, `capteur_fige`…), avec les attributs `lux`,
   `lux_filtre`, `cible`, `fin_pause`, `cause_pause` (origine du réglage qui
   l'a mise en pause), `conflit`, `rampe` (départ de la transition en

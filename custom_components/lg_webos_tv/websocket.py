@@ -10,11 +10,18 @@ import voluptuous as vol
 
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
+
+from homeassistant.util import dt as dt_util
 
 from . import arbre, restauration
-from .const import (CONF_CAPTEUR_LUX, DOMAIN, OPTIONS_AVANCEES,
-                    OPTIONS_LUMINOSITE_DEFAUT)
-from .luminosite_adaptative import modes_proposes, valider_options
+from .const import (CONF_CAPTEUR_LUX, CONF_POINT_INTERMEDIAIRE, DOMAIN,
+                    OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
+from .courbe import conserver_ancrages
+from .luminosite_adaptative import (AncrageImpossible, modes_proposes,
+                                    nom_zone, valider_options, zone_entite,
+                                    zone_televiseur)
+from .signal_lux import profil
 from .presets import PresetExistant, PresetInconnu, capturer_snapshot
 
 # Textes des erreurs de validation des options (mêmes clés que le formulaire).
@@ -25,7 +32,19 @@ ERREURS_OPTIONS = {
     "mode_inconnu": "mode d'image inconnu",
     "emplacement_inconnu": "emplacement inconnu",
     "capteur_inconnu": "capteur introuvable",
+    "point_intermediaire_hors_courbe":
+        "doit tomber entre les deux extrémités de la courbe, en lux et en luminosité",
 }
+
+# Refus du point d'ancrage (luminosite_adaptative.AncrageImpossible).
+ERREURS_ANCRAGE = {
+    "deconnecte": "le téléviseur n'est pas connecté",
+    "mode_exclu": "le mode d'image actuel est laissé de côté : passez dans un autre mode",
+    "indisponible": "mesure du capteur ou luminosité du téléviseur inconnue",
+}
+# Capteurs qui ont publié depuis moins d'une heure : proposés juste après
+# ceux de la pièce du téléviseur.
+RECENT_S = 3600
 
 
 def _donnees(hass: HomeAssistant, connection, msg) -> Any | None:
@@ -201,12 +220,35 @@ async def _pause_luminosite(hass, connection, msg, donnees) -> None:
 
 def _capteurs_lux(hass: HomeAssistant) -> list[dict]:
     """Capteurs proposés au choix, comme le sélecteur du formulaire des
-    options (capteurs de luminosité ambiante)."""
-    capteurs = [{"entity_id": etat.entity_id, "nom": etat.name, "valeur": etat.state,
-                 "unite": etat.attributes.get("unit_of_measurement")}
-                for etat in hass.states.async_all("sensor")
-                if etat.attributes.get("device_class") == "illuminance"]
-    return sorted(capteurs, key=lambda capteur: capteur["nom"].casefold())
+    options (capteurs de luminosité ambiante) : ceux de la pièce du
+    téléviseur d'abord, puis ceux qui ont publié dans l'heure, puis les
+    autres. Profil pressenti d'après la plateforme seule (la cadence n'est
+    observée qu'une fois le capteur choisi)."""
+    registre = er.async_get(hass)
+    zone_tv = zone_televiseur(hass)
+    maintenant = dt_util.utcnow().timestamp()
+    capteurs = []
+    for etat in hass.states.async_all("sensor"):
+        if etat.attributes.get("device_class") != "illuminance":
+            continue
+        entite = registre.async_get(etat.entity_id)
+        plateforme = entite.platform if entite is not None else None
+        zone = zone_entite(hass, etat.entity_id)
+        capteurs.append({
+            "entity_id": etat.entity_id, "nom": etat.name, "valeur": etat.state,
+            "unite": etat.attributes.get("unit_of_measurement"),
+            "piece": nom_zone(hass, zone),
+            "meme_piece": zone is not None and zone == zone_tv,
+            "age_s": round(maintenant - etat.last_reported_timestamp),
+            "plateforme": plateforme,
+            "profil": profil(plateforme, None),
+        })
+
+    def rang(capteur: dict) -> tuple:
+        groupe = 0 if capteur["meme_piece"] else 1 if capteur["age_s"] < RECENT_S else 2
+        return groupe, capteur["nom"].casefold()
+
+    return sorted(capteurs, key=rang)
 
 
 async def _configuration_luminosite(hass, connection, msg, donnees) -> None:
@@ -215,6 +257,7 @@ async def _configuration_luminosite(hass, connection, msg, donnees) -> None:
         "options": {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: None, **entree.options},
         "modes_proposes": await hass.async_add_executor_job(modes_proposes),
         "capteurs": _capteurs_lux(hass),
+        "piece_televiseur": nom_zone(hass, zone_televiseur(hass)),
     })
 
 
@@ -222,9 +265,12 @@ async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
     """Mêmes options que le formulaire. Sans rechargement de l'intégration
     (qui couperait la connexion au téléviseur), sauf pour créer ou retirer
     la fonction : ses entités n'existent que si un capteur est choisi. Une
-    option avancée à `null` revient à la valeur du profil du capteur."""
+    option avancée à `null` revient à la valeur du profil du capteur, un
+    point intermédiaire à `null` est retiré. Les points d'ancrage sont
+    oubliés si la courbe change."""
     entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
-    connues = {*OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX, *OPTIONS_AVANCEES}
+    connues = {*OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX, *OPTIONS_AVANCEES,
+               CONF_POINT_INTERMEDIAIRE}
     saisie = {**OPTIONS_LUMINOSITE_DEFAUT, **entree.options,
               **{cle: valeur for cle, valeur in msg["options"].items() if cle in connues}}
     capteur = saisie.pop(CONF_CAPTEUR_LUX, None) or None
@@ -238,6 +284,7 @@ async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
         return
     if capteur is not None:
         options[CONF_CAPTEUR_LUX] = capteur
+    options = conserver_ancrages(entree.options, options)
     hass.config_entries.async_update_entry(entree, options=options)
 
     recharge = (capteur is None) != (donnees.luminosite_adaptative is None)
@@ -254,6 +301,33 @@ async def _desactiver_economie_energie(hass, connection, msg, donnees) -> None:
     resultat = await fonction.desactiver_economie_energie("panneau")
     if not _echec_ecriture(connection, msg, resultat):
         connection.send_result(msg["id"], resultat)
+
+
+async def _ancrer_luminosite(hass, connection, msg, donnees) -> None:
+    """Point d'ancrage de la mise en route : courbe calée sur la luminosité
+    actuelle du téléviseur, enregistrée sans rechargement."""
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    try:
+        options, compte_rendu = fonction.ancrer()
+    except AncrageImpossible as exc:
+        connection.send_error(msg["id"], str(exc), ERREURS_ANCRAGE[str(exc)])
+        return
+    entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(entree, options=options)
+    fonction.reconfigurer(options)
+    connection.send_result(msg["id"], {"options": options, "compte_rendu": compte_rendu})
+
+
+async def _mise_en_route(hass, connection, msg, donnees) -> None:
+    """Assistant de mise en route ouvert : la fonction n'écrit pas et ne se
+    met pas en pause tant que l'abonnement dure. Lié à la connexion, il
+    prend fin avec elle (onglet fermé, réseau perdu)."""
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    fonction.commencer_mise_en_route()
+    connection.subscriptions[msg["id"]] = fonction.terminer_mise_en_route
+    connection.send_result(msg["id"])
 
 
 async def _sante_luminosite(hass, connection, msg, donnees) -> None:
@@ -384,6 +458,8 @@ COMMANDES = [
     _commande(_type("luminosite_adaptative/desactiver_economie_energie"),
               _desactiver_economie_energie),
     _commande(_type("luminosite_adaptative/sante"), _sante_luminosite),
+    _commande(_type("luminosite_adaptative/ancrer"), _ancrer_luminosite),
+    _commande(_type("luminosite_adaptative/mise_en_route"), _mise_en_route),
     _commande(_type("luminosite_adaptative/suivre"), _suivre_luminosite),
     _commande(_type("abonner"), _abonner),
 ]

@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { BORNES, calculerCible } from '../luminosite.js'
+import { arrondirLux, BORNES, calculerCible, pointsCourbe } from '../luminosite.js'
 
 // Repère du graphique (unités du viewBox) : marges pour les graduations.
 const LARGEUR = 640
@@ -18,15 +18,17 @@ function formaterLux(lux) {
   return `${lux.toLocaleString('fr-FR')} lx`
 }
 
-// La courbe de la fonction est une droite sur le logarithme du lux : axe des
-// lux logarithmique, du lux 1 à la décade qui contient le plus grand des
+// La courbe de la fonction est faite de segments sur le logarithme du lux :
+// axe des lux logarithmique, du lux 1 à la décade qui contient le plus grand des
 // repères (pièce lumineuse, mesure actuelle), avec de la marge.
 function domaineLux(options, lux) {
   const plusGrand = Math.max(options.lux_max, lux ?? 0) * 1.5
   return 10 ** Math.max(3, Math.ceil(Math.log10(plusGrand)))
 }
 
-export default function CourbeLuminosite({ options, lux, desactive, onChanger }) {
+// `ancrages` : points d'ancrage de la mise en route, affichés en losanges.
+// Sans `onChanger`, la courbe est un aperçu, sans poignées.
+export default function CourbeLuminosite({ options, lux, ancrages = [], desactive, onChanger }) {
   const svgRef = useRef(null)
   const luxFin = domaineLux(options, lux)
   const xDeLux = (l) => X0 + (Math.log10(borner(l, 1, luxFin)) / Math.log10(luxFin)) * (X1 - X0)
@@ -37,29 +39,50 @@ export default function CourbeLuminosite({ options, lux, desactive, onChanger })
   const decades = []
   for (let l = 1; l <= luxFin; l *= 10) decades.push(l)
 
-  const bas = { x: xDeLux(options.lux_min), y: yDeLum(options.luminosite_min) }
-  const haut = { x: xDeLux(options.lux_max), y: yDeLum(options.luminosite_max) }
-  const trace = `M ${X0} ${bas.y} L ${bas.x} ${bas.y} L ${haut.x} ${haut.y} L ${X1} ${haut.y}`
+  const points = pointsCourbe(options).map(([l, v]) => ({ x: xDeLux(l), y: yDeLum(v) }))
+  const premier = points[0]
+  const dernier = points[points.length - 1]
+  const trace = `M ${X0} ${premier.y} ${points.map((p) => `L ${p.x} ${p.y}`).join(' ')} `
+    + `L ${X1} ${dernier.y}`
 
   const cible = lux !== null && lux !== undefined ? calculerCible(lux, options) : null
   const maintenant = cible !== null ? { x: xDeLux(Math.max(lux, 1)), y: yDeLum(cible) } : null
+  const milieu = options.point_intermediaire
 
-  // Chaque poignée reste de son côté de l'autre : pièce sombre sous pièce
-  // lumineuse, luminosité minimale sous la maximale.
+  // Chaque poignée reste entre ses voisines, en lux (au moins un dixième
+  // d'écart) comme en luminosité : la courbe reste monotone.
   function deplacer(poignee, luxVoulu, lumVoulue) {
+    const voisins = pointsCourbe(options)
     if (poignee === 'bas') {
+      const [luxSuivant, lumSuivante] = voisins[1]
       onChanger({
-        lux_min: borner(Math.round(luxVoulu), BORNES.lux_min[0],
-          Math.min(BORNES.lux_min[1], options.lux_max - 1)),
-        luminosite_min: borner(Math.round(lumVoulue), 0, options.luminosite_max),
+        lux_min: borner(arrondirLux(luxVoulu), BORNES.lux_min[0],
+          Math.min(BORNES.lux_min[1], arrondirLux(luxSuivant - 0.1))),
+        luminosite_min: borner(Math.round(lumVoulue), 0, lumSuivante),
+      })
+    } else if (poignee === 'milieu') {
+      onChanger({
+        point_intermediaire: [
+          borner(arrondirLux(luxVoulu), arrondirLux(options.lux_min + 0.1),
+            arrondirLux(options.lux_max - 0.1)),
+          borner(Math.round(lumVoulue), options.luminosite_min, options.luminosite_max),
+        ],
       })
     } else {
+      const [luxPrecedent, lumPrecedente] = voisins[voisins.length - 2]
       onChanger({
-        lux_max: borner(Math.round(luxVoulu), Math.max(BORNES.lux_max[0], options.lux_min + 1),
-          BORNES.lux_max[1]),
-        luminosite_max: borner(Math.round(lumVoulue), options.luminosite_min, 100),
+        lux_max: borner(arrondirLux(luxVoulu),
+          Math.max(BORNES.lux_max[0], arrondirLux(luxPrecedent + 0.1)), BORNES.lux_max[1]),
+        luminosite_max: borner(Math.round(lumVoulue), lumPrecedente, 100),
       })
     }
+  }
+
+  // Posé sur la courbe, au milieu des extrémités en ln(lux) : la luminosité
+  // calculée ne change pas tant qu'on ne le déplace pas.
+  function ajouterMilieu() {
+    const luxMilieu = arrondirLux(Math.sqrt(options.lux_min * options.lux_max))
+    onChanger({ point_intermediaire: [luxMilieu, calculerCible(luxMilieu, options)] })
   }
 
   function pointSvg(e) {
@@ -84,13 +107,16 @@ export default function CourbeLuminosite({ options, lux, desactive, onChanger })
     }
   }
 
-  // Flèches gauche / droite : lux par pas de 10 % (au moins 1) ; haut / bas :
+  // Flèches gauche / droite : lux par pas de 10 % (au moins 0,1) ; haut / bas :
   // luminosité par pas de 1.
   function touche(poignee) {
     return (e) => {
-      const lux0 = poignee === 'bas' ? options.lux_min : options.lux_max
-      const lum0 = poignee === 'bas' ? options.luminosite_min : options.luminosite_max
-      const pas = Math.max(1, Math.round(lux0 * 0.1))
+      const [lux0, lum0] = {
+        bas: [options.lux_min, options.luminosite_min],
+        milieu: milieu,
+        haut: [options.lux_max, options.luminosite_max],
+      }[poignee]
+      const pas = Math.max(0.1, arrondirLux(lux0 * 0.1))
       const deplacements = {
         ArrowLeft: [lux0 - pas, lum0],
         ArrowRight: [lux0 + pas, lum0],
@@ -155,23 +181,54 @@ export default function CourbeLuminosite({ options, lux, desactive, onChanger })
           </g>
         ))}
         <path d={trace} className="trace-courbe" />
+        {ancrages.map((a) => (
+          <rect key={a.horodatage} className="ancre-courbe" x={xDeLux(a.lux) - 6}
+            y={yDeLum(a.luminosite) - 6} width="12" height="12"
+            transform={`rotate(45 ${xDeLux(a.lux)} ${yDeLum(a.luminosite)})`}>
+            <title>{`Point d'ancrage : ${formaterLux(a.lux)}, luminosité ${a.luminosite}`}</title>
+          </rect>
+        ))}
         {maintenant && (
           <g className="point-maintenant">
             <line x1={maintenant.x} x2={maintenant.x} y1={Y0} y2={maintenant.y} />
             <circle cx={maintenant.x} cy={maintenant.y} r="6" />
           </g>
         )}
-        {poignee('bas', bas, 'Pièce sombre et luminosité minimale', options.lux_min,
-          options.luminosite_min)}
-        {poignee('haut', haut, 'Pièce lumineuse et luminosité maximale', options.lux_max,
-          options.luminosite_max)}
+        {onChanger && (
+          <>
+            {poignee('bas', premier, 'Pièce sombre et luminosité minimale', options.lux_min,
+              options.luminosite_min)}
+            {milieu && poignee('milieu', points[1], 'Point intermédiaire', milieu[0], milieu[1])}
+            {poignee('haut', dernier, 'Pièce lumineuse et luminosité maximale', options.lux_max,
+              options.luminosite_max)}
+          </>
+        )}
       </svg>
       <figcaption className="texte-attenue">
         {maintenant
           ? `Maintenant : ${formaterLux(Math.round(lux * 10) / 10)} → luminosité ${cible}`
           : 'Mesure du capteur indisponible'}
-        {' · '}faites glisser les deux points, ou utilisez les flèches du clavier.
+        {onChanger
+          ? ` · faites glisser les ${milieu ? 'trois' : 'deux'} points, ou utilisez les flèches `
+            + 'du clavier.'
+          : '.'}
+        {ancrages.length > 0 && ' Losanges : vos points d\'ancrage.'}
       </figcaption>
+      {onChanger && (
+        <div className="actions-courbe">
+          {milieu ? (
+            <button type="button" className="bouton-secondaire" disabled={desactive}
+              onClick={() => onChanger({ point_intermediaire: null })}>
+              Retirer le point intermédiaire
+            </button>
+          ) : (
+            <button type="button" className="bouton-secondaire" disabled={desactive}
+              onClick={ajouterMilieu}>
+              Ajouter un point intermédiaire
+            </button>
+          )}
+        </div>
+      )}
     </figure>
   )
 }

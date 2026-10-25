@@ -31,8 +31,10 @@ from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_CONFIRMATION_SAUT,
                     CONF_LISSAGE_DESCENTE, CONF_LISSAGE_MONTEE,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
-                    CONF_RAMPE_DEBIT, CONF_RAMPE_PAS, DOMAIN, EMPLACEMENTS,
-                    OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
+                    CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
+                    CONF_RAMPE_PAS, DOMAIN, EMPLACEMENTS, OPTIONS_AVANCEES,
+                    OPTIONS_LUMINOSITE_DEFAUT)
+from .courbe import conserver_ancrages
 from .luminosite_adaptative import BORNES, modes_proposes, valider_options
 from .televiseur import AppairageEchoue, appairer
 
@@ -40,6 +42,11 @@ TITRE_DEFAUT = "LG webOS TV"
 # Section repliée du formulaire : écart minimal, constantes du signal (qui
 # suivent sinon le profil du capteur et son emplacement) et rampe.
 SECTION_AVANCEE = "avance"
+# Point intermédiaire de la courbe : deux champs du formulaire, une seule
+# option `point_intermediaire` ([lux, luminosité]) ; vides tous deux, pas de
+# point.
+LUX_INTERMEDIAIRE = "lux_intermediaire"
+LUMINOSITE_INTERMEDIAIRE = "luminosite_intermediaire"
 
 
 class LgWebosTvConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -163,9 +170,10 @@ class LgWebosTvConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-def _nombre(cle: str, unite: str | None = None) -> NumberSelector:
-    minimum, maximum = BORNES[cle]
-    config = NumberSelectorConfig(min=minimum, max=maximum, step=1,
+def _nombre(cle: str, unite: str | None = None,
+            bornes: tuple[int, int] | None = None, pas: float = 1) -> NumberSelector:
+    minimum, maximum = bornes or BORNES[cle]
+    config = NumberSelectorConfig(min=minimum, max=maximum, step=pas,
                                   mode=NumberSelectorMode.BOX)
     if unite is not None:
         config["unit_of_measurement"] = unite
@@ -184,13 +192,26 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
         # Lecture de l'arbre (en cache une fois l'entrée chargée).
         modes = await self.hass.async_add_executor_job(modes_proposes)
         saisie = None
+        champs_point = None
         if user_input is not None:
             # Options stockées à plat : la section n'est qu'une présentation.
             saisie = {**user_input, **user_input.get(SECTION_AVANCEE, {})}
             saisie.pop(SECTION_AVANCEE, None)
+            point = [saisie.pop(LUX_INTERMEDIAIRE, None),
+                     saisie.pop(LUMINOSITE_INTERMEDIAIRE, None)]
+            champs_point = dict(zip((LUX_INTERMEDIAIRE, LUMINOSITE_INTERMEDIAIRE), point,
+                                    strict=True))
+            if None not in point:
+                saisie[CONF_POINT_INTERMEDIAIRE] = point
             options, erreurs = valider_options(saisie, modes)
+            if point.count(None) == 1:
+                manquant = LUX_INTERMEDIAIRE if point[0] is None else LUMINOSITE_INTERMEDIAIRE
+                erreurs[manquant] = "point_intermediaire_incomplet"
+            if (erreur := erreurs.pop(CONF_POINT_INTERMEDIAIRE, None)) is not None:
+                erreurs[LUX_INTERMEDIAIRE] = erreur
             if not erreurs:
-                return self.async_create_entry(data=options)
+                return self.async_create_entry(
+                    data=conserver_ancrages(self.config_entry.options, options))
 
         avance = vol.Schema({
             # Vides : valeur par défaut, ou celle du profil du capteur.
@@ -210,9 +231,18 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
             vol.Required(CONF_EMPLACEMENT): SelectSelector(SelectSelectorConfig(
                 options=EMPLACEMENTS, mode=SelectSelectorMode.DROPDOWN,
                 translation_key=CONF_EMPLACEMENT)),
-            vol.Required(CONF_LUX_MIN): _nombre(CONF_LUX_MIN, "lx"),
-            vol.Required(CONF_LUX_MAX): _nombre(CONF_LUX_MAX, "lx"),
+            # Dans l'ordre de la courbe : pièce sombre, intermédiaire
+            # (facultative), lumineuse.
+            # Lux au dixième : le point d'ancrage cale la courbe à cette
+            # précision en pièce sombre.
+            vol.Required(CONF_LUX_MIN): _nombre(CONF_LUX_MIN, "lx", pas=0.1),
             vol.Required(CONF_LUMINOSITE_MIN): _nombre(CONF_LUMINOSITE_MIN),
+            vol.Optional(LUX_INTERMEDIAIRE): _nombre(
+                LUX_INTERMEDIAIRE, "lx", (BORNES[CONF_LUX_MIN][0], BORNES[CONF_LUX_MAX][1]),
+                pas=0.1),
+            vol.Optional(LUMINOSITE_INTERMEDIAIRE): _nombre(
+                LUMINOSITE_INTERMEDIAIRE, None, BORNES[CONF_LUMINOSITE_MIN]),
+            vol.Required(CONF_LUX_MAX): _nombre(CONF_LUX_MAX, "lx", pas=0.1),
             vol.Required(CONF_LUMINOSITE_MAX): _nombre(CONF_LUMINOSITE_MAX),
             vol.Required(CONF_PAUSE_MIN): _nombre(CONF_PAUSE_MIN, "min"),
             vol.Required(CONF_MODES_EXCLUS): SelectSelector(SelectSelectorConfig(
@@ -222,6 +252,11 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
         valeurs = {**OPTIONS_LUMINOSITE_DEFAUT, **self.config_entry.options, **(saisie or {})}
         valeurs[SECTION_AVANCEE] = {cle: valeurs.pop(cle) for cle in OPTIONS_AVANCEES
                                     if cle in valeurs}
+        if (point := valeurs.pop(CONF_POINT_INTERMEDIAIRE, None)) is not None:
+            valeurs[LUX_INTERMEDIAIRE], valeurs[LUMINOSITE_INTERMEDIAIRE] = point
+        if champs_point is not None:
+            # Saisie refusée : réafficher ce qui a été tapé, même incomplet.
+            valeurs.update(champs_point)
         return self.async_show_form(
             step_id="init", errors=erreurs,
             data_schema=self.add_suggested_values_to_schema(schema, valeurs))

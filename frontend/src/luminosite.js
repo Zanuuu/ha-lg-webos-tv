@@ -4,6 +4,7 @@
 // États du capteur de la fonction (translations/fr.json).
 export const LIBELLES_ETAT = {
   active: 'Active',
+  mise_en_route: 'Mise en route en cours',
   pause: 'En pause',
   mode_exclu: 'Mode d\'image laissé de côté',
   conflit_economie_energie: 'En conflit avec l\'économie d\'énergie du téléviseur',
@@ -78,6 +79,7 @@ export const FINS_RAMPE = {
   preset: 'application d\'un preset',
   annulation: 'retour arrière dans l\'historique',
   arret: 'arrêt de l\'intégration',
+  mise_en_route: 'mise en route ouverte',
 }
 
 // Profils du capteur (signal_lux.profil).
@@ -87,6 +89,12 @@ export const LIBELLES_PROFIL = {
   sur_variation: 'sur variation',
   lent: 'lent',
   inconnu: 'à déterminer',
+}
+
+// Plateformes courantes des capteurs de lux (registre des entités).
+export const NOMS_PLATEFORME = {
+  esphome: 'ESPHome', zha: 'ZHA', mqtt: 'MQTT', hue: 'Philips Hue', deconz: 'deCONZ',
+  zwave_js: 'Z-Wave JS', matter: 'Matter',
 }
 
 // Emplacements du capteur (docs/etude-luminosite-adaptative.md, § 3.3 et
@@ -135,18 +143,48 @@ export const EMPLACEMENTS = {
   },
 }
 
+// Précision des lux de la courbe (courbe._encadrer) : au dixième sous
+// 100 lx, à l'unité au-delà.
+export function arrondirLux(lux) {
+  return lux < 100 ? Math.round(lux * 10) / 10 : Math.round(lux)
+}
+
 export function heure(iso) {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Portage de luminosite_adaptative.calculer_cible : interpolation sur le
-// logarithme du lux, bornée aux extrêmes, arrondi 0,5 vers le haut.
-export function calculerCible(lux, options) {
-  const { lux_min: luxMin, lux_max: luxMax, luminosite_min: bas, luminosite_max: haut } = options
-  let t = (Math.log(Math.max(lux, 1)) - Math.log(luxMin)) / (Math.log(luxMax) - Math.log(luxMin))
-  t = Math.min(Math.max(t, 0), 1)
-  return Math.floor(bas + t * (haut - bas) + 0.5)
+// Points de la courbe, du plus sombre au plus lumineux : extrémités et
+// point intermédiaire facultatif (courbe.points).
+export function pointsCourbe(options) {
+  const points = [[options.lux_min, options.luminosite_min]]
+  if (options.point_intermediaire) points.push(options.point_intermediaire)
+  points.push([options.lux_max, options.luminosite_max])
+  return points
 }
+
+// Portage de courbe.calculer_cible (vecteurs partagés :
+// tests/vecteurs_courbe.json) : interpolation par morceaux sur le logarithme
+// du lux, plate au-delà des extrémités, arrondi 0,5 vers le haut.
+export function calculerCible(lux, options) {
+  const courbe = pointsCourbe(options).map(([l, v]) => [Math.log(l), v])
+  const x = Math.log(Math.max(lux, 1))
+  let valeur = courbe[courbe.length - 1][1]
+  if (x <= courbe[0][0]) {
+    valeur = courbe[0][1]
+  } else {
+    for (let i = 1; i < courbe.length; i += 1) {
+      const [x0, v0] = courbe[i - 1]
+      const [x1, v1] = courbe[i]
+      if (x <= x1) {
+        valeur = v0 + ((x - x0) / (x1 - x0)) * (v1 - v0)
+        break
+      }
+    }
+  }
+  return Math.floor(valeur + 0.5)
+}
+
+const estNombre = (v) => typeof v === 'number' && !Number.isNaN(v)
 
 // Mêmes contrôles que luminosite_adaptative.valider_options ; renvoie un
 // message par option fautive.
@@ -155,7 +193,7 @@ export function validerOptions(options) {
   for (const [cle, [bas, haut]] of Object.entries(BORNES)) {
     const valeur = options[cle]
     if (cle in OPTIONS_AVANCEES && (valeur === null || valeur === undefined)) continue
-    if (typeof valeur !== 'number' || Number.isNaN(valeur) || valeur < bas || valeur > haut) {
+    if (!estNombre(valeur) || valeur < bas || valeur > haut) {
       erreurs[cle] = `Entre ${bas} et ${haut}.`
     }
   }
@@ -165,6 +203,21 @@ export function validerOptions(options) {
     }
     if (options.luminosite_max < options.luminosite_min) {
       erreurs.luminosite_max = 'Doit être au moins égale à la luminosité minimale.'
+    }
+  }
+  const point = options.point_intermediaire
+  if (Object.keys(erreurs).length === 0 && point !== null && point !== undefined) {
+    // courbe.valider_point_intermediaire
+    if (Array.isArray(point) && point.length === 2 && point.some((v) => v == null)) {
+      erreurs.point_intermediaire = 'Indiquez le lux et la luminosité du point intermédiaire, '
+        + 'ou aucun des deux.'
+    } else if (!Array.isArray(point) || point.length !== 2 || !point.every(estNombre)
+        || point[0] < 1 || point[0] > BORNES.lux_max[1] || point[1] < 0 || point[1] > 100) {
+      erreurs.point_intermediaire = 'Lux entre 1 et 100 000, luminosité entre 0 et 100.'
+    } else if (!(options.lux_min < point[0] && point[0] < options.lux_max
+        && options.luminosite_min <= point[1] && point[1] <= options.luminosite_max)) {
+      erreurs.point_intermediaire = 'Doit tomber entre la pièce sombre et la pièce lumineuse, '
+        + 'et entre les luminosités minimale et maximale.'
     }
   }
   if (options.emplacement_capteur !== undefined && !(options.emplacement_capteur in EMPLACEMENTS)) {

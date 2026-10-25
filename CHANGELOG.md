@@ -1,5 +1,46 @@
 # Changelog
 
+## 2.8.0 — 2026-10-25
+
+Luminosité adaptative : mise en route guidée et point intermédiaire de la
+courbe (lot 4 de `docs/etude-luminosite-adaptative.md`).
+
+- **Mise en route guidée** dans le panneau, à la première activation puis
+  relançable : capteur (ceux de la pièce du téléviseur d'abord, puis ceux
+  qui ont publié dans l'heure, avec valeur, âge de la mesure et profil
+  pressenti), emplacement, vérifications (téléviseur, économie d'énergie
+  et mode Éco, mode laissé de côté, capteur qui répond), point d'ancrage,
+  activation.
+- **Point d'ancrage** : la luminosité réglée pendant la mise en route
+  (curseur du panneau ou télécommande, par la file d'écriture, historisée)
+  et le lux lissé du moment calent la courbe, décalée en ln(lux), pente
+  conservée. Une valeur hors des bornes de luminosité les élargit ; la
+  partie hors de portée du capteur (sous 1 lx, au-delà de 100 000 lx) est
+  coupée. Pendant la mise en route, la fonction n'écrit pas, ne se met pas
+  en pause et ne compte pas ce réglage comme une correction (état
+  `mise_en_route`).
+- **Deuxième point**, le soir dans le noir (invitation sur la page) : dans
+  une lumière au moins 4 fois plus faible, il cale aussi la pente ; un
+  point pris dans une lumière voisine remplace le précédent, un point
+  contradictoire (moins de lumière, luminosité plus haute) le fait
+  oublier. Points d'ancrage en losanges sur la courbe, oubliés si la
+  courbe est retouchée.
+- **Point intermédiaire** facultatif de la courbe (option
+  `point_intermediaire`), interpolation par morceaux sur ln(lux), courbe
+  monotone : formulaire des options (« Pièce intermédiaire »), troisième
+  poignée de la courbe du panneau, ajout et retrait.
+- Lux de la courbe au dixième (sous 100 lx) dans le formulaire et le
+  panneau.
+- Commandes websocket `lg_webos_tv/luminosite_adaptative/ancrer` et
+  `…/mise_en_route` (abonnement, administrateurs) ; configuration
+  enrichie (pièce, profil et âge de la mesure de chaque capteur, pièce du
+  téléviseur).
+- Installations existantes inchangées : sans point intermédiaire ni
+  ancrage, la courbe donne les mêmes valeurs qu'en 2.7.0, sans migration.
+- Développement : `courbe.py` (logique pure) ; vecteurs de test partagés
+  entre pytest et le panneau (`tests/vecteurs_courbe.json`,
+  `cd frontend && npm test`).
+
 ## 2.7.0 — 2026-10-25
 
 Luminosité adaptative : santé de l'installation (lot 3 de

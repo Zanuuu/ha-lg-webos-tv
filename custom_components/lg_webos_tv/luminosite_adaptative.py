@@ -31,7 +31,6 @@ téléviseur les attribue tous à notre client). Ici :
 """
 
 import logging
-import math
 from collections import deque
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
@@ -52,15 +51,18 @@ from homeassistant.helpers.event import (async_track_point_in_utc_time,
                                          async_track_time_interval)
 from homeassistant.util import dt as dt_util
 
-from .const import (CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
+from .const import (CONF_ANCRAGES, CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
                     CONF_ECART_MINIMAL, CONF_EMPLACEMENT, CONF_GEL_ECRITURE,
                     CONF_HYSTERESIS_DESCENTE, CONF_HYSTERESIS_MONTEE,
                     CONF_LISSAGE_DESCENTE, CONF_LISSAGE_MONTEE,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
-                    CONF_RAMPE_DEBIT, CONF_RAMPE_PAS, DOMAIN,
+                    CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
+                    CONF_RAMPE_PAS, DOMAIN,
                     ECART_MINIMAL_DEFAUT, EMPLACEMENTS, MODES_HDR,
                     OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
+from . import courbe
+from .courbe import calculer_cible, valider_point_intermediaire
 from .entite import descriptions
 from .rampe import Rampe, parametres
 from .sante import (CONSERVATION_JOURS, RAMPE_DELTA_MIN, Accumulateur,
@@ -122,7 +124,7 @@ BORNES = {CONF_LUX_MIN: (1, 1000), CONF_LUX_MAX: (2, 100000),
 ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_PAUSE_MIN, *OPTIONS_AVANCEES)
 
 # Par ordre de priorité (voir LuminositeAdaptative.etat).
-ETATS = ["desactivee", "televiseur_deconnecte", "consultation", "pause",
+ETATS = ["desactivee", "televiseur_deconnecte", "consultation", "mise_en_route", "pause",
          "mode_exclu", "conflit_economie_energie", "capteur_indisponible",
          "capteur_fige", "active"]
 
@@ -146,8 +148,11 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
     avancées vides retirées) et erreurs par option, en clés de traduction du
     formulaire."""
     erreurs = {}
+    # Vides : option avancée qui suit le profil, courbe sans point
+    # intermédiaire.
     options = {cle: valeur for cle, valeur in options.items()
-               if not (cle in OPTIONS_AVANCEES and valeur is None)}
+               if not ((cle in OPTIONS_AVANCEES or cle == CONF_POINT_INTERMEDIAIRE)
+                       and valeur is None)}
     for cle, (bas, haut) in BORNES.items():
         valeur = options.get(cle)
         if cle in OPTIONS_AVANCEES and valeur is None:
@@ -160,6 +165,14 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
             erreurs[CONF_LUX_MAX] = "lux_max_trop_bas"
         if options[CONF_LUMINOSITE_MAX] < options[CONF_LUMINOSITE_MIN]:
             erreurs[CONF_LUMINOSITE_MAX] = "luminosite_max_trop_basse"
+    if not erreurs and CONF_POINT_INTERMEDIAIRE in options:
+        point, erreur = valider_point_intermediaire(options)
+        if erreur is not None:
+            erreurs[CONF_POINT_INTERMEDIAIRE] = erreur
+        else:
+            options[CONF_POINT_INTERMEDIAIRE] = point
+    if not isinstance(options.get(CONF_ANCRAGES, []), list):
+        erreurs[CONF_ANCRAGES] = "hors_bornes"
     exclus = options.get(CONF_MODES_EXCLUS)
     if not isinstance(exclus, list) or not set(exclus) <= set(modes):
         erreurs[CONF_MODES_EXCLUS] = "mode_inconnu"
@@ -171,15 +184,32 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
     return {**options, **{cle: int(options[cle]) for cle in ENTIERS if cle in options}}, {}
 
 
-def calculer_cible(lux: float, options: dict) -> int:
-    """Interpolation sur le logarithme du lux, bornée aux extrêmes."""
-    lux_min, lux_max = options[CONF_LUX_MIN], options[CONF_LUX_MAX]
-    t = (math.log(max(lux, 1)) - math.log(lux_min)) / (math.log(lux_max) - math.log(lux_min))
-    t = min(max(t, 0), 1)
-    bas, haut = options[CONF_LUMINOSITE_MIN], options[CONF_LUMINOSITE_MAX]
-    # Arrondi « commercial » (0,5 vers le haut), comme Jinja dans le
-    # blueprint, plutôt que l'arrondi au pair de round().
-    return int(math.floor(bas + t * (haut - bas) + 0.5))
+def zone_entite(hass: HomeAssistant, entity_id: str) -> str | None:
+    """Pièce d'une entité, sinon celle de son appareil (registres de Home
+    Assistant)."""
+    if (entite := er.async_get(hass).async_get(entity_id)) is None:
+        return None
+    if entite.area_id is not None or entite.device_id is None:
+        return entite.area_id
+    appareil = dr.async_get(hass).async_get(entite.device_id)
+    return appareil.area_id if appareil is not None else None
+
+
+def zone_televiseur(hass: HomeAssistant) -> str | None:
+    if not (entrees := hass.config_entries.async_entries(DOMAIN)):
+        return None
+    tv = dr.async_get(hass).async_get_device_by_identifier((DOMAIN, entrees[0].entry_id),
+                                                           entrees[0].entry_id)
+    return tv.area_id if tv is not None else None
+
+
+def nom_zone(hass: HomeAssistant, zone_id: str | None) -> str | None:
+    zone = ar.async_get(hass).async_get_area(zone_id) if zone_id is not None else None
+    return zone.name if zone is not None else None
+
+
+class AncrageImpossible(Exception):
+    """Point d'ancrage refusé ; le message est un code pour le panneau."""
 
 
 @callback
@@ -250,6 +280,9 @@ class LuminositeAdaptative:
         # redémarrage de Home Assistant (connexion sans déconnexion vue) la
         # conserve.
         self._eteint_pendant_pause = False
+        # Assistants de mise en route ouverts (onglets du panneau) : la
+        # fonction n'écrit pas tant qu'il en reste un.
+        self._mises_en_route = 0
 
         # Signal du capteur : repart de zéro à chaque changement de capteur.
         self._plateforme: str | None = None
@@ -478,6 +511,8 @@ class LuminositeAdaptative:
             return "televiseur_deconnecte"
         if self._tv.ecriture_possible is False:
             return "consultation"
+        if self._mises_en_route:
+            return "mise_en_route"
         if self.fin_pause is not None:
             return "pause"
         if self.mode_exclu(self._tv.mode_image):
@@ -581,6 +616,51 @@ class LuminositeAdaptative:
         self._prevenir()
         self._actualiser_sante()
 
+    def commencer_mise_en_route(self) -> None:
+        """Assistant de mise en route ouvert dans le panneau : la fonction
+        n'écrit plus, et la luminosité réglée pendant ce temps (curseur de
+        l'assistant, télécommande) ne la met pas en pause."""
+        self._mises_en_route += 1
+        if self._mises_en_route > 1:
+            return
+        if self.rampe is not None:
+            self.rampe.interrompre("mise_en_route")
+        self._annuler_planification()
+        self._noter("mise_en_route")
+        self._prevenir()
+
+    def terminer_mise_en_route(self) -> None:
+        """Assistant fermé (terminé, abandonné ou connexion perdue) : la
+        fonction reprend, sans condition d'hystérésis. Une pause d'avant
+        l'assistant est conservée."""
+        self._mises_en_route = max(self._mises_en_route - 1, 0)
+        # Fonction arrêtée entre-temps (rechargement) : rien à relancer.
+        if self._mises_en_route or not self._desabonnements:
+            return
+        self._noter("fin_mise_en_route")
+        self._signal.oublier_reference()
+        self._planifier(DELAI_APPLICATION_S)
+        self._prevenir()
+
+    def ancrer(self) -> tuple[dict, dict]:
+        """Point d'ancrage : la courbe est calée pour donner, au lux filtré du
+        moment, la luminosité du téléviseur (notifiée ou relue, jamais celle
+        demandée). Renvoie les options à enregistrer et le compte rendu."""
+        if self._tv.etat_connexion != "connecte":
+            raise AncrageImpossible("deconnecte")
+        # La luminosité d'un mode calibré ne dit rien de la préférence.
+        if self.mode_exclu(self._tv.mode_image):
+            raise AncrageImpossible("mode_exclu")
+        lux, valeur = self.lux_filtre, self._actuelle()
+        if lux is None or valeur is None:
+            raise AncrageImpossible("indisponible")
+        options, ancrages, compte_rendu = courbe.ancrer(
+            self.options, self.options.get(CONF_ANCRAGES), lux, round(valeur),
+            dt_util.utcnow().isoformat())
+        self._noter("ancrage", lux=round(lux, 1), luminosite=round(valeur),
+                    points=compte_rendu["points"])
+        return {**options, CONF_ANCRAGES: ancrages}, compte_rendu
+
     async def desactiver_economie_energie(self, origine: str) -> dict:
         """« Fonction Économie d'énergie » sur Désactivé, sur demande
         explicite de l'utilisateur, par la file d'écriture. L'état suit la
@@ -671,6 +751,11 @@ class LuminositeAdaptative:
 
     # ----------------------------------------------------------------- pause
     def _reprise_en_main(self, mode: str | None, origine: str, valeur=None) -> None:
+        if self._mises_en_route:
+            # Curseur de l'assistant ou télécommande : c'est le point
+            # d'ancrage qui se cherche, pas une correction de la courbe.
+            self._retroaction.perturbation(_horloge())
+            return
         # La luminosité d'un mode laissé de côté ne dit rien de celle des
         # autres modes.
         if not self.active or self.mode_exclu(mode):
@@ -1063,27 +1148,8 @@ class LuminositeAdaptative:
             self._actualiser_sante()
 
     def _pieces(self) -> tuple[str | None, str | None]:
-        """Pièces du capteur (entité, sinon son appareil) et du téléviseur,
-        d'après les registres de Home Assistant."""
-        appareils = dr.async_get(self.hass)
-        zone_capteur = None
-        if (entite := er.async_get(self.hass).async_get(self.capteur)) is not None:
-            zone_capteur = entite.area_id
-            if zone_capteur is None and entite.device_id is not None:
-                appareil = appareils.async_get(entite.device_id)
-                zone_capteur = appareil.area_id if appareil is not None else None
-        zone_tv = None
-        if entrees := self.hass.config_entries.async_entries(DOMAIN):
-            tv = appareils.async_get_device_by_identifier((DOMAIN, entrees[0].entry_id),
-                                                         entrees[0].entry_id)
-            zone_tv = tv.area_id if tv is not None else None
-        zones = ar.async_get(self.hass)
-
-        def nom(zone_id: str | None) -> str | None:
-            zone = zones.async_get_area(zone_id) if zone_id is not None else None
-            return zone.name if zone is not None else None
-
-        return nom(zone_capteur), nom(zone_tv)
+        return (nom_zone(self.hass, zone_entite(self.hass, self.capteur)),
+                nom_zone(self.hass, zone_televiseur(self.hass)))
 
     def _calculer_sante(self) -> dict[str, Any]:
         piece_capteur, piece_televiseur = self._pieces()

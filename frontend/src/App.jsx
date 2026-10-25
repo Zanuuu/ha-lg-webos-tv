@@ -229,6 +229,10 @@ export default function App() {
               index={index}
               luminosite={connexion === null ? undefined : luminosite}
               lectureSeule={lectureSeule}
+              connexion={connexion}
+              ecriturePossible={ecriturePossible}
+              reglages={reglages}
+              onEcrire={ecrire}
               onReprendre={reprendre}
               onRecharge={rouvrirCanal}
             />

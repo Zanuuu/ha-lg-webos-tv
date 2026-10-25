@@ -1,0 +1,456 @@
+{
+ "_note": "Vecteurs partagés entre tests/test_courbe.py et frontend/tests/courbe.test.js : calcul de la cible et validation des options de la courbe, identiques côté intégration et panneau.",
+ "cibles": [
+  {
+   "nom": "2 points, 0 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 0,
+   "cible": 40
+  },
+  {
+   "nom": "2 points, 0.5 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 0.5,
+   "cible": 40
+  },
+  {
+   "nom": "2 points, 1 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 1,
+   "cible": 40
+  },
+  {
+   "nom": "2 points, 5 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 5,
+   "cible": 40
+  },
+  {
+   "nom": "2 points, 20 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 20,
+   "cible": 60
+  },
+  {
+   "nom": "2 points, 38.73 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 38.73,
+   "cible": 70
+  },
+  {
+   "nom": "2 points, 300 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 300,
+   "cible": 100
+  },
+  {
+   "nom": "2 points, 1000 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 1000,
+   "cible": 100
+  },
+  {
+   "nom": "3 points, 3 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 3,
+   "cible": 40
+  },
+  {
+   "nom": "3 points, 14.14 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 14.14,
+   "cible": 60
+  },
+  {
+   "nom": "3 points, 40 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 40,
+   "cible": 80
+  },
+  {
+   "nom": "3 points, 60 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 60,
+   "cible": 84
+  },
+  {
+   "nom": "3 points, 109.54 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 109.54,
+   "cible": 90
+  },
+  {
+   "nom": "3 points, 300 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 300,
+   "cible": 100
+  },
+  {
+   "nom": "3 points, 5000 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 5000,
+   "cible": 100
+  },
+  {
+   "nom": "plateau bas, 20 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     40
+    ]
+   },
+   "lux": 20,
+   "cible": 40
+  },
+  {
+   "nom": "plateau bas, 40 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     40
+    ]
+   },
+   "lux": 40,
+   "cible": 40
+  },
+  {
+   "nom": "plateau bas, 109.54 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     40
+    ]
+   },
+   "lux": 109.54,
+   "cible": 70
+  },
+  {
+   "nom": "arrondi 0,5 vers le haut",
+   "options": {
+    "lux_min": 1,
+    "lux_max": 100,
+    "luminosite_min": 0,
+    "luminosite_max": 101
+   },
+   "lux": 10,
+   "cible": 51
+  },
+  {
+   "nom": "pièce sombre à 1 lx, capteur à 0",
+   "options": {
+    "lux_min": 1,
+    "lux_max": 100,
+    "luminosite_min": 30,
+    "luminosite_max": 90
+   },
+   "lux": 0,
+   "cible": 30
+  }
+ ],
+ "validation": [
+  {
+   "nom": "sans point intermédiaire",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a"
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "point intermédiaire valide",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "plateau permis",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     40,
+     100
+    ]
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "point retiré (null)",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": null
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "lux égal à la pièce sombre",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     5,
+     60
+    ]
+   },
+   "erreurs": [
+    "point_intermediaire"
+   ]
+  },
+  {
+   "nom": "lux au-delà de la pièce lumineuse",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     400,
+     90
+    ]
+   },
+   "erreurs": [
+    "point_intermediaire"
+   ]
+  },
+  {
+   "nom": "luminosité sous la minimale",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     40,
+     30
+    ]
+   },
+   "erreurs": [
+    "point_intermediaire"
+   ]
+  },
+  {
+   "nom": "luminosité au-delà de 100",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     40,
+     101
+    ]
+   },
+   "erreurs": [
+    "point_intermediaire"
+   ]
+  },
+  {
+   "nom": "lux sous 1",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     0,
+     60
+    ]
+   },
+   "erreurs": [
+    "point_intermediaire"
+   ]
+  },
+  {
+   "nom": "forme invalide",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "point_intermediaire": [
+     40
+    ]
+   },
+   "erreurs": [
+    "point_intermediaire"
+   ]
+  },
+  {
+   "nom": "extrémités inversées",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 4,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a"
+   },
+   "erreurs": [
+    "lux_max"
+   ]
+  }
+ ]
+}

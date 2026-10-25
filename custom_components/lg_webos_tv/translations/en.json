@@ -48,6 +48,8 @@
           "lux_min": "Dark room",
           "lux_max": "Bright room",
           "luminosite_min": "Minimum brightness",
+          "lux_intermediaire": "Intermediate room",
+          "luminosite_intermediaire": "Intermediate brightness",
           "luminosite_max": "Maximum brightness",
           "pause": "Pause after a manual change",
           "modes_exclus": "Picture modes left alone"
@@ -56,6 +58,8 @@
           "capteur_lux": "Leave empty to turn the feature off and remove its entities.",
           "emplacement_capteur": "Next to the screen, facing the room, is the best choice. Facing the screen (D), the screen lights the sensor: the feature waits longer after each change. Diagram and advice in the panel.",
           "lux_min": "Below this, the minimum brightness applies.",
+          "lux_intermediaire": "Optional, with its brightness: a third point of the curve, between the dark room and the bright room (an evening under the lamps, for example). Both empty: no intermediate point.",
+          "luminosite_intermediaire": "Between the minimum and maximum brightness.",
           "lux_max": "Above this, the maximum brightness applies.",
           "pause": "The pause also ends the next time the TV is turned on, or with the Resume button.",
           "modes_exclus": "Modes where brightness is never changed (calibrated modes)."
@@ -95,7 +99,9 @@
       "luminosite_max_trop_basse": "Must be at least the minimum brightness.",
       "hors_bornes": "Value outside the allowed range.",
       "mode_inconnu": "Unknown picture mode.",
-      "emplacement_inconnu": "Unknown location."
+      "emplacement_inconnu": "Unknown location.",
+      "point_intermediaire_incomplet": "Enter both the lux and the brightness of the intermediate point, or neither.",
+      "point_intermediaire_hors_courbe": "Must lie between the dark room and the bright room, and between the minimum and maximum brightness."
     }
   },
   "entity": {
@@ -122,6 +128,7 @@
           "desactivee": "Off",
           "televiseur_deconnecte": "TV disconnected",
           "consultation": "Write unavailable",
+          "mise_en_route": "Setup in progress",
           "pause": "Paused (manual change)",
           "mode_exclu": "Picture mode left alone",
           "conflit_economie_energie": "Conflicts with the TV's energy saving",

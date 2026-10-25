@@ -1229,3 +1229,206 @@ async def test_pieces_et_diagnostics_ha(hass: HomeAssistant, fonction):
 async def test_diagnostics_ha_sans_fonction(hass: HomeAssistant, installe):
     diag = await async_get_config_entry_diagnostics(hass, installe)
     assert diag["luminosite_adaptative"] is None
+
+
+# ------------------------------------------------------- mise en route (lot 4)
+async def ouvrir_mise_en_route(ws) -> int:
+    """Abonnement de l'assistant ; renvoie son identifiant."""
+    reponse = await ws("luminosite_adaptative/mise_en_route")
+    assert reponse["success"]
+    return reponse["id"]
+
+
+async def fermer_mise_en_route(hass, ws, abonnement: int) -> None:
+    await ws.client.send_json({"id": next(ws.compteur), "type": "unsubscribe_events",
+                               "subscription": abonnement})
+    assert (await ws.client.receive_json())["success"]
+    await hass.async_block_till_done()
+
+
+async def test_mise_en_route_ecrit_sans_pause_ni_reprise_comptee(hass: HomeAssistant, fonction,
+                                                                 faux_client, ws):
+    la = fonction.runtime_data.luminosite_adaptative
+    abonnement = await ouvrir_mise_en_route(ws)
+    assert la.etat == "mise_en_route"
+    assert etat(hass).state == "mise_en_route"
+    # Curseur de l'assistant (origine panneau, historisé) puis télécommande.
+    reponse = await ws("ecrire", entree_id=ID_OLED, valeur=75)
+    assert reponse["success"]
+    historique = await fonction.runtime_data.historique.lister()
+    assert (historique[0]["origine"], historique[0]["nouvelle"]) == ("panneau", 75)
+    await faux_client.notifier("picture", {"backlight": "78"}, caller=TELECOMMANDE)
+    # Pas plus d'une minute en tout : au-delà, le client websocket de test
+    # perd sa connexion, ce qui fermerait l'assistant.
+    await passer_le_temps(hass, 10)
+    # Ni pause, ni écriture de la fonction, ni correction comptée.
+    assert la.fin_pause is None and luminosite(faux_client) == 78
+    assert sante(fonction)["resume"]["reprises"] == 0
+    actif = sante(fonction)["resume"]["actif_s"]
+    await passer_le_temps(hass, 30)
+    assert sante(fonction)["resume"]["actif_s"] == pytest.approx(actif, abs=1)
+    assert [e["type"] for e in la.journal][-1] == "mise_en_route"
+
+    # Assistant fermé sans ancrage : la fonction reprend la courbe.
+    await fermer_mise_en_route(hass, ws, abonnement)
+    await passer_le_temps(hass, RAMPE_S)
+    assert la.etat == "active" and luminosite(faux_client) == 60
+    assert la.fin_pause is None
+
+
+async def test_mise_en_route_interrompt_la_rampe(hass: HomeAssistant, fonction, ws):
+    la = await demarrer_rampe(hass, fonction)
+    await ouvrir_mise_en_route(ws)
+    await passer_le_temps(hass, 2)
+    assert la.rampe is None
+    assert applications(fonction)[-1]["fin"] == "mise_en_route"
+
+
+async def test_ancrer_cale_la_courbe(hass: HomeAssistant, fonction, faux_client, ws):
+    la = fonction.runtime_data.luminosite_adaptative
+    await ouvrir_mise_en_route(ws)
+    await ws("ecrire", entree_id=ID_OLED, valeur=70)
+    reponse = await ws("luminosite_adaptative/ancrer")
+    resultat = reponse["result"]
+    assert resultat["compte_rendu"]["points"] == 1 and resultat["compte_rendu"]["cible"] == 70
+    # Valeur relue sur le téléviseur, au lux filtré (20 lx).
+    [ancrage] = fonction.options["ancrages"]
+    assert (ancrage["lux"], ancrage["luminosite"]) == (20, 70)
+    assert fonction.options["lux_min"] < 5 and fonction.options["luminosite_min"] == 40
+    assert la.options == {**OPTIONS_LUMINOSITE_DEFAUT, **fonction.options}
+    assert la.cible == 70
+    assert la.journal[-1]["type"] == "ancrage"
+
+    # Deuxième point, dans le noir : deux points, pente calée.
+    # Moins de deux minutes : le client websocket de test ne survit pas à un
+    # saut d'horloge.
+    await regler_lux(hass, 1, secondes=60)
+    await ws("ecrire", entree_id=ID_OLED, valeur=45)
+    reponse = await ws("luminosite_adaptative/ancrer")
+    assert reponse["result"]["compte_rendu"]["points"] == 2
+    assert len(fonction.options["ancrages"]) == 2
+    assert la.cible == 45
+
+    # Courbe retouchée depuis la page : ancrages oubliés ; autre réglage :
+    # conservés.
+    await ws("luminosite_adaptative/configurer", options={"pause": 60})
+    assert len(fonction.options["ancrages"]) == 2
+    await ws("luminosite_adaptative/configurer", options={"luminosite_max": 90})
+    assert "ancrages" not in fonction.options
+
+
+async def test_ancrer_refuse(hass: HomeAssistant, fonction, faux_client, ws):
+    await faux_client.notifier("picture", {"pictureMode": "expert1"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    reponse = await ws("luminosite_adaptative/ancrer")
+    assert reponse["error"]["code"] == "mode_exclu"
+    await faux_client.notifier("picture", {"pictureMode": "vivid"}, caller=TELECOMMANDE)
+    hass.states.async_set(LUX, "unavailable")
+    await hass.async_block_till_done()
+    reponse = await ws("luminosite_adaptative/ancrer")
+    assert reponse["error"]["code"] == "indisponible"
+    assert "ancrages" not in fonction.options
+
+
+async def test_mise_en_route_et_ancrage_reserves_aux_administrateurs(
+        hass: HomeAssistant, fonction, hass_ws_client, hass_read_only_access_token):
+    client = await hass_ws_client(hass, hass_read_only_access_token)
+    for i, nom in enumerate(("ancrer", "mise_en_route"), start=1):
+        await client.send_json({"id": i, "type": f"lg_webos_tv/luminosite_adaptative/{nom}"})
+        assert (await client.receive_json())["error"]["code"] == "unauthorized"
+    assert fonction.runtime_data.luminosite_adaptative.etat == "active"
+
+
+async def test_configuration_enrichie_et_triee(hass: HomeAssistant, fonction, ws):
+    zones = ar.async_get(hass)
+    salon = zones.async_create("Salon")
+    appareils = dr.async_get(hass)
+    tv = appareils.async_get_device_by_identifier((DOMAIN, fonction.entry_id),
+                                                  fonction.entry_id)
+    appareils.async_update_device(tv.id, area_id=salon.id)
+    attributs = {"device_class": "illuminance", "unit_of_measurement": "lx"}
+    # Capteur de la pièce du téléviseur, enregistré par ZHA.
+    er.async_get(hass).async_get_or_create(
+        "sensor", "zha", "lux-canape", suggested_object_id="canape_lux")
+    er.async_get(hass).async_update_entity("sensor.canape_lux", area_id=salon.id)
+    hass.states.async_set("sensor.canape_lux", "12", attributs)
+    hass.states.async_set("sensor.ancien_lux", "3", attributs,
+                          timestamp=dt_util.utcnow().timestamp() - 2 * 3600)
+    hass.states.async_set("sensor.recent_lux", "8", attributs)
+    reponse = await ws("luminosite_adaptative/configuration")
+    resultat = reponse["result"]
+    assert resultat["piece_televiseur"] == "Salon"
+    capteurs = resultat["capteurs"]
+    assert [c["entity_id"] for c in capteurs] == [
+        "sensor.canape_lux", "sensor.recent_lux", LUX, "sensor.ancien_lux"]
+    canape = capteurs[0]
+    assert canape["piece"] == "Salon" and canape["meme_piece"]
+    assert canape["plateforme"] == "zha" and canape["profil"] == "sur_variation"
+    assert canape["age_s"] == 0 and capteurs[-1]["age_s"] == 2 * 3600
+
+
+async def test_point_intermediaire_depuis_la_page(hass: HomeAssistant, fonction, faux_client,
+                                                  ws):
+    reponse = await ws("luminosite_adaptative/configurer",
+                       options={"point_intermediaire": [400, 90]})
+    assert reponse["error"]["code"] == "invalide"
+    assert "point_intermediaire" in reponse["error"]["message"]
+    # 20 lx sur le premier segment (5 → 40 lx, 40 → 80) : 40 + 40 × 2/3 = 66,7
+    reponse = await ws("luminosite_adaptative/configurer",
+                       options={"point_intermediaire": [40, 80]})
+    assert reponse["result"] == {"recharge": False}
+    await passer_le_temps(hass, RAMPE_S)
+    assert fonction.options["point_intermediaire"] == [40, 80]
+    assert luminosite(faux_client) == 67
+    await ws("luminosite_adaptative/configurer", options={"point_intermediaire": None})
+    await passer_le_temps(hass, RAMPE_S)
+    assert "point_intermediaire" not in fonction.options
+    assert luminosite(faux_client) == 60
+
+
+def test_options_2_7_0_memes_cibles():
+    options_2_7_0 = {**OPTIONS_LUMINOSITE_DEFAUT, "lux_min": 3, "lux_max": 800,
+                     "luminosite_min": 35, "luminosite_max": 95}
+    valides, erreurs = valider_options(options_2_7_0, modes_proposes())
+    assert erreurs == {} and valides == options_2_7_0
+
+
+ANCRAGES = [{"lux": 20, "luminosite": 70, "horodatage": "2026-10-25T20:00:00+00:00"}]
+
+
+async def formulaire(hass, entree, **valeurs):
+    flux = await hass.config_entries.options.async_init(entree.entry_id)
+    saisie = {**{k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items() if k != "ecart_minimal"},
+              CONF_CAPTEUR_LUX: LUX, "avance": {}, **valeurs}
+    return await hass.config_entries.options.async_configure(flux["flow_id"], saisie)
+
+
+@pytest.mark.parametrize("options_entree", [{CONF_CAPTEUR_LUX: LUX, "ancrages": ANCRAGES}])
+async def test_formulaire_point_intermediaire(hass: HomeAssistant, installe):
+    flux = await formulaire(hass, installe, lux_intermediaire=40)
+    assert flux["errors"] == {"luminosite_intermediaire": "point_intermediaire_incomplet"}
+    flux = await formulaire(hass, installe, lux_intermediaire=400, luminosite_intermediaire=90)
+    assert flux["errors"] == {"lux_intermediaire": "point_intermediaire_hors_courbe"}
+
+    # Autre réglage que la courbe : les ancrages restent.
+    flux = await formulaire(hass, installe, pause=60)
+    assert flux["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert installe.options["ancrages"] == ANCRAGES
+    assert "point_intermediaire" not in installe.options
+
+    flux = await formulaire(hass, installe, lux_intermediaire=40.0, luminosite_intermediaire=80.0)
+    assert flux["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert installe.options["point_intermediaire"] == [40.0, 80]
+    assert "ancrages" not in installe.options
+    assert installe.runtime_data.luminosite_adaptative.options["point_intermediaire"] == [40, 80]
+
+    # Réaffiché dans ses deux champs, puis retiré en les vidant.
+    flux = await hass.config_entries.options.async_init(installe.entry_id)
+    suggestions = {str(cle): (cle.description or {}).get("suggested_value")
+                   for cle in flux["data_schema"].schema}
+    assert (suggestions["lux_intermediaire"], suggestions["luminosite_intermediaire"]) == (40, 80)
+    flux = await formulaire(hass, installe)
+    await hass.async_block_till_done()
+    assert "point_intermediaire" not in installe.options

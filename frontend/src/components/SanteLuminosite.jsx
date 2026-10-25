@@ -53,6 +53,11 @@ export default function SanteLuminosite({ sante, etat, options, lectureSeule, on
         La fonction observe elle-même le capteur, le téléviseur et vos corrections, et dit ici ce
         qui gagnerait à être changé. Certains contrôles demandent quelques jours d'usage.
       </p>
+      {sante.chargees && sante.jours.length < 2 && (
+        <p className="ligne-carte">
+          Dans les prochains jours, la page vous dira si l'installation fonctionne bien.
+        </p>
+      )}
 
       {actifs.length === 0 ? (
         <p className="ligne-carte">Rien à signaler.</p>

@@ -34,6 +34,14 @@ CONF_LUMINOSITE_MAX = "luminosite_max"
 CONF_ECART_MINIMAL = "ecart_minimal"
 CONF_PAUSE_MIN = "pause"
 CONF_MODES_EXCLUS = "modes_exclus"
+# Point intermédiaire facultatif de la courbe, [lux, luminosité] ; absent,
+# la courbe est une droite sur ln(lux) entre les deux extrémités.
+CONF_POINT_INTERMEDIAIRE = "point_intermediaire"
+# Points d'ancrage de la mise en route (au plus deux), de quoi caler la
+# pente sur un deuxième réglage ; oubliés si la courbe est retouchée.
+CONF_ANCRAGES = "ancrages"
+CLES_COURBE = (CONF_LUX_MIN, CONF_LUX_MAX, CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX,
+               CONF_POINT_INTERMEDIAIRE)
 # Où se trouve le capteur (docs/etude-luminosite-adaptative.md, § 3.3) :
 # A à G, ou inconnu.
 CONF_EMPLACEMENT = "emplacement_capteur"

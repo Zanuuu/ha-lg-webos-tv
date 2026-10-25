@@ -1807,3 +1807,158 @@ table.table-historique {
     min-height: 44px;
   }
 }
+
+/* ---------- Mise en route et point d'ancrage (lot 4) ---------- */
+
+.actions-courbe {
+  margin-top: 0.5rem;
+}
+
+/* Losange d'un point d'ancrage : contour seul, pour ne pas se confondre
+   avec une poignée. */
+.ancre-courbe {
+  fill: var(--noir);
+  stroke: var(--etat-attente);
+  stroke-width: 2.5;
+}
+
+.etapes-mise-en-route {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+  color: var(--gris-texte);
+  font-size: 0.85rem;
+}
+
+.etapes-mise-en-route li {
+  counter-increment: etape;
+}
+
+.etapes-mise-en-route li::before {
+  content: counter(etape) '. ';
+}
+
+.etapes-mise-en-route li[aria-current='step'] {
+  color: var(--blanc-ecran);
+  font-weight: 600;
+}
+
+.etapes-mise-en-route .etape-faite::before {
+  content: '✓ ';
+  font-variant-emoji: text;
+  color: var(--etat-ok);
+}
+
+.titre-etape {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.etape-mise-en-route {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.etape-mise-en-route > p {
+  max-width: 70ch;
+}
+
+.etape-mise-en-route legend {
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.liste-capteurs {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choix-capteur {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 0.15rem 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--trait);
+  border-radius: var(--rayon-champ);
+  background: var(--graphite);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.choix-capteur > span {
+  grid-column: 2;
+  overflow-wrap: anywhere;
+}
+
+.choix-capteur input {
+  grid-row: 1 / span 4;
+  margin: 0.2rem 0 0;
+}
+
+.choix-capteur-choisi {
+  border-color: var(--allume);
+}
+
+.nom-capteur {
+  font-weight: 600;
+}
+
+.badge-piece {
+  color: var(--etat-ok);
+  font-weight: 600;
+}
+
+.controles-mise-en-route li {
+  align-items: start;
+}
+
+.controle-a-corriger .symbole-sante {
+  color: var(--etat-attente);
+}
+
+.controles-mise-en-route .message {
+  margin-bottom: 0;
+}
+
+.champ-ancrage {
+  max-width: 28rem;
+  margin-bottom: 1rem;
+}
+
+.invitation-ancrage {
+  border-left-color: var(--etat-ok);
+}
+
+.invitation-ancrage p,
+.carte-luminosite .ligne-carte p {
+  margin: 0 0 0.6rem;
+}
+
+@media (max-width: 600px) {
+  .choix-capteur {
+    min-height: 44px;
+  }
+
+  .actions-courbe button {
+    min-height: 44px;
+  }
+
+  .ancre-courbe {
+    stroke-width: 5;
+  }
+}
+
+.grille-points {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 36rem;
+}

@@ -3,13 +3,14 @@ import * as api from '../api.js'
 import { useLuminositeAdaptative } from '../hooks/useLuminositeAdaptative.js'
 import {
   BORNES, EMPLACEMENTS, FINS_RAMPE, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT,
-  LIBELLES_PROFIL, MODE_HDR, OPTIONS_AVANCEES, validerOptions,
+  LIBELLES_PROFIL, MODE_HDR, NOMS_PLATEFORME, OPTIONS_AVANCEES, validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
 import { duree } from '../sante.js'
 import { libelleModeImage } from '../valeurs.js'
 import Interrupteur from './controles/Interrupteur.jsx'
 import CourbeLuminosite from './CourbeLuminosite.jsx'
+import MiseEnRoute from './MiseEnRoute.jsx'
 import SanteLuminosite from './SanteLuminosite.jsx'
 import SchemaEmplacement from './SchemaEmplacement.jsx'
 
@@ -23,12 +24,6 @@ const RAISONS_REPRISE = {
 
 const formaterLux = (lux) => `${lux.toLocaleString('fr-FR')} lx`
 
-// Plateformes courantes des capteurs de lux (registre des entités).
-const NOMS_PLATEFORME = {
-  esphome: 'ESPHome', zha: 'ZHA', mqtt: 'MQTT', hue: 'Philips Hue', deconz: 'deCONZ',
-  zwave_js: 'Z-Wave JS', matter: 'Matter',
-}
-
 function texteProfil(profil) {
   if (!profil) return null
   const plateforme = profil.plateforme && (NOMS_PLATEFORME[profil.plateforme] || profil.plateforme)
@@ -40,22 +35,44 @@ function texteProfil(profil) {
   return texte
 }
 
-// Les options avancées vides (null) suivent le profil : sans effet sur la
-// comparaison avec les options enregistrées, où elles sont absentes.
-function normaliser(options) {
+// Les options avancées vides (null) suivent le profil, un point
+// intermédiaire vide est absent : sans effet sur la comparaison avec les
+// options enregistrées, où ils n'apparaissent pas.
+function normaliser(options, cles = null) {
   return JSON.stringify(Object.fromEntries(Object.entries(options)
-    .filter(([cle, valeur]) => !(cle in OPTIONS_AVANCEES && valeur == null))
+    .filter(([cle, valeur]) => !((cle in OPTIONS_AVANCEES || cle === 'point_intermediaire')
+      && valeur == null))
+    .filter(([cle]) => cles === null || cles.includes(cle))
     .sort(([a], [b]) => a.localeCompare(b))))
 }
+
+// Clés de la courbe (const.CLES_COURBE) : les retoucher fait oublier les
+// points d'ancrage.
+const CLES_COURBE = ['lux_min', 'lux_max', 'luminosite_min', 'luminosite_max',
+  'point_intermediaire']
+
+// Avec un seul point d'ancrage, le deuxième se prend dans une ambiance au
+// moins 4 fois plus sombre (courbe.FACTEUR_DEUX_POINTS).
+const FACTEUR_DEUX_POINTS = 4
 
 function libelleCapteur(capteur) {
   const valeur = capteur.unite ? `${capteur.valeur} ${capteur.unite}` : capteur.valeur
   return `${capteur.nom} (${valeur})`
 }
 
-export default function VueLuminosite({ index, luminosite, lectureSeule, onReprendre, onRecharge }) {
+export default function VueLuminosite({
+  index, luminosite, lectureSeule, connexion, ecriturePossible, reglages, onEcrire, onReprendre,
+  onRecharge,
+}) {
   const { configuration, erreur, details, journal, sante, relire } =
     useLuminositeAdaptative(Boolean(luminosite))
+  // Parcours de mise en route ouvert : { depart: 'capteur' | 'ancrage' }.
+  // Toujours ouvert tant que la fonction n'existe pas ; il reste ouvert à
+  // travers le rechargement qui la crée.
+  const [miseEnRoute, setMiseEnRoute] = useState(null)
+  useEffect(() => {
+    if (luminosite === null && miseEnRoute === null) setMiseEnRoute({ depart: 'capteur' })
+  }, [luminosite, miseEnRoute])
 
   if (erreur) {
     return (
@@ -86,8 +103,23 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
         point. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset)
         la met en pause.
       </p>
-      {luminosite === null ? (
-        <MiseEnRoute capteurs={configuration.capteurs} onEnregistrer={enregistrer} />
+      {miseEnRoute || luminosite === null ? (
+        <MiseEnRoute
+          index={index}
+          configuration={configuration}
+          luminosite={luminosite}
+          details={details}
+          connexion={connexion}
+          ecriturePossible={ecriturePossible}
+          reglages={reglages}
+          depart={miseEnRoute?.depart ?? 'capteur'}
+          onEnregistrer={enregistrer}
+          onEcrire={onEcrire}
+          onTerminer={() => {
+            setMiseEnRoute(null)
+            relire()
+          }}
+        />
       ) : (
         <>
           <EtatLuminosite
@@ -95,6 +127,12 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
             etat={details || luminosite}
             lectureSeule={lectureSeule}
             onReprendre={onReprendre}
+          />
+          <CarteMiseEnRoute
+            ancrages={configuration.options.ancrages ?? []}
+            lux={details?.lux_filtre ?? null}
+            lectureSeule={lectureSeule}
+            onOuvrir={(depart) => setMiseEnRoute({ depart })}
           />
           <SanteLuminosite
             sante={sante}
@@ -119,55 +157,46 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
   )
 }
 
-function MiseEnRoute({ capteurs, onEnregistrer }) {
-  const [capteur, setCapteur] = useState(capteurs[0]?.entity_id ?? '')
-  const [envoi, setEnvoi] = useState(false)
-  const [erreur, setErreur] = useState(null)
-
-  async function activer(e) {
-    e.preventDefault()
-    setErreur(null)
-    setEnvoi(true)
-    try {
-      await onEnregistrer({ capteur_lux: capteur })
-    } catch (err) {
-      setErreur(err.message)
-      setEnvoi(false)
-    }
-  }
-
-  if (capteurs.length === 0) {
-    return (
-      <div className="carte-luminosite">
-        <h3>Aucun capteur de luminosité</h3>
-        <p className="texte-attenue">
-          La fonction a besoin d'un capteur de luminosité ambiante (classe « illuminance »)
-          dans Home Assistant, placé dans la pièce du téléviseur.
-        </p>
-      </div>
-    )
-  }
-
+// Relance du parcours, et invitation au deuxième point (étude, § 4.6,
+// étape 6) : un seul ancrage cale la position de la courbe, pas sa pente.
+function CarteMiseEnRoute({ ancrages, lux, lectureSeule, onOuvrir }) {
+  const [ancrage] = ancrages
+  const invitation = ancrages.length === 1
+  const moment = invitation && lux !== null && lux * FACTEUR_DEUX_POINTS <= ancrage.lux
   return (
-    <form className="carte-luminosite" onSubmit={activer}>
-      <h3>Mise en route</h3>
-      <label className="champ-luminosite">
-        <span>Capteur de luminosité ambiante</span>
-        <select value={capteur} onChange={(e) => setCapteur(e.target.value)}>
-          {capteurs.map((c) => (
-            <option key={c.entity_id} value={c.entity_id}>{libelleCapteur(c)}</option>
-          ))}
-        </select>
-      </label>
-      <p className="texte-attenue">
-        Les autres réglages partent des valeurs par défaut, modifiables ensuite sur cette page.
-        L'intégration est rechargée pour créer les entités de la fonction.
+    <section className="carte-luminosite" aria-labelledby="titre-carte-mise-en-route">
+      <h3 id="titre-carte-mise-en-route">Mise en route</h3>
+      {invitation && (
+        <div className={moment ? 'message invitation-ancrage' : 'ligne-carte'}>
+          <p>
+            {moment
+              ? `C'est le moment : il fait bien plus sombre qu'à votre premier réglage `
+                + `(${formaterLux(ancrage.lux)}). Refaites-le maintenant pour caler aussi la pente `
+                + 'de la courbe.'
+              : `Votre réglage du ${new Date(ancrage.horodatage).toLocaleDateString('fr-FR')} `
+                + `(${formaterLux(ancrage.lux)} → ${ancrage.luminosite}) cale la courbe. Ce soir, `
+                + 'dans le noir, refaites le réglage : avec ce deuxième point, la courbe suivra '
+                + 'aussi votre préférence dans l\'obscurité.'}
+          </p>
+          <button type="button" className={moment ? 'bouton-principal' : 'bouton-secondaire'}
+            disabled={lectureSeule} onClick={() => onOuvrir('ancrage')}>
+            Refaire le réglage
+          </button>
+        </div>
+      )}
+      {ancrages.length === 2 && (
+        <p className="ligne-carte texte-attenue">
+          Courbe calée sur vos deux réglages ({ancrages.map((a) => `${formaterLux(a.lux)} → `
+            + `${a.luminosite}`).join(', ')}).
+        </p>
+      )}
+      <p className="ligne-carte">
+        <button type="button" className="bouton-secondaire" onClick={() => onOuvrir('capteur')}>
+          Relancer la mise en route
+        </button>{' '}
+        <span className="texte-attenue">capteur, emplacement, vérifications et point d'ancrage.</span>
       </p>
-      <button type="submit" className="bouton-principal" disabled={envoi}>
-        {envoi ? 'Activation…' : 'Activer la luminosité adaptative'}
-      </button>
-      {erreur && <p className="erreur-reglage" role="alert">{erreur}</p>}
-    </form>
+    </section>
   )
 }
 
@@ -307,6 +336,8 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
   const [envoi, setEnvoi] = useState(false)
   const [message, setMessage] = useState(null)
   const modifie = normaliser(brouillon) !== normaliser(options)
+  const ancrages = options.ancrages ?? []
+  const courbeModifiee = normaliser(brouillon, CLES_COURBE) !== normaliser(options, CLES_COURBE)
   const erreurs = validerOptions(brouillon)
   const valide = Object.keys(erreurs).length === 0
 
@@ -349,7 +380,8 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
     }
   }
 
-  function champNombre(cle, libelle, unite) {
+  // Lux au dixième : le point d'ancrage cale la courbe à cette précision.
+  function champNombre(cle, libelle, unite, pas = '1') {
     const [bas, haut] = BORNES[cle]
     return (
       <label className="champ-luminosite">
@@ -359,7 +391,7 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
             type="number"
             min={bas}
             max={haut}
-            step="1"
+            step={pas}
             value={Number.isNaN(brouillon[cle]) ? '' : brouillon[cle]}
             aria-invalid={erreurs[cle] ? true : undefined}
             onChange={(e) => changer({ [cle]: e.target.valueAsNumber })}
@@ -367,6 +399,33 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
           {unite && <span className="texte-attenue">{unite}</span>}
         </span>
         {erreurs[cle] && <span className="erreur-reglage">{erreurs[cle]}</span>}
+      </label>
+    )
+  }
+
+  // Point intermédiaire : deux champs, vides tous deux pour s'en passer.
+  function champIntermediaire(indice, libelle, unite) {
+    const valeur = brouillon.point_intermediaire?.[indice]
+    return (
+      <label className="champ-luminosite">
+        <span>{libelle}</span>
+        <span className="saisie-unite">
+          <input
+            type="number"
+            min={indice === 0 ? 1 : 0}
+            max={indice === 0 ? BORNES.lux_max[1] : 100}
+            step={indice === 0 ? '0.1' : '1'}
+            value={valeur == null || Number.isNaN(valeur) ? '' : valeur}
+            placeholder="facultatif"
+            aria-invalid={erreurs.point_intermediaire ? true : undefined}
+            onChange={(e) => {
+              const point = [...(brouillon.point_intermediaire ?? [null, null])]
+              point[indice] = e.target.value === '' ? null : e.target.valueAsNumber
+              changer({ point_intermediaire: point.every((v) => v == null) ? null : point })
+            }}
+          />
+          {unite && <span className="texte-attenue">{unite}</span>}
+        </span>
       </label>
     )
   }
@@ -407,15 +466,28 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
       <CourbeLuminosite
         options={valide ? brouillon : options}
         lux={lux}
+        ancrages={courbeModifiee ? [] : ancrages}
         desactive={envoi}
         onChanger={changer}
       />
-      <div className="grille-champs">
-        {champNombre('lux_min', 'Pièce sombre', 'lx')}
+      {/* Une ligne par point de la courbe : lux, puis luminosité. */}
+      <div className="grille-champs grille-points">
+        {champNombre('lux_min', 'Pièce sombre', 'lx', '0.1')}
         {champNombre('luminosite_min', 'Luminosité minimale')}
-        {champNombre('lux_max', 'Pièce lumineuse', 'lx')}
+        {champIntermediaire(0, 'Pièce intermédiaire', 'lx')}
+        {champIntermediaire(1, 'Luminosité intermédiaire')}
+        {champNombre('lux_max', 'Pièce lumineuse', 'lx', '0.1')}
         {champNombre('luminosite_max', 'Luminosité maximale')}
       </div>
+      {erreurs.point_intermediaire && (
+        <p className="erreur-reglage">{erreurs.point_intermediaire}</p>
+      )}
+      {courbeModifiee && ancrages.length > 0 && (
+        <p className="message">
+          Courbe retouchée : vos points d'ancrage seront oubliés à l'enregistrement. Le prochain
+          réglage de la mise en route repartira d'un seul point.
+        </p>
+      )}
 
       <h3>Réglages</h3>
       <div className="grille-champs">
@@ -547,6 +619,14 @@ function texteEvenement(evenement) {
         + ` : ${formaterLux(evenement.avant)} avant, ${formaterLux(evenement.apres)} après`
     case 'allers_retours':
       return 'Allers-retours : 3 changements de sens en 10 minutes'
+    case 'mise_en_route':
+      return 'Mise en route ouverte : la fonction n\'écrit pas pendant le réglage'
+    case 'fin_mise_en_route':
+      return 'Mise en route fermée'
+    case 'ancrage':
+      return `Point d'ancrage : luminosité ${evenement.luminosite} à `
+        + `${formaterLux(evenement.lux)} (courbe calée sur ${evenement.points} point`
+        + `${evenement.points > 1 ? 's' : ''})`
     case 'activation':
       return 'Fonction activée'
     case 'desactivation':

@@ -48,6 +48,8 @@
           "lux_min": "Pièce sombre",
           "lux_max": "Pièce lumineuse",
           "luminosite_min": "Luminosité minimale",
+          "lux_intermediaire": "Pièce intermédiaire",
+          "luminosite_intermediaire": "Luminosité intermédiaire",
           "luminosite_max": "Luminosité maximale",
           "pause": "Pause après un réglage manuel",
           "modes_exclus": "Modes d'image laissés de côté"
@@ -56,6 +58,8 @@
           "capteur_lux": "Laisser vide pour désactiver la fonction et retirer ses entités.",
           "emplacement_capteur": "À côté de l'écran, tourné vers la pièce, est le meilleur choix. Face à l'écran (D), l'écran éclaire le capteur : la fonction attend plus longtemps après chaque changement. Schéma et conseils dans le panneau.",
           "lux_min": "En dessous, la luminosité minimale s'applique.",
+          "lux_intermediaire": "Facultatif, avec sa luminosité : un troisième point de la courbe, entre la pièce sombre et la pièce lumineuse (par exemple une soirée sous les lampes). Vides tous deux : pas de point intermédiaire.",
+          "luminosite_intermediaire": "Entre la luminosité minimale et la maximale.",
           "lux_max": "Au-dessus, la luminosité maximale s'applique.",
           "pause": "La pause prend fin aussi au prochain allumage du téléviseur, ou avec le bouton « Reprendre ».",
           "modes_exclus": "Modes où la luminosité n'est jamais modifiée (modes calibrés)."
@@ -95,7 +99,9 @@
       "luminosite_max_trop_basse": "Doit être au moins égale à la luminosité minimale.",
       "hors_bornes": "Valeur hors des limites autorisées.",
       "mode_inconnu": "Mode d'image inconnu.",
-      "emplacement_inconnu": "Emplacement inconnu."
+      "emplacement_inconnu": "Emplacement inconnu.",
+      "point_intermediaire_incomplet": "Indiquez le lux et la luminosité du point intermédiaire, ou aucun des deux.",
+      "point_intermediaire_hors_courbe": "Doit tomber entre la pièce sombre et la pièce lumineuse, et entre les luminosités minimale et maximale."
     }
   },
   "entity": {
@@ -122,6 +128,7 @@
           "desactivee": "Désactivée",
           "televiseur_deconnecte": "Téléviseur déconnecté",
           "consultation": "Écriture impossible",
+          "mise_en_route": "Mise en route en cours",
           "pause": "En pause (réglage manuel)",
           "mode_exclu": "Mode d'image laissé de côté",
           "conflit_economie_energie": "En conflit avec l'économie d'énergie du téléviseur",
