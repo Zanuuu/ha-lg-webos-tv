@@ -256,9 +256,15 @@ async def _desactiver_economie_energie(hass, connection, msg, donnees) -> None:
         connection.send_result(msg["id"], resultat)
 
 
+async def _sante_luminosite(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is not None:
+        connection.send_result(msg["id"], fonction.sante())
+
+
 async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
-    """Flux de la page Luminosité adaptative : état complet, lux compris, et
-    événements du journal, seulement pendant qu'elle est ouverte."""
+    """Flux de la page Luminosité adaptative : état complet, lux compris,
+    événements du journal et santé de l'installation, seulement pendant
+    qu'elle est ouverte."""
     if (fonction := _fonction(connection, msg, donnees)) is None:
         return
     dernier = fonction.details()
@@ -277,9 +283,14 @@ async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
         connection.send_message(websocket_api.event_message(
             msg["id"], {"type": "journal", "evenement": evenement}))
 
+    @callback
+    def signaler_sante() -> None:
+        connection.send_message(websocket_api.event_message(
+            msg["id"], {"type": "sante", "sante": fonction.sante()}))
+
     # Le détail suit aussi chaque pas d'une rampe (valeur du téléviseur).
     ne_plus_ecouter = [fonction.ecouter(signaler), fonction.ecouter_details(signaler),
-                       fonction.ecouter_journal(noter)]
+                       fonction.ecouter_journal(noter), fonction.ecouter_sante(signaler_sante)]
 
     @callback
     def desabonner() -> None:
@@ -289,7 +300,8 @@ async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
     connection.subscriptions[msg["id"]] = desabonner
     connection.send_result(msg["id"])
     connection.send_message(websocket_api.event_message(msg["id"], {
-        "type": "instantane", "details": dernier, "journal": list(fonction.journal)}))
+        "type": "instantane", "details": dernier, "journal": list(fonction.journal),
+        "sante": fonction.sante()}))
 
 
 async def _abonner(hass, connection, msg, donnees) -> None:
@@ -371,6 +383,7 @@ COMMANDES = [
               _configurer_luminosite),
     _commande(_type("luminosite_adaptative/desactiver_economie_energie"),
               _desactiver_economie_energie),
+    _commande(_type("luminosite_adaptative/sante"), _sante_luminosite),
     _commande(_type("luminosite_adaptative/suivre"), _suivre_luminosite),
     _commande(_type("abonner"), _abonner),
 ]

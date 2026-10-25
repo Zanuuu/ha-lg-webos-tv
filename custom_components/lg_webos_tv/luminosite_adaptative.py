@@ -23,7 +23,11 @@ téléviseur les attribue tous à notre client). Ici :
 - une transition se fait en rampe (rampe.py) : petits pas cadencés, chacun
   confirmé par le téléviseur avant le suivant, qui suivent la cible lissée
   jusqu'à son arrivée. Une seule entrée d'historique par rampe (départ →
-  arrivée) ; mesures mises de côté pendant la rampe et le gel qui suit.
+  arrivée) ; mesures mises de côté pendant la rampe et le gel qui suit ;
+- la santé de l'installation (sante.py) se mesure au fil de l'eau :
+  agrégats journaliers enregistrés en SQLite (statistiques.py), réponse du
+  capteur à l'allumage, à l'extinction et aux rampes, diagnostics pour le
+  panneau.
 """
 
 import logging
@@ -31,12 +35,15 @@ import math
 from collections import deque
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import (Event, EventStateChangedData,
                                 EventStateReportedData, HomeAssistant, State,
                                 callback)
+from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import (async_track_point_in_utc_time,
@@ -56,6 +63,9 @@ from .const import (CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
                     OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from .entite import descriptions
 from .rampe import Rampe, parametres
+from .sante import (CONSERVATION_JOURS, RAMPE_DELTA_MIN, Accumulateur,
+                    Contexte, Inversions, Retroaction, StatsJour, ambiance,
+                    evaluer, fenetre, resume, resume_jour)
 from .signal_lux import REEVALUATION_S, Cadence, SignalLux, constantes, profil
 
 log = logging.getLogger(__name__)
@@ -90,6 +100,8 @@ TAILLE_JOURNAL = 50
 # Pause demandée depuis le panneau, sans réglage de la luminosité.
 PAUSE_MANUELLE = "pause_manuelle"
 VERIFICATION_CAPTEUR = timedelta(minutes=1)
+# Statistiques de santé : au plus cinq minutes perdues sur un arrêt brutal.
+ENREGISTREMENT_STATS = timedelta(minutes=5)
 
 # Réparations (Paramètres → Réparations) : seulement les cas qui bloquent la
 # fonction (docs/etude-luminosite-adaptative.md, arbitrage A6).
@@ -190,6 +202,16 @@ def _horloge() -> float:
     return dt_util.utcnow().timestamp()
 
 
+def _jour_local() -> str:
+    """Jour des statistiques : celui de l'utilisateur, pas l'UTC."""
+    return dt_util.as_local(dt_util.utcnow()).date().isoformat()
+
+
+def _premier_jour_conserve() -> str:
+    return (date.fromisoformat(_jour_local())
+            - timedelta(days=CONSERVATION_JOURS - 1)).isoformat()
+
+
 @dataclass
 class _Transition:
     """Rampe en cours et ce qu'il faut pour l'historiser à sa fin."""
@@ -239,6 +261,25 @@ class LuminositeAdaptative:
         self._fige_signale = False
         self._cible_signalee: int | None = None
 
+        # Santé de l'installation : agrégats du jour en cours, jours passés
+        # relus en base pour ce capteur, rétroaction et allers-retours en
+        # mémoire. Repart à chaque changement de capteur.
+        self._statistiques = donnees.statistiques
+        self._jours: dict[str, StatsJour] = {}
+        self._accumulateur = Accumulateur(StatsJour(_jour_local()))
+        self._retroaction = Retroaction()
+        self._inversions = Inversions()
+        # Rien n'est enregistré avant la relecture : on écraserait le jour
+        # déjà en base.
+        self._stats_chargees = False
+        self._a_enregistrer: set[str] = set()
+        # Reprise en main de la pause en cours (jour, ambiance, valeur) :
+        # plusieurs appuis sur la télécommande font une seule correction.
+        self._reprise_en_cours: tuple[str, str, float] | None = None
+        self._sante: dict | None = None
+        self._ecouteurs_sante: list[Callable[[], None]] = []
+        self._tache_stats = None
+
         self._ecouteurs: list[Callable[[], None]] = []
         # Seulement le détail (page du panneau) : prévenus à chaque pas d'une
         # rampe, sans réécrire l'état des entités.
@@ -258,6 +299,9 @@ class LuminositeAdaptative:
             self._historique.ecouter(self._sur_ecriture),
             async_track_time_interval(self.hass, self._verifier_capteur,
                                       VERIFICATION_CAPTEUR),
+            async_track_time_interval(self.hass, self._enregistrer_periodiquement,
+                                      ENREGISTREMENT_STATS),
+            self.hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, self._sur_arret_hass),
         ]
         self._suivre_capteur()
 
@@ -275,10 +319,14 @@ class LuminositeAdaptative:
         self._cadence = Cadence()
         self._signal = SignalLux(self._constantes())
         self._actualiser_profil()
+        self._reinitialiser_sante()
         etat = self.hass.states.get(self.capteur)
         if (lux := _lire_lux(etat)) is not None:
             self._cadence.noter(etat.last_reported_timestamp)
             self._signal.mesurer(_horloge(), lux)
+            # Valeur maintenue, pas un nouveau rapport : la rétroaction
+            # seulement.
+            self._retroaction.rapport(_horloge(), lux)
 
     def arreter(self) -> None:
         for desabonner in self._desabonnements:
@@ -312,7 +360,14 @@ class LuminositeAdaptative:
         self._ecouteurs_details.append(ecouteur)
         return lambda: self._ecouteurs_details.remove(ecouteur)
 
+    def ecouter_sante(self, ecouteur: Callable[[], None]) -> Callable[[], None]:
+        """Abonne la page du panneau aux changements de la santé de
+        l'installation."""
+        self._ecouteurs_sante.append(ecouteur)
+        return lambda: self._ecouteurs_sante.remove(ecouteur)
+
     def _prevenir(self) -> None:
+        self._echantillonner()
         self._cible_signalee = self.cible
         self._synchroniser_reparations()
         for ecouteur in list(self._ecouteurs):
@@ -453,6 +508,7 @@ class LuminositeAdaptative:
                     severity=ir.IssueSeverity.WARNING,
                     translation_key=(PROBLEME_CONFLIT if conflit == "economie_energie"
                                      else "conflit_mode_eco"))
+            self._actualiser_sante()
         fige = connecte and self.fige
         if fige != self._fige_signale:
             self._fige_signale = fige
@@ -469,6 +525,7 @@ class LuminositeAdaptative:
                         "depuis": dt_util.as_local(dt_util.utc_from_timestamp(
                             self._cadence.dernier)).strftime("%d/%m %H:%M"),
                     })
+            self._actualiser_sante()
 
     # ------------------------------------------------------------ commandes
     def restaurer(self, active: bool, fin_pause: datetime | None,
@@ -500,7 +557,10 @@ class LuminositeAdaptative:
         """Pause demandée depuis le panneau (le temps d'un film), sans
         toucher à la luminosité."""
         self._pause(dt_util.utcnow() + timedelta(minutes=minutes), PAUSE_MANUELLE)
+        self._accumulateur.pause_manuelle()
+        self._reprise_en_cours = None
         self._prevenir()
+        self._actualiser_sante()
 
     def reconfigurer(self, options: dict) -> None:
         """Options modifiées depuis le panneau, appliquées sans recharger
@@ -508,6 +568,10 @@ class LuminositeAdaptative:
         en cours est conservée."""
         self.options = {**OPTIONS_LUMINOSITE_DEFAUT, **options}
         if options[CONF_CAPTEUR_LUX] != self.capteur:
+            # Les statistiques de l'ancien capteur, avant de repartir de
+            # celles du nouveau.
+            if (a_ecrire := self._a_ecrire()) is not None:
+                self.hass.async_create_task(self._statistiques.enregistrer(*a_ecrire))
             self.capteur = options[CONF_CAPTEUR_LUX]
             self._suivre_capteur()
         else:
@@ -515,6 +579,7 @@ class LuminositeAdaptative:
         self._signal.oublier_reference()
         self._planifier(DELAI_APPLICATION_S)
         self._prevenir()
+        self._actualiser_sante()
 
     async def desactiver_economie_energie(self, origine: str) -> dict:
         """« Fonction Économie d'énergie » sur Désactivé, sur demande
@@ -538,6 +603,10 @@ class LuminositeAdaptative:
             self._signal.oublier()
         else:
             fige = self._fige_signale
+            maintenant = _horloge()
+            self._accumulateur.rapport(maintenant, lux, self._tv.etat_connexion == "connecte")
+            self._retroaction.rapport(maintenant, lux)
+            self._resoudre_retroaction(maintenant)
             self._cadence.noter(instant)
             self._signal.mesurer(_horloge(), lux)
             self._actualiser_profil()
@@ -553,12 +622,17 @@ class LuminositeAdaptative:
 
     @callback
     def _verifier_capteur(self, _instant) -> None:
+        self._echantillonner()
+        self._resoudre_retroaction(_horloge())
+        self._actualiser_sante()
         if (self.active and self._tv.etat_connexion == "connecte"
                 and self.fige != self._fige_signale):
             self._prevenir()
 
     async def _sur_evenement(self, evenement: dict) -> None:
         if evenement["type"] == "connexion":
+            if evenement["etat"] in ("connecte", "deconnecte"):
+                self._retroaction.televiseur(_horloge(), evenement["etat"] == "connecte")
             if evenement["etat"] == "connecte":
                 if self._eteint_pendant_pause:
                     self._lever_pause("rallumage")
@@ -577,7 +651,7 @@ class LuminositeAdaptative:
                 self.rampe.interrompre("reprise_en_main" if origine in ORIGINES_EXTERIEURES
                                        else "changement_exterieur")
             if CLE in reglages and origine in ORIGINES_EXTERIEURES:
-                self._reprise_en_main(self._tv.mode_image, origine)
+                self._reprise_en_main(self._tv.mode_image, origine, reglages[CLE])
             elif origine != "application" and (CLE in reglages or "pictureMode" in reglages):
                 self._reappliquer(DELAI_APPLICATION_S)
             elif CLE_ECONOMIE in reglages:
@@ -590,18 +664,44 @@ class LuminositeAdaptative:
         if ecriture["origine"] == ORIGINE:
             return
         if (ecriture["categorie"], ecriture["cle"]) == (CATEGORIE, CLE):
-            self._reprise_en_main(ecriture["mode_image"], ecriture["origine"])
+            self._reprise_en_main(ecriture["mode_image"], ecriture["origine"],
+                                  ecriture["nouvelle"])
         elif ecriture["origine"] in ORIGINES_LOT:
             self._reappliquer(DELAI_APRES_LOT_S, ecriture["origine"])
 
     # ----------------------------------------------------------------- pause
-    def _reprise_en_main(self, mode: str | None, origine: str) -> None:
+    def _reprise_en_main(self, mode: str | None, origine: str, valeur=None) -> None:
         # La luminosité d'un mode laissé de côté ne dit rien de celle des
         # autres modes.
         if not self.active or self.mode_exclu(mode):
             return
+        self._noter_reprise(valeur)
         self._pause(dt_util.utcnow() + timedelta(minutes=self.options[CONF_PAUSE_MIN]), origine)
         self._prevenir()
+
+    def _noter_reprise(self, valeur) -> None:
+        """Statistiques : correction = valeur posée par l'utilisateur − cible
+        de la fonction, rangée par ambiance (pauses fréquentes ; matière des
+        suggestions du lot 5)."""
+        self._retroaction.perturbation(_horloge())
+        try:
+            valeur = float(valeur)
+        except (TypeError, ValueError):
+            return
+        jour = self._accumulateur.stats.jour
+        if (self.fin_pause is not None and self._reprise_en_cours is not None
+                and self._reprise_en_cours[0] == jour):
+            _, nom, precedente = self._reprise_en_cours
+            self._accumulateur.corriger_reprise(nom, valeur - precedente)
+            self._reprise_en_cours = (jour, nom, valeur)
+            return
+        cible, lux = self.cible, self.lux_filtre
+        if cible is None or lux is None:
+            return
+        nom = ambiance(lux, self.options[CONF_LUX_MIN], self.options[CONF_LUX_MAX])
+        self._accumulateur.reprise(nom, valeur - cible)
+        self._reprise_en_cours = (jour, nom, valeur)
+        self._actualiser_sante()
 
     def _pause(self, fin: datetime, origine: str) -> None:
         cause = {"origine": origine, "horodatage": dt_util.utcnow().isoformat()}
@@ -634,6 +734,7 @@ class LuminositeAdaptative:
         self.fin_pause = None
         self.cause_pause = None
         self._eteint_pendant_pause = False
+        self._reprise_en_cours = None
 
     # ----------------------------------------------------------- application
     def _reappliquer(self, delai_s: float, raison: str = "changement_exterieur") -> None:
@@ -725,6 +826,7 @@ class LuminositeAdaptative:
         self._transition = _Transition(
             Rampe(parametres(self.options), depart, _horloge()), self._tv.mode_image)
         self._signal.suspendre(_horloge())
+        self._retroaction.perturbation(_horloge())
         self._prevenir()
         self._avancer_rampe()
 
@@ -840,13 +942,32 @@ class LuminositeAdaptative:
             if rampe.pas_confirmes > 1:
                 self.hass.async_create_background_task(
                     self._historiser_rampe(transition), f"{DOMAIN} historique de la rampe")
+            self._compter_transition(rampe, instant, fin)
         elif fin == "non_confirmee":
             self._noter("erreur", cible=transition.demandee, raison=self.derniere_erreur)
+        if fin == "non_confirmee":
+            self._accumulateur.non_confirmee()
         if fin != "arret":
+            self._actualiser_sante()
             # Évaluation après le gel : mesure mise de côté, filtre qui
             # avance encore, ou valeur changée par le téléviseur.
             self._planifier(max(self._signal.fin_gel - instant, 0.1))
             self._prevenir()
+
+    def _compter_transition(self, rampe: Rampe, instant: float, fin: str) -> None:
+        """Statistiques d'une transition faite : sens (allers-retours) et,
+        capteur rapide, réponse du capteur à l'écran une fois stabilisé."""
+        inversion = episode = False
+        if rampe.depart is not None and rampe.valeur != rampe.depart:
+            delta = rampe.valeur - rampe.depart
+            inversion, episode = self._inversions.transition(instant, 1 if delta > 0 else -1)
+            lux_avant = self._signal.lux_vise(instant) if self.lux is not None else None
+            if (fin == "arrivee" and self.profil == "rapide" and abs(delta) >= RAMPE_DELTA_MIN
+                    and lux_avant is not None):
+                self._retroaction.rampe(instant, lux_avant, delta, self._signal.constantes.gel_s)
+        self._accumulateur.transition(rampe.pas_confirmes, inversion, episode)
+        if episode:
+            self._noter("allers_retours")
 
     async def _historiser_rampe(self, transition: _Transition) -> None:
         """Une seule entrée pour la rampe, celle du premier pas, complétée de
@@ -854,6 +975,145 @@ class LuminositeAdaptative:
         départ."""
         await self._historique.completer(transition.premier["id_historique"],
                                          transition.dernier["nouvelle"])
+
+    # ------------------------------------------------------------- santé
+    def _reinitialiser_sante(self) -> None:
+        """Démarrage ou nouveau capteur : les statistiques repartent de
+        celles enregistrées pour ce capteur."""
+        self._jours = {}
+        self._accumulateur = Accumulateur(StatsJour(_jour_local()))
+        self._retroaction = Retroaction()
+        self._inversions = Inversions()
+        self._stats_chargees = False
+        self._a_enregistrer = set()
+        self._reprise_en_cours = None
+        self._tache_stats = self.hass.async_create_task(
+            self._charger_statistiques(self.capteur), f"{DOMAIN} statistiques")
+
+    async def _charger_statistiques(self, capteur: str) -> None:
+        depuis = _premier_jour_conserve()
+        try:
+            await self._statistiques.purger(depuis)
+            lignes = await self._statistiques.charger(capteur, depuis)
+        except Exception:  # noqa: BLE001 — la fonction marche sans
+            log.exception("Luminosité adaptative : statistiques illisibles")
+            lignes = []
+        if capteur != self.capteur:
+            return
+        for donnees in lignes:
+            stats = StatsJour.depuis_dict(donnees)
+            if stats.jour == self._accumulateur.stats.jour:
+                # Jour commencé avant le redémarrage, puis depuis.
+                stats.fusionner(self._accumulateur.stats)
+                self._accumulateur.stats = stats
+            else:
+                self._jours.setdefault(stats.jour, stats)
+        self._stats_chargees = True
+        self._actualiser_sante()
+
+    def _a_ecrire(self) -> tuple[str, list[dict]] | None:
+        """(capteur, jours) à enregistrer, figés tout de suite : le capteur
+        peut changer pendant l'écriture."""
+        if not self._stats_chargees:
+            return None
+        jours = [self._jours[jour].en_dict() for jour in self._a_enregistrer
+                 if jour in self._jours]
+        self._a_enregistrer = set()
+        return self.capteur, [*jours, self._accumulateur.stats.en_dict()]
+
+    async def enregistrer_statistiques(self) -> None:
+        self._echantillonner()
+        if (a_ecrire := self._a_ecrire()) is not None:
+            await self._statistiques.enregistrer(*a_ecrire)
+
+    @callback
+    def _enregistrer_periodiquement(self, _instant) -> None:
+        self.hass.async_create_task(self.enregistrer_statistiques(),
+                                    f"{DOMAIN} statistiques")
+
+    async def _sur_arret_hass(self, _evenement) -> None:
+        await self.enregistrer_statistiques()
+
+    def _echantillonner(self) -> None:
+        """Temps passé dans l'état d'avant (allumé, active, lux) ; au
+        changement de jour, le jour fini est enregistré."""
+        termine = self._accumulateur.echantillon(
+            _horloge(), _jour_local(), self._tv.etat_connexion == "connecte",
+            self.etat == "active", self.lux_filtre, self.lux)
+        if termine is None:
+            return
+        self._jours[termine.jour] = termine
+        self._a_enregistrer.add(termine.jour)
+        limite = _premier_jour_conserve()
+        for jour in [jour for jour in self._jours if jour < limite]:
+            del self._jours[jour]
+        self.hass.async_create_task(self.enregistrer_statistiques(), f"{DOMAIN} statistiques")
+
+    def _resoudre_retroaction(self, instant: float) -> None:
+        resultats = self._retroaction.resoudre(instant)
+        for nature, valeur in resultats:
+            if nature == "tv":
+                sens, avant, apres = valeur
+                self._accumulateur.evenement_tv(valeur)
+                # Au journal : de quoi vérifier la mesure à l'essai réel.
+                self._noter("retroaction", sens=sens, avant=avant, apres=apres)
+            else:
+                self._accumulateur.reponse_rampe(valeur)
+        if resultats:
+            self._actualiser_sante()
+
+    def _pieces(self) -> tuple[str | None, str | None]:
+        """Pièces du capteur (entité, sinon son appareil) et du téléviseur,
+        d'après les registres de Home Assistant."""
+        appareils = dr.async_get(self.hass)
+        zone_capteur = None
+        if (entite := er.async_get(self.hass).async_get(self.capteur)) is not None:
+            zone_capteur = entite.area_id
+            if zone_capteur is None and entite.device_id is not None:
+                appareil = appareils.async_get(entite.device_id)
+                zone_capteur = appareil.area_id if appareil is not None else None
+        zone_tv = None
+        if entrees := self.hass.config_entries.async_entries(DOMAIN):
+            tv = appareils.async_get_device_by_identifier((DOMAIN, entrees[0].entry_id),
+                                                         entrees[0].entry_id)
+            zone_tv = tv.area_id if tv is not None else None
+        zones = ar.async_get(self.hass)
+
+        def nom(zone_id: str | None) -> str | None:
+            zone = zones.async_get_area(zone_id) if zone_id is not None else None
+            return zone.name if zone is not None else None
+
+        return nom(zone_capteur), nom(zone_tv)
+
+    def _calculer_sante(self) -> dict[str, Any]:
+        piece_capteur, piece_televiseur = self._pieces()
+        contexte = Contexte(
+            options=self.options, constantes=self._signal.constantes, profil=self.profil,
+            plateforme=self._plateforme, conflit=self._conflit_signale,
+            fige=self._fige_signale, ecriture_possible=self._tv.ecriture_possible,
+            piece_capteur=piece_capteur, piece_televiseur=piece_televiseur)
+        jours = [*self._jours.values(), self._accumulateur.stats]
+        aujourdhui = self._accumulateur.stats.jour
+        return {
+            "chargees": self._stats_chargees,
+            "diagnostics": [asdict(d) for d in evaluer(jours, aujourdhui, contexte)],
+            "resume": resume(jours, aujourdhui),
+            "jours": [resume_jour(jour) for jour in reversed(fenetre(jours, aujourdhui))],
+        }
+
+    def _actualiser_sante(self) -> None:
+        sante = self._calculer_sante()
+        if sante != self._sante:
+            self._sante = sante
+            for ecouteur in list(self._ecouteurs_sante):
+                ecouteur()
+
+    def sante(self) -> dict[str, Any]:
+        """Santé de l'installation : diagnostics, statistiques des 7
+        derniers jours et par jour."""
+        if self._sante is None:
+            self._sante = self._calculer_sante()
+        return self._sante
 
     def _resume_rampe(self) -> dict | None:
         if self.rampe is None:

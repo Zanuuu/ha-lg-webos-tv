@@ -6,9 +6,11 @@ import {
   LIBELLES_PROFIL, MODE_HDR, OPTIONS_AVANCEES, validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
+import { duree } from '../sante.js'
 import { libelleModeImage } from '../valeurs.js'
 import Interrupteur from './controles/Interrupteur.jsx'
 import CourbeLuminosite from './CourbeLuminosite.jsx'
+import SanteLuminosite from './SanteLuminosite.jsx'
 import SchemaEmplacement from './SchemaEmplacement.jsx'
 
 const PAUSE_MANUELLE_MIN = 60
@@ -25,12 +27,6 @@ const formaterLux = (lux) => `${lux.toLocaleString('fr-FR')} lx`
 const NOMS_PLATEFORME = {
   esphome: 'ESPHome', zha: 'ZHA', mqtt: 'MQTT', hue: 'Philips Hue', deconz: 'deCONZ',
   zwave_js: 'Z-Wave JS', matter: 'Matter',
-}
-
-function duree(secondes) {
-  if (secondes < 90) return `${Math.round(secondes)} s`
-  if (secondes < 5400) return `${Math.round(secondes / 60)} min`
-  return `${Math.round(secondes / 3600)} h`
 }
 
 function texteProfil(profil) {
@@ -58,7 +54,7 @@ function libelleCapteur(capteur) {
 }
 
 export default function VueLuminosite({ index, luminosite, lectureSeule, onReprendre, onRecharge }) {
-  const { configuration, erreur, details, journal, relire } =
+  const { configuration, erreur, details, journal, sante, relire } =
     useLuminositeAdaptative(Boolean(luminosite))
 
   if (erreur) {
@@ -99,6 +95,14 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
             etat={details || luminosite}
             lectureSeule={lectureSeule}
             onReprendre={onReprendre}
+          />
+          <SanteLuminosite
+            sante={sante}
+            etat={details || luminosite}
+            options={configuration.options}
+            lectureSeule={lectureSeule}
+            onAppliquer={enregistrer}
+            onDesactiverEconomie={api.desactiverEconomieEnergie}
           />
           <ReglagesLuminosite
             index={index}
@@ -234,21 +238,9 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
         </p>
       )}
 
-      {etat.conflit && (
-        <ConflitLuminosite
-          conflit={etat.conflit}
-          economieEnergie={etat.economie_energie}
-          desactive={lectureSeule || envoi}
-          onDesactiver={() => agir(api.desactiverEconomieEnergie)}
-        />
-      )}
-      {etat.etat === 'capteur_fige' && (
-        <p className="message">
-          Aucune mesure du capteur depuis
-          {etat.derniere_mesure ? ` ${heure(etat.derniere_mesure)}` : ' longtemps'}, bien plus
-          longtemps que d'habitude, alors que le téléviseur est allumé. Pile vide, ou appareil
-          injoignable (réseau Zigbee, Wi-Fi) ? La luminosité actuelle est conservée jusqu'à la
-          prochaine mesure.
+      {(etat.conflit || etat.etat === 'capteur_fige') && (
+        <p className="ligne-carte texte-attenue">
+          Le détail et la correction sont dans Santé de l'installation, ci-dessous.
         </p>
       )}
 
@@ -305,33 +297,6 @@ function TransitionLuminosite({ rampe, cible, actuelle }) {
       {progression !== null && (
         <progress max="1" value={progression} aria-label="Progression de la transition" />
       )}
-    </div>
-  )
-}
-
-function ConflitLuminosite({ conflit, economieEnergie, desactive, onDesactiver }) {
-  if (conflit === 'mode_eco') {
-    return (
-      <p className="message message-conflit">
-        En mode d'image Éco, le capteur du téléviseur ajuste lui-même la luminosité des pixels
-        OLED selon l'éclairage ambiant : la luminosité adaptative n'écrit rien dans ce mode.
-        Choisissez un autre mode d'image, ou laissez Éco de côté dans les réglages ci-dessous.
-      </p>
-    )
-  }
-  return (
-    <div className="message message-conflit">
-      <p>
-        La « Fonction Économie d'énergie » du téléviseur (Général › Économie d'énergie) règle
-        déjà la luminosité de l'écran
-        {economieEnergie === 'auto' ? ' selon son propre capteur' : ''}. Les deux régulations se
-        contrarieraient : la luminosité adaptative n'écrit plus rien tant qu'elle reste active.
-      </p>
-      <button type="button" className="bouton-principal" disabled={desactive} onClick={onDesactiver}>
-        {economieEnergie === 'auto'
-          ? 'Désactiver l\'économie d\'énergie automatique'
-          : 'Désactiver l\'économie d\'énergie'}
-      </button>
     </div>
   )
 }
@@ -482,7 +447,7 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
           </select>
         </label>
       </div>
-      <div className="emplacement-capteur">
+      <div className="emplacement-capteur" id="emplacement-capteur">
         <SchemaEmplacement
           choisi={brouillon.emplacement_capteur}
           desactive={envoi}
@@ -577,6 +542,11 @@ function texteEvenement(evenement) {
         + (LIBELLES_CAUSE[evenement.origine] || evenement.origine)
     case 'reprise':
       return `Reprise : ${RAISONS_REPRISE[evenement.raison] || evenement.raison}`
+    case 'retroaction':
+      return `Effet de l'écran mesuré à ${evenement.sens === 'allumage' ? 'l\'allumage' : 'l\'extinction'}`
+        + ` : ${formaterLux(evenement.avant)} avant, ${formaterLux(evenement.apres)} après`
+    case 'allers_retours':
+      return 'Allers-retours : 3 changements de sens en 10 minutes'
     case 'activation':
       return 'Fonction activée'
     case 'desactivation':

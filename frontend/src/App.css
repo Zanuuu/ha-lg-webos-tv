@@ -869,7 +869,8 @@ select {
 
 /* Conflit avec une fonction du téléviseur, emplacement déconseillé : à
    corriger, sans être une erreur du panneau. */
-.message-conflit {
+/* Spécificité relevée : .message, défini plus bas, fixe sa propre bordure. */
+.message.message-conflit {
   border-left-color: var(--etat-attente);
 }
 
@@ -1649,5 +1650,160 @@ table.table-historique {
 
   .ligne-revelee {
     animation: none;
+  }
+}
+
+/* ---------- Santé de l'installation ---------- */
+
+.diagnostics-sante,
+.controles-sante {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.diagnostic-sante {
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-left: 3px solid var(--gris-texte);
+  border-radius: var(--rayon-champ);
+  background: var(--graphite);
+  font-size: 0.9rem;
+}
+
+.diagnostic-sante p {
+  margin: 0 0 0.5rem;
+}
+
+.diagnostic-sante p:last-child {
+  margin-bottom: 0;
+}
+
+/* Le bloc conflit garde son propre cadre (message-conflit). */
+.diagnostic-bloquant {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.diagnostic-bloquant .message {
+  margin-bottom: 0;
+}
+
+.diagnostic-avertissement {
+  border-left-color: var(--etat-attente);
+}
+
+.titre-diagnostic {
+  display: flex;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.diagnostic-avertissement .symbole-sante {
+  color: var(--etat-attente);
+}
+
+.actions-diagnostic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.actions-diagnostic a {
+  color: inherit;
+}
+
+.controles-sante li {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: 0.25rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.symbole-sante {
+  font-variant-emoji: text;
+}
+
+.symbole-ok {
+  color: var(--etat-ok);
+}
+
+.titre-statistiques {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.statistiques-sante {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.statistiques-sante dt {
+  color: var(--gris-texte);
+  font-size: 0.8rem;
+}
+
+.statistiques-sante dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.jours-sante summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tableau-defilant {
+  overflow-x: auto;
+}
+
+.jours-sante table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.jours-sante th,
+.jours-sante td {
+  padding: 0.3rem 0.5rem;
+  border-top: 1px solid var(--trait);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.jours-sante th:first-child {
+  text-align: left;
+  font-weight: normal;
+}
+
+.jours-sante thead th {
+  color: var(--gris-texte);
+  font-weight: normal;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .statistiques-sante {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions-diagnostic .bouton-principal {
+    min-height: 44px;
   }
 }

@@ -19,6 +19,7 @@ from .entite import descriptions
 from .historique import Historique
 from .luminosite_adaptative import LuminositeAdaptative, retirer_entites
 from .presets import Presets
+from .statistiques import StatsLuminosite
 from .televiseur import Televiseur
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.EVENT,
@@ -33,6 +34,8 @@ class DonneesLgWebosTv:
     historique: Historique
     presets: Presets
     ecritures: FileEcritures
+    # Statistiques journalières de la luminosité adaptative (lot 3).
+    statistiques: StatsLuminosite
     # Absente tant qu'aucun capteur de lux n'est choisi dans les options.
     luminosite_adaptative: LuminositeAdaptative | None = None
 
@@ -84,6 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
             televiseur=televiseur, historique=historique,
             presets=Presets(dossier / "presets.sqlite"),
             ecritures=FileEcritures(ecrire),
+            statistiques=StatsLuminosite(dossier / "historique.sqlite"),
         )
 
     donnees = await hass.async_add_executor_job(construire)
@@ -126,8 +130,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     panneau.async_retirer(hass)
-    if entry.runtime_data.luminosite_adaptative is not None:
-        entry.runtime_data.luminosite_adaptative.arreter()
+    if (fonction := entry.runtime_data.luminosite_adaptative) is not None:
+        await fonction.enregistrer_statistiques()
+        fonction.arreter()
     await entry.runtime_data.ecritures.arreter()
     await entry.runtime_data.televiseur.arreter()
     return True

@@ -1210,6 +1210,31 @@ celle-ci réutilise leurs détections.
   de l'entrée), le formulaire l'ayant toujours enregistré.
 - P4 se mesure avec `outils/scripts/mesure_rampe.py`.
 
+**Lot 3 livré en 2.7.0 : choix de mise en œuvre.**
+
+- Module pur `sante.py` (agrégats, rétroaction, diagnostics) et
+  persistance `statistiques.py` : table `stats_luminosite` dans la base de
+  l'historique, une ligne JSON par jour **et par capteur** (changer de
+  capteur ne mélange pas les mesures), 30 jours. Les diagnostics sont
+  structurés ; leurs textes vivent dans le panneau.
+- Capteur trop grossier : le pas est rapporté au lux sombre habituel, mais
+  pas sous « Pièce sombre », où la courbe est plate ; la règle « valeurs
+  entières sous 10 lx » en devient le cas d'un pas de 1 lx.
+- Capteur trop lent : simple information pour un capteur qui ne publie que
+  sur variation (Zigbee), qu'une pièce stable fait taire.
+- Courbe calée de travers : jugée avec les options du moment (le
+  diagnostic disparaît dès la correction appliquée) ; proposition au
+  90ᵉ centile seulement si la lumière varie (P90/P10 ≥ 1,5) ; borne basse
+  en information seule (décision de l'utilisateur, 25/10/2026).
+- Rétroaction : valeur « avant » prise 60 s avant la (dé)connexion du
+  téléviseur, faute de connaître le délai entre l'écran et la connexion ;
+  « après » = médiane des mesures entre 30 et 150 s ; allumage compté
+  seulement après 3 min d'extinction vue ; événements retenus en pièce
+  sombre (≤ 50 lx). Chaque mesure est notée au journal pour la vérifier à
+  l'essai réel. Si le téléviseur garde la connexion en veille, ce
+  diagnostic reste en observation.
+- Aucune nouvelle Réparation (arbitrage A6).
+
 ---
 
 ## 8. Points ouverts

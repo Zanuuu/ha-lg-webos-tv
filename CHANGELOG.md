@@ -1,5 +1,44 @@
 # Changelog
 
+## 2.7.0 — 2026-10-25
+
+Luminosité adaptative : santé de l'installation (lot 3 de
+`docs/etude-luminosite-adaptative.md`).
+
+- **Statistiques journalières** calculées par la fonction elle-même (sans
+  dépendre du recorder) : temps téléviseur allumé et fonction active,
+  fréquence et résolution des mesures, lumière habituelle, transitions,
+  reprises en main (avec la correction faite, par ambiance), écritures non
+  confirmées, allers-retours, effet de l'écran sur le capteur. Conservées
+  30 jours dans `<config>/lg_webos_tv/historique.sqlite` (table
+  `stats_luminosite`, une ligne par jour et par capteur), enregistrées
+  toutes les 5 minutes et à l'arrêt, relues au démarrage.
+- **Diagnostics**, chacun avec ce qui ne va pas, pourquoi, le chiffre qui
+  le justifie et quoi faire : capteur trop lent, capteur trop grossier en
+  pièce sombre, plafond du capteur, 0 lx dans le noir, courbe calée de
+  travers, allers-retours, rétroaction de l'écran (mesurée à l'allumage et
+  à l'extinction du téléviseur, médiane d'au moins 5 événements, et par la
+  réponse aux transitions pour un capteur rapide ; emplacement « face à
+  l'écran » signalé d'office), corrections fréquentes, écritures refusées,
+  capteur et téléviseur dans deux pièces différentes, en plus du conflit
+  avec l'économie d'énergie et du capteur figé.
+- **Propositions appliquées d'un clic** : « Pièce lumineuse » au 90ᵉ
+  centile du lux observé quand la luminosité reste au maximum plus de
+  80 % du temps, « Pièce sombre » relevée pour un capteur trop grossier,
+  seuils et lissage relevés contre les allers-retours.
+- Panneau : section **Santé de l'installation** sur la page Luminosité
+  adaptative (diagnostics, contrôles passés et en observation,
+  statistiques des 7 derniers jours, jour par jour) ; le conflit avec
+  l'économie d'énergie et le capteur figé y sont regroupés. Journal :
+  mesures de l'effet de l'écran et épisodes d'allers-retours.
+- Commande websocket `lg_webos_tv/luminosite_adaptative/sante`
+  (administrateurs) ; la santé suit aussi le flux de la page.
+- Diagnostics téléchargeables : état, réglages, statistiques et
+  diagnostics de la fonction, sans l'identifiant du capteur ni les noms de
+  pièce.
+- Aucune nouvelle Réparation : seuls le conflit et le capteur figé, qui
+  empêchent la fonction de marcher, en ouvrent une.
+
 ## 2.6.0 — 2026-10-25
 
 Luminosité adaptative : transitions douces (lot 2 de

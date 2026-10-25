@@ -10,6 +10,8 @@ import pytest
 
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.setup import async_setup_component
@@ -21,7 +23,10 @@ from custom_components.lg_webos_tv.const import (CONF_CAPTEUR_LUX, DOMAIN,
 from custom_components.lg_webos_tv.luminosite_adaptative import (
     BORNES, ID_MODE, ID_OLED, modes_proposes, valider_options)
 from custom_components.lg_webos_tv import restauration
+from custom_components.lg_webos_tv.diagnostics import \
+    async_get_config_entry_diagnostics
 from custom_components.lg_webos_tv.presets import capturer_snapshot
+from custom_components.lg_webos_tv.sante import Accumulateur, StatsJour
 
 from .conftest import entite
 
@@ -511,7 +516,8 @@ async def test_page_suivi(hass: HomeAssistant, fonction, faux_client, ws):
     assert [e["evenement"]["type"] for e in evenements if e["type"] == "journal"] == ["pause"]
 
     la = fonction.runtime_data.luminosite_adaptative
-    ecouteurs = la._ecouteurs, la._ecouteurs_details, la._ecouteurs_journal
+    ecouteurs = (la._ecouteurs, la._ecouteurs_details, la._ecouteurs_journal,
+                 la._ecouteurs_sante)
     avant = [len(liste) for liste in ecouteurs]
     await commande(ws, "unsubscribe_events", subscription=abonnement["id"])
     assert [len(liste) for liste in ecouteurs] == [n - 1 for n in avant]
@@ -1059,3 +1065,167 @@ def test_emplacements_traduits(langue):
     traductions = json.loads((Path(__file__).parent.parent / "custom_components" / DOMAIN
                               / "translations" / f"{langue}.json").read_text())
     assert list(traductions["selector"]["emplacement_capteur"]["options"]) == EMPLACEMENTS
+
+
+# ---------------------------------------------------------------- santé
+
+def sante(fonction_entree) -> dict:
+    return fonction_entree.runtime_data.luminosite_adaptative.sante()
+
+
+def diagnostic_sante(fonction_entree, id_) -> dict:
+    return next(d for d in sante(fonction_entree)["diagnostics"] if d["id"] == id_)
+
+
+async def test_statistiques_des_transitions_et_reprises(hass: HomeAssistant, fonction,
+                                                        faux_client):
+    la = fonction.runtime_data.luminosite_adaptative
+    assert sante(fonction)["chargees"]
+    assert sante(fonction)["resume"]["transitions"] == 1  # 80 → 60 à l'installation
+    await passer_le_temps(hass, 600)
+    assert sante(fonction)["resume"]["actif_s"] >= 600
+    # Deux appuis sur la télécommande : une seule reprise, la dernière
+    # valeur compte. Cible 60 à 20 lx (ambiance intermédiaire).
+    await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
+    await faux_client.notifier("picture", {"backlight": "54"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    assert la._accumulateur.stats.reprises["intermediaire"] == [1, -6]
+    la.mettre_en_pause(60)
+    assert sante(fonction)["resume"]["reprises"] == 1
+    assert sante(fonction)["resume"]["pauses_manuelles"] == 1
+
+
+async def test_ecriture_non_confirmee_comptee(hass: HomeAssistant, fonction, faux_client):
+    await demarrer_rampe(hass, fonction)
+    faux_client.refuser.add(("picture", "backlight"))
+    await passer_le_temps(hass, 2)
+    assert sante(fonction)["resume"]["non_confirmees"] == 1
+
+
+async def test_statistiques_relues_au_redemarrage(hass: HomeAssistant, fonction):
+    await regler_lux(hass, 300)
+    avant = sante(fonction)["resume"]
+    assert avant["transitions"] == 2
+    assert await hass.config_entries.async_reload(fonction.entry_id)
+    await passer_le_temps(hass)
+    apres = sante(fonction)["resume"]
+    assert apres["transitions"] == 2
+    assert apres["actif_s"] >= avant["actif_s"]
+
+
+async def test_enregistrement_periodique(hass: HomeAssistant, fonction):
+    await passer_le_temps(hass, 6 * 60)
+    lignes = await fonction.runtime_data.statistiques.charger(LUX, "2000-01-01")
+    assert [ligne["transitions"] for ligne in lignes] == [1]
+
+
+async def test_nouveau_capteur_repart_de_zero(hass: HomeAssistant, fonction, ws):
+    hass.states.async_set("sensor.bureau_lux", "20", {"device_class": "illuminance"})
+    await ws("luminosite_adaptative/configurer", options={CONF_CAPTEUR_LUX: "sensor.bureau_lux"})
+    await passer_le_temps(hass)
+    assert sante(fonction)["resume"]["transitions"] == 0
+    # Retour au premier capteur : ses statistiques, enregistrées avant le
+    # changement, sont relues.
+    await ws("luminosite_adaptative/configurer", options={CONF_CAPTEUR_LUX: LUX})
+    await passer_le_temps(hass)
+    assert sante(fonction)["resume"]["transitions"] == 1
+
+
+async def test_commande_sante_et_flux(hass: HomeAssistant, fonction, faux_client, ws):
+    reponse = await ws("luminosite_adaptative/sante")
+    ids = [d["id"] for d in reponse["result"]["diagnostics"]]
+    assert ids[:2] == ["conflit", "capteur_fige"] and "retroaction" in ids
+    assert reponse["result"]["jours"][0]["transitions"] == 1
+
+    abonnement = await ws("luminosite_adaptative/suivre")
+    assert abonnement["success"]
+    instantane = (await ws.client.receive_json())["event"]
+    assert instantane["sante"]["resume"]["transitions"] == 1
+    await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    evenements, _ = await commande(ws, "lg_webos_tv/reglages")
+    [message] = [e for e in evenements if e["type"] == "sante"]
+    assert message["sante"]["resume"]["reprises"] == 1
+
+
+async def test_sante_reservee_aux_administrateurs(hass: HomeAssistant, fonction,
+                                                  hass_ws_client,
+                                                  hass_read_only_access_token):
+    client = await hass_ws_client(hass, hass_read_only_access_token)
+    await client.send_json({"id": 1, "type": "lg_webos_tv/luminosite_adaptative/sante"})
+    assert (await client.receive_json())["error"]["code"] == "unauthorized"
+
+
+async def test_proposition_de_courbe_appliquee(hass: HomeAssistant, fonction, ws):
+    """Douze heures entre 400 et 4 000 lx : la luminosité reste au maximum ;
+    la proposition (90ᵉ centile) appliquée par la commande `configurer`
+    fait disparaître le diagnostic."""
+    la = fonction.runtime_data.luminosite_adaptative
+    jour = la._accumulateur.stats.jour
+    accumulateur = Accumulateur(StatsJour(jour))
+    for i in range(721):
+        lux = 400 * 10 ** (i / 720)
+        accumulateur.echantillon(i * 60, jour, True, True, lux, lux)
+    la._jours["2000-01-01"] = StatsJour("2000-01-01")  # hors fenêtre, ignoré
+    la._accumulateur.stats.fusionner(accumulateur.stats)
+    la._actualiser_sante()
+    courbe = diagnostic_sante(fonction, "courbe")
+    assert courbe["niveau"] == "avertissement" and courbe["proposition"] == {"lux_max": 3200}
+
+    reponse = await ws("luminosite_adaptative/configurer", options=courbe["proposition"])
+    assert reponse["success"]
+    assert fonction.options["lux_max"] == 3200
+    assert diagnostic_sante(fonction, "courbe")["niveau"] == "ok"
+
+
+async def test_retroaction_mesuree_a_l_extinction(hass: HomeAssistant, fonction):
+    """Le capteur perd 12 lx quand l'écran s'éteint : mesuré, et noté au
+    journal pour vérifier à l'essai réel."""
+    la = fonction.runtime_data.luminosite_adaptative
+    tv = fonction.runtime_data.televiseur
+    await tv._changer_etat("deconnecte")
+    await regler_lux(hass, 8, secondes=40)
+    await regler_lux(hass, 8.1, secondes=150)
+    [evenement] = [e for e in la.journal if e["type"] == "retroaction"]
+    assert (evenement["sens"], evenement["avant"]) == ("extinction", 20)
+    # Seul rapport de la fenêtre [30 s ; 150 s] après l'extinction.
+    assert evenement["apres"] == 8.1
+    assert la._accumulateur.stats.tv == [["extinction", 20, 8.1]]
+    assert diagnostic_sante(fonction, "retroaction")["valeurs"]["evenements"] == 1
+
+
+async def test_pieces_et_diagnostics_ha(hass: HomeAssistant, fonction):
+    """Pièces lues dans les registres ; les diagnostics téléchargeables n'en
+    gardent que la différence, sans nom ni identifiant du capteur."""
+    zones = ar.async_get(hass)
+    bureau, salon = zones.async_create("Bureau"), zones.async_create("Salon")
+    # L'identifiant n'est libre au registre que sans état.
+    etat_lux = hass.states.get(LUX)
+    hass.states.async_remove(LUX)
+    er.async_get(hass).async_get_or_create(
+        "sensor", "essai", "lux-salon", suggested_object_id="salon_lux")
+    hass.states.async_set(LUX, etat_lux.state, etat_lux.attributes)
+    er.async_get(hass).async_update_entity(LUX, area_id=bureau.id)
+    appareils = dr.async_get(hass)
+    tv = appareils.async_get_device_by_identifier((DOMAIN, fonction.entry_id),
+                                                  fonction.entry_id)
+    appareils.async_update_device(tv.id, area_id=salon.id)
+    fonction.runtime_data.luminosite_adaptative._actualiser_sante()
+    pieces = diagnostic_sante(fonction, "pieces_differentes")
+    assert pieces["niveau"] == "info"
+    assert pieces["valeurs"] == {"capteur": "Bureau", "televiseur": "Salon"}
+
+    diag = await async_get_config_entry_diagnostics(hass, fonction)
+    bloc = diag["luminosite_adaptative"]
+    assert bloc["etat"] == "active" and CONF_CAPTEUR_LUX not in bloc["options"]
+    assert bloc["statistiques"]["transitions"] == 1
+    [pieces] = [d for d in bloc["diagnostics"] if d["id"] == "pieces_differentes"]
+    assert pieces["valeurs"] == {"differentes": True}
+    texte = json.dumps(diag)
+    assert "salon_lux" not in texte and "Bureau" not in texte and "Salon" not in texte
+
+
+@pytest.mark.parametrize("options_entree", [{}])
+async def test_diagnostics_ha_sans_fonction(hass: HomeAssistant, installe):
+    diag = await async_get_config_entry_diagnostics(hass, installe)
+    assert diag["luminosite_adaptative"] is None

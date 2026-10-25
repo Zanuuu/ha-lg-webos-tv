@@ -37,8 +37,9 @@ dans la barre latérale.
   - événement « Réglage modifié sur le téléviseur » quand un réglage est
     changé à la télécommande, pour qu'une automatisation cède la main.
 - **Luminosité adaptative** : la luminosité des pixels OLED suit un capteur
-  de lumière ambiante, en transitions douces, et cède la main à tout
-  réglage manuel.
+  de lumière ambiante, en transitions douces, cède la main à tout
+  réglage manuel, et dit ce qui gagnerait à être changé dans
+  l'installation (capteur, emplacement, courbe).
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
   régler sur la TV »), recherche d'un réglage (sans tenir compte des
@@ -222,6 +223,31 @@ depuis le démarrage de Home Assistant.
   « Luminosité adaptative », de la valeur de départ à celle d'arrivée), et
   son retour arrière restaure la valeur de départ.
 
+### Santé de l'installation
+
+La section **Santé de l'installation** de la page dit ce qui gagnerait à
+être changé, pourquoi, avec le chiffre qui le justifie, et quoi faire. Les
+mesures sont faites par la fonction elle-même, sur les 7 derniers jours ;
+certains contrôles restent « en observation » quelques jours.
+
+| Diagnostic | Quand | Proposition |
+|---|---|---|
+| Capteur trop lent | une mesure toutes les 5 min ou plus, téléviseur allumé | conseil selon l'intégration du capteur |
+| Capteur trop grossier | en pièce sombre, un pas du capteur dépasse 20 % de la mesure | relever « Pièce sombre » (un clic) |
+| Plafond du capteur | le capteur répète sa valeur maximale | gênant seulement sous « Pièce lumineuse » |
+| 0 lx dans le noir | le capteur affiche 0 la plupart du temps | information |
+| Courbe calée de travers | luminosité au maximum (ou au minimum) plus de 80 % du temps | « Pièce lumineuse » au 90ᵉ centile du lux observé (un clic) ; au minimum : information |
+| Allers-retours | 3 changements de sens en 10 min, 3 fois en 7 jours | seuils et lissage relevés (un clic) |
+| Le capteur voit l'écran | le lux change de plus de 30 % à l'allumage et à l'extinction du téléviseur, en pièce sombre (au moins 5 fois), ou suit les transitions ; emplacement « face à l'écran » | déplacer le capteur |
+| Corrections fréquentes | au moins 7 reprises en main en 7 jours | information (ambiance et correction moyenne) |
+| Écritures refusées | au moins 3 non confirmées, 10 % des transitions | information |
+| Pièces différentes | capteur et téléviseur rangés dans deux pièces de Home Assistant | information |
+
+Seuls le conflit avec l'économie d'énergie et le capteur figé ouvrent une
+alerte dans Réparations. Les statistiques, conservées 30 jours, se
+retrouvent dans les diagnostics téléchargeables (sans identifiant de
+capteur ni nom de pièce).
+
 ## Écriture sous webOS 11 et mode consultation
 
 Chaque modification est confirmée par la notification du téléviseur (ou,
@@ -246,7 +272,8 @@ en cascade d'autres réglages).
 
 ## Données
 
-L'historique et les presets sont stockés dans `<config>/lg_webos_tv/`
+L'historique, les statistiques de la luminosité adaptative (30 jours) et
+les presets sont stockés dans `<config>/lg_webos_tv/`
 (inclus dans les sauvegardes de Home Assistant) ; la clé d'appairage dans
 l'entrée de configuration.
 
