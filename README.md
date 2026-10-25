@@ -37,7 +37,8 @@ dans la barre latérale.
   - événement « Réglage modifié sur le téléviseur » quand un réglage est
     changé à la télécommande, pour qu'une automatisation cède la main.
 - **Luminosité adaptative** : la luminosité des pixels OLED suit un capteur
-  de lumière ambiante, et cède la main à tout réglage manuel.
+  de lumière ambiante, en transitions douces, et cède la main à tout
+  réglage manuel.
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
   régler sur la TV »), recherche d'un réglage (sans tenir compte des
@@ -153,13 +154,14 @@ de luminosité ambiante (lux) active la fonction et crée ses trois entités ;
 effacer le capteur la retire (l'intégration est alors rechargée).
 
 La page du panneau montre l'état en direct (lux lissé et dernière mesure,
-profil du capteur, luminosité calculée, luminosité du téléviseur, mode
-d'image), la **cause d'une pause** et son heure de fin, avec « Reprendre »
+profil du capteur, luminosité calculée, luminosité du téléviseur,
+transition en cours et sa progression, mode d'image), la **cause d'une
+pause** et son heure de fin, avec « Reprendre »
 ou « Pause 1 h » ; la **courbe** lux → luminosité, dont on déplace les deux
 points à la souris, au doigt ou au clavier ; l'**emplacement du capteur**
 avec un schéma de la pièce ; les autres réglages (capteur, durée de pause,
 modes laissés de côté, réglages avancés repliés), appliqués sans recharger
-l'intégration ; et un **journal** des 50 derniers événements (applications,
+l'intégration ; et un **journal** des 50 derniers événements (transitions,
 pauses, reprises, mesures écartées, conflits, erreurs), tenu en mémoire
 depuis le démarrage de Home Assistant.
 
@@ -170,10 +172,16 @@ depuis le démarrage de Home Assistant.
   monte que quand elle baisse), la luminosité n'est recalculée que si la
   lumière a changé d'au moins +10 % / −20 % depuis la dernière
   application, une mesure isolée plus de 4 fois plus forte ou plus faible
-  attend 8 s ou une deuxième mesure, et les mesures sont mises de côté 5 s
-  après chaque changement de luminosité (le capteur peut voir l'écran). Un
-  grand changement de lumière se suit donc en quelques pas espacés de 5 s.
-  Un changement plus petit que l'écart minimal (3 par défaut) est ignoré.
+  attend 8 s ou une deuxième mesure. Un changement de luminosité plus petit
+  que l'écart minimal (2 par défaut) est ignoré.
+- **Transitions douces** : la luminosité change point par point (4 points
+  par seconde par défaut, de 40 à 100 en 15 s), chaque pas confirmé par le
+  téléviseur avant le suivant, et suit le lux lissé jusqu'à la cible
+  exacte. Pendant la transition et 5 s après, les mesures sont mises de
+  côté (le capteur peut voir l'écran). Une transition s'arrête dès que la
+  luminosité est réglée ailleurs, que le mode d'image ou l'entrée change,
+  ou qu'une écriture n'est pas confirmée. Taille des pas et vitesse se
+  règlent dans les réglages avancés.
 - **Profil du capteur**, déduit de son intégration (ZHA, Zigbee2MQTT, Hue,
   Z-Wave JS…) puis de la fréquence observée de ses mesures : il n'ajuste
   que le lissage et la confirmation des sauts, jamais la courbe. Ces
@@ -208,10 +216,11 @@ depuis le démarrage de Home Assistant.
   fonction (`active`, `pause`, `mode_exclu`, `conflit_economie_energie`,
   `capteur_indisponible`, `capteur_fige`…), avec les attributs `lux`,
   `lux_filtre`, `cible`, `fin_pause`, `cause_pause` (origine du réglage qui
-  l'a mise en pause), `conflit`, `profil`, `emplacement` et
-  `derniere_erreur`. Ses
-  écritures apparaissent dans l'historique du panneau (origine
-  « Luminosité adaptative »), et peuvent y être annulées.
+  l'a mise en pause), `conflit`, `rampe` (départ de la transition en
+  cours), `profil`, `emplacement` et `derniere_erreur`. Chaque transition
+  apparaît **une seule fois** dans l'historique du panneau (origine
+  « Luminosité adaptative », de la valeur de départ à celle d'arrivée), et
+  son retour arrière restaure la valeur de départ.
 
 ## Écriture sous webOS 11 et mode consultation
 

@@ -20,9 +20,13 @@ RAISON_ECRITURE_IMPOSSIBLE = ("modification impossible : le téléviseur n'autor
 
 async def ecrire(tv: Televiseur, historique: Historique, entree_id: str | None,
                  categorie: str, cle: str, valeur: Any, origine: str,
-                 mode_attendu: str | None = None) -> dict:
+                 mode_attendu: str | None = None, historiser: bool = True) -> dict:
     """Écrit un réglage et historise l'écriture réussie avec son `origine`
     (historique.ORIGINES).
+
+    `historiser=False` : pas intermédiaire d'une rampe de la luminosité
+    adaptative ; seul son premier pas est historisé (`id_historique` dans le
+    résultat), puis complété de la valeur d'arrivée à la fin de la rampe.
 
     `mode_attendu`, s'il est fourni, exige que ce mode d'image soit actif
     pour les réglages qui en dépendent (`arbre.mode_dependant`) : utilisé par
@@ -50,20 +54,22 @@ async def ecrire(tv: Televiseur, historique: Historique, entree_id: str | None,
     if not resultat["confirme"]:
         return {**base, "ok": False, "raison": "valeur non confirmée après relecture",
                 **resultat}
-    await historique.enregistrer(entree_id, categorie, cle,
-                                 resultat["ancienne"], resultat["nouvelle"],
-                                 resultat["mode_image"], origine)
+    if historiser:
+        base["id_historique"] = await historique.enregistrer(
+            entree_id, categorie, cle, resultat["ancienne"], resultat["nouvelle"],
+            resultat["mode_image"], origine)
     return {**base, "ok": True, **resultat}
 
 
 async def ecrire_par_entree(tv: Televiseur, historique: Historique,
                             entree_id: str, valeur: Any, origine: str,
-                            mode_attendu: str | None = None) -> dict:
-    """Écriture directe (entité, action, panneau), validée par l'arbre :
-    bornes, choix."""
+                            mode_attendu: str | None = None,
+                            historiser: bool = True) -> dict:
+    """Écriture directe (entité, action, panneau, luminosité adaptative),
+    validée par l'arbre : bornes, choix."""
     categorie, cle, valeur = arbre.preparer_ecriture(entree_id, valeur)
     return await ecrire(tv, historique, entree_id, categorie, cle, valeur,
-                        origine, mode_attendu)
+                        origine, mode_attendu, historiser)
 
 
 async def annuler_ecriture(tv: Televiseur, historique: Historique, id_: int) -> dict:

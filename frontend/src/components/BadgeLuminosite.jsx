@@ -12,11 +12,15 @@ const ETATS_SIGNALES = [
 export default function BadgeLuminosite({ luminosite, lectureSeule, onReprendre, onDetails }) {
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState(null)
-  const { etat, cible, fin_pause: finPause } = luminosite
+  const { etat, cible, fin_pause: finPause, rampe } = luminosite
   let texte = ETATS_SIGNALES.includes(etat)
     ? `Luminosité adaptative : ${LIBELLES_ETAT[etat].toLowerCase()}`
     : null
-  if (etat === 'active' && cible !== null) texte += ` (cible ${cible})`
+  if (etat === 'active' && rampe && cible !== null) {
+    texte += ` (transition ${rampe.depart ?? '?'} → ${cible})`
+  } else if (etat === 'active' && cible !== null) {
+    texte += ` (cible ${cible})`
+  }
   if (etat === 'pause' && finPause) texte += ` jusqu'à ${heure(finPause)}`
 
   async function reprendre() {

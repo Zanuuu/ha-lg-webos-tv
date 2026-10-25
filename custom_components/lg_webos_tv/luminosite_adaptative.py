@@ -19,14 +19,18 @@ téléviseur les attribue tous à notre client). Ici :
 - le lux est filtré, avec hystérésis, confirmation des sauts et gel après
   nos écritures (signal_lux.py) ; un capteur figé ou une fonction native du
   téléviseur qui règle déjà la luminosité (économie d'énergie, mode Éco)
-  arrêtent les écritures et ouvrent une Réparation.
+  arrêtent les écritures et ouvrent une Réparation ;
+- une transition se fait en rampe (rampe.py) : petits pas cadencés, chacun
+  confirmé par le téléviseur avant le suivant, qui suivent la cible lissée
+  jusqu'à son arrivée. Une seule entrée d'historique par rampe (départ →
+  arrivée) ; mesures mises de côté pendant la rampe et le gel qui suit.
 """
 
 import logging
 import math
 from collections import deque
 from collections.abc import Callable
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -46,11 +50,13 @@ from .const import (CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
                     CONF_HYSTERESIS_DESCENTE, CONF_HYSTERESIS_MONTEE,
                     CONF_LISSAGE_DESCENTE, CONF_LISSAGE_MONTEE,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
-                    CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN, DOMAIN,
-                    EMPLACEMENTS, MODES_HDR, OPTIONS_AVANCEES,
-                    OPTIONS_LUMINOSITE_DEFAUT)
+                    CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
+                    CONF_RAMPE_DEBIT, CONF_RAMPE_PAS, DOMAIN,
+                    ECART_MINIMAL_DEFAUT, EMPLACEMENTS, MODES_HDR,
+                    OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from .entite import descriptions
-from .signal_lux import Cadence, SignalLux, constantes, profil
+from .rampe import Rampe, parametres
+from .signal_lux import REEVALUATION_S, Cadence, SignalLux, constantes, profil
 
 log = logging.getLogger(__name__)
 
@@ -92,15 +98,16 @@ PROBLEME_FIGE = "capteur_fige"
 
 # Bornes des options numériques, communes au formulaire des options et au
 # panneau. Le téléviseur n'accepte que des entiers pour la luminosité.
-# Options avancées en secondes et en pourcentage.
+# Options avancées en secondes et en pourcentage ; rampe en points et en
+# points par seconde.
 BORNES = {CONF_LUX_MIN: (1, 1000), CONF_LUX_MAX: (2, 100000),
           CONF_LUMINOSITE_MIN: (0, 100), CONF_LUMINOSITE_MAX: (0, 100),
           CONF_ECART_MINIMAL: (1, 20), CONF_PAUSE_MIN: (5, 720),
           CONF_LISSAGE_MONTEE: (0, 120), CONF_LISSAGE_DESCENTE: (0, 300),
           CONF_HYSTERESIS_MONTEE: (0, 100), CONF_HYSTERESIS_DESCENTE: (0, 90),
-          CONF_CONFIRMATION_SAUT: (0, 60), CONF_GEL_ECRITURE: (0, 120)}
-ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_ECART_MINIMAL, CONF_PAUSE_MIN,
-           *OPTIONS_AVANCEES)
+          CONF_CONFIRMATION_SAUT: (0, 60), CONF_GEL_ECRITURE: (0, 120),
+          CONF_RAMPE_PAS: (1, 10), CONF_RAMPE_DEBIT: (1, 20)}
+ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_PAUSE_MIN, *OPTIONS_AVANCEES)
 
 # Par ordre de priorité (voir LuminositeAdaptative.etat).
 ETATS = ["desactivee", "televiseur_deconnecte", "consultation", "pause",
@@ -183,6 +190,19 @@ def _horloge() -> float:
     return dt_util.utcnow().timestamp()
 
 
+@dataclass
+class _Transition:
+    """Rampe en cours et ce qu'il faut pour l'historiser à sa fin."""
+
+    rampe: Rampe
+    mode: str | None  # mode d'image de départ : garde de chaque pas
+    premier: dict | None = None  # résultat du premier pas confirmé
+    dernier: dict | None = None  # résultat du dernier pas confirmé
+    demandee: int | None = None  # valeur du dernier pas envoyé
+    annuler_minuterie: Callable[[], None] | None = None
+    tache: Any = None
+
+
 class LuminositeAdaptative:
     def __init__(self, hass: HomeAssistant, donnees, options: dict) -> None:
         self.hass = hass
@@ -202,6 +222,7 @@ class LuminositeAdaptative:
         self.cause_pause: dict[str, str] | None = None
         self.journal: deque[dict] = deque(maxlen=TAILLE_JOURNAL)
         self._ecouteurs_journal: list[Callable[[dict], None]] = []
+        self._transition: _Transition | None = None
         # Le téléviseur a été vu injoignable pendant la pause : sa prochaine
         # connexion est un rallumage, qui lève la pause. Un simple
         # redémarrage de Home Assistant (connexion sans déconnexion vue) la
@@ -219,6 +240,9 @@ class LuminositeAdaptative:
         self._cible_signalee: int | None = None
 
         self._ecouteurs: list[Callable[[], None]] = []
+        # Seulement le détail (page du panneau) : prévenus à chaque pas d'une
+        # rampe, sans réécrire l'état des entités.
+        self._ecouteurs_details: list[Callable[[], None]] = []
         self._desabonnements: list[Callable[[], None]] = []
         self._annuler_application: Callable[[], None] | None = None
         self._echeance: datetime | None = None
@@ -269,6 +293,11 @@ class LuminositeAdaptative:
             self._annuler_fin_pause = None
         if self._tache is not None:
             self._tache.cancel()
+        if self._transition is not None:
+            # Les pas déjà faits restent historisés.
+            if self._transition.tache is not None:
+                self._transition.tache.cancel()
+            self._finir_rampe("arret")
         ir.async_delete_issue(self.hass, DOMAIN, PROBLEME_CONFLIT)
         ir.async_delete_issue(self.hass, DOMAIN, PROBLEME_FIGE)
 
@@ -277,10 +306,21 @@ class LuminositeAdaptative:
         self._ecouteurs.append(ecouteur)
         return lambda: self._ecouteurs.remove(ecouteur)
 
+    def ecouter_details(self, ecouteur: Callable[[], None]) -> Callable[[], None]:
+        """Abonne la page du panneau aux changements du détail seul
+        (progression d'une rampe)."""
+        self._ecouteurs_details.append(ecouteur)
+        return lambda: self._ecouteurs_details.remove(ecouteur)
+
     def _prevenir(self) -> None:
         self._cible_signalee = self.cible
         self._synchroniser_reparations()
         for ecouteur in list(self._ecouteurs):
+            ecouteur()
+        self._prevenir_details()
+
+    def _prevenir_details(self) -> None:
+        for ecouteur in list(self._ecouteurs_details):
             ecouteur()
 
     def ecouter_journal(self, ecouteur: Callable[[dict], None]) -> Callable[[], None]:
@@ -317,6 +357,30 @@ class LuminositeAdaptative:
     def cible(self) -> int | None:
         lux = self.lux_filtre
         return None if lux is None else calculer_cible(lux, self.options)
+
+    @property
+    def rampe(self) -> Rampe | None:
+        return self._transition.rampe if self._transition is not None else None
+
+    @property
+    def cible_finale(self) -> int | None:
+        """Cible une fois le filtre arrivé sur la dernière mesure retenue."""
+        if self.lux is None:
+            return None
+        lux = self._signal.lux_vise(_horloge())
+        return None if lux is None else calculer_cible(lux, self.options)
+
+    @property
+    def ecart_minimal(self) -> int:
+        ecart = self.options.get(CONF_ECART_MINIMAL)
+        return ECART_MINIMAL_DEFAUT if ecart is None else ecart
+
+    def _actuelle(self) -> float | None:
+        """Luminosité notifiée ou relue par le téléviseur."""
+        try:
+            return float(self._tv.etat.get(CATEGORIE, {}).get(CLE))
+        except (TypeError, ValueError):
+            return None
 
     # ----------------------------------------------------------------- état
     def mode_exclu(self, mode: str | None) -> bool:
@@ -508,6 +572,10 @@ class LuminositeAdaptative:
             self._prevenir()
         elif evenement["type"] == "changement" and evenement["categorie"] == CATEGORIE:
             reglages, origine = evenement["reglages"], evenement["origine"]
+            if CLE in reglages and origine != "application" and self.rampe is not None:
+                # La valeur n'est plus celle que la rampe a confirmée.
+                self.rampe.interrompre("reprise_en_main" if origine in ORIGINES_EXTERIEURES
+                                       else "changement_exterieur")
             if CLE in reglages and origine in ORIGINES_EXTERIEURES:
                 self._reprise_en_main(self._tv.mode_image, origine)
             elif origine != "application" and (CLE in reglages or "pictureMode" in reglages):
@@ -524,7 +592,7 @@ class LuminositeAdaptative:
         if (ecriture["categorie"], ecriture["cle"]) == (CATEGORIE, CLE):
             self._reprise_en_main(ecriture["mode_image"], ecriture["origine"])
         elif ecriture["origine"] in ORIGINES_LOT:
-            self._reappliquer(DELAI_APRES_LOT_S)
+            self._reappliquer(DELAI_APRES_LOT_S, ecriture["origine"])
 
     # ----------------------------------------------------------------- pause
     def _reprise_en_main(self, mode: str | None, origine: str) -> None:
@@ -568,10 +636,13 @@ class LuminositeAdaptative:
         self._eteint_pendant_pause = False
 
     # ----------------------------------------------------------- application
-    def _reappliquer(self, delai_s: float) -> None:
+    def _reappliquer(self, delai_s: float, raison: str = "changement_exterieur") -> None:
         """La luminosité du téléviseur a pu changer sans que le lux bouge
         (mode, entrée, rallumage, preset) : prochaine évaluation sans
-        condition d'hystérésis."""
+        condition d'hystérésis. Une rampe en cours s'arrête : son départ ne
+        vaut plus, ou un lot écrit ses propres réglages."""
+        if self.rampe is not None:
+            self.rampe.interrompre(raison)
         self._signal.oublier_reference()
         self._planifier(delai_s)
 
@@ -598,6 +669,9 @@ class LuminositeAdaptative:
 
     def _lancer(self) -> None:
         self._annuler_planification()
+        if self.rampe is not None:
+            # La rampe suit déjà la cible ; une évaluation suit sa fin.
+            return
         self._tache = self.hass.async_create_background_task(
             self._evaluer(), f"{DOMAIN} luminosité adaptative")
 
@@ -610,7 +684,10 @@ class LuminositeAdaptative:
             if self._signal.gele(instant):
                 echeance = self._signal.fin_gel
             else:
-                await self._appliquer()
+                self._appliquer()
+                if self.rampe is not None:
+                    # Elle planifiera l'évaluation suivante à sa fin.
+                    return
         # Le filtre avance encore, un saut attend sa confirmation, ou une
         # mesure attend la fin du gel : nouvelle évaluation sans mesure.
         instant = _horloge()
@@ -623,14 +700,11 @@ class LuminositeAdaptative:
         if not echeances or self.cible != self._cible_signalee:
             self._prevenir()
 
-    async def _appliquer(self) -> None:
+    def _appliquer(self) -> None:
         lux = self._signal.lux_filtre(_horloge())
         cible = calculer_cible(lux, self.options)
-        try:
-            actuelle = float(self._tv.etat.get(CATEGORIE, {}).get(CLE))
-        except (TypeError, ValueError):
-            actuelle = None
-        if actuelle is not None and abs(cible - actuelle) < self.options[CONF_ECART_MINIMAL]:
+        actuelle = self._actuelle()
+        if actuelle is not None and abs(cible - actuelle) < self.ecart_minimal:
             # Le téléviseur est déjà à la bonne valeur : ce lux devient la
             # référence de l'hystérésis, mais seulement filtre arrivé. En
             # pleine transition, l'avancer laisserait la luminosité s'arrêter
@@ -639,26 +713,153 @@ class LuminositeAdaptative:
             if self._signal.converge(_horloge()):
                 self._signal.noter_reference(lux)
             return
-        try:
-            # Garde de mode : si le mode change entre le calcul et
-            # l'écriture, celle-ci est refusée et la cascade du nouveau mode
-            # relance le calcul.
-            resultat = await self._ecritures.demander(
-                ID_OLED, cible, ORIGINE, mode_attendu=self._tv.mode_image)
-        except Exception as exc:  # noqa: BLE001 — exposé dans l'état
-            self.derniere_erreur = str(exc)
-        else:
-            self.derniere_erreur = None if resultat["ok"] else resultat["raison"]
-        if self.derniere_erreur:
-            log.info("Luminosité adaptative : écriture de %s impossible : %s",
-                     cible, self.derniere_erreur)
-            self._noter("erreur", cible=cible, raison=self.derniere_erreur)
-        else:
-            self._signal.geler(_horloge())
-            self._signal.noter_reference(lux)
-            self._noter("application", lux=round(lux, 1), lux_brut=self.lux,
-                        cible=cible, ancienne=actuelle)
+        self._demarrer_rampe(None if actuelle is None else round(actuelle))
+
+    # --------------------------------------------------------------- rampe
+    # Machine à états sur les minuteries de Home Assistant, comme
+    # l'évaluation : chaque pas est une tâche courte, l'attente entre deux
+    # pas une minuterie. Une tâche qui dormirait toute la rampe retiendrait
+    # l'arrêt de Home Assistant.
+
+    def _demarrer_rampe(self, depart: int | None) -> None:
+        self._transition = _Transition(
+            Rampe(parametres(self.options), depart, _horloge()), self._tv.mode_image)
+        self._signal.suspendre(_horloge())
         self._prevenir()
+        self._avancer_rampe()
+
+    def _arret_rampe(self, transition: _Transition) -> str | None:
+        """Raison d'arrêter la rampe avant son prochain pas, ou None."""
+        etat = self.etat
+        if etat == "pause":
+            origine = self.cause_pause["origine"] if self.cause_pause else None
+            return PAUSE_MANUELLE if origine == PAUSE_MANUELLE else "reprise_en_main"
+        # Garde de mode : la luminosité est propre au mode de départ.
+        if self._tv.mode_image != transition.mode:
+            return "mode"
+        if transition.rampe.interruption is not None:
+            return transition.rampe.interruption
+        if etat != "active":
+            return etat
+        # Une écriture de l'utilisateur attend son tour : le pas suivant la
+        # coalescerait et l'effacerait. Elle sera historisée, puis mettra la
+        # fonction en pause.
+        if self._ecritures.origine_en_attente(ID_OLED) not in (None, ORIGINE):
+            return "reprise_en_main"
+        return None
+
+    @callback
+    def _avancer_rampe(self, _maintenant=None) -> None:
+        """Prochain pas vers la cible du moment : écrit tout de suite, ou à
+        son heure ; fin de la rampe à l'arrivée du filtre ou sur un arrêt."""
+        transition = self._transition
+        if transition is None:
+            return
+        transition.annuler_minuterie = None
+        if (fin := self._arret_rampe(transition)) is not None:
+            self._finir_rampe(fin)
+            return
+        rampe = transition.rampe
+        instant = _horloge()
+        cible = self.cible
+        if cible != self._cible_signalee:
+            self._prevenir()
+        pas = rampe.prochain_pas(instant, cible)
+        if pas is None:
+            if rampe.arrivee(cible, self.cible_finale):
+                self._finir_rampe("arrivee")
+            else:
+                # Téléviseur sur la cible, filtre pas encore arrivé : la
+                # cible bougera encore.
+                self._attendre_rampe(instant + min(rampe.parametres.intervalle_s,
+                                                   REEVALUATION_S))
+            return
+        echeance, valeur = pas
+        if echeance > instant:
+            # Puis tout revérifier : la cible ou l'état ont pu changer.
+            self._attendre_rampe(echeance)
+            return
+        rampe.envoyer(instant, valeur)
+        transition.demandee = valeur
+        transition.tache = self.hass.async_create_background_task(
+            self._ecrire_pas(transition, valeur), f"{DOMAIN} rampe de luminosité")
+
+    def _attendre_rampe(self, instant: float) -> None:
+        self._transition.annuler_minuterie = async_track_point_in_utc_time(
+            self.hass, self._avancer_rampe, dt_util.utc_from_timestamp(instant))
+
+    async def _ecrire_pas(self, transition: _Transition, valeur: int) -> None:
+        try:
+            # Le premier pas est historisé à sa place parmi les autres
+            # écritures (retour à un instant donné), les suivants non.
+            resultat = await self._ecritures.demander(
+                ID_OLED, valeur, ORIGINE, mode_attendu=transition.mode,
+                historiser=transition.premier is None)
+        except Exception as exc:  # noqa: BLE001 — exposé dans l'état
+            resultat = {"ok": False, "raison": str(exc)}
+        transition.tache = None
+        if self._transition is not transition:
+            return
+        if not resultat["ok"]:
+            # Une reprise en main ou un changement de mode survenus pendant
+            # l'écriture l'expliquent mieux qu'un échec.
+            fin = self._arret_rampe(transition) or "non_confirmee"
+            if fin == "non_confirmee":
+                self.derniere_erreur = resultat["raison"]
+                log.info("Luminosité adaptative : écriture de %s impossible : %s",
+                         valeur, self.derniere_erreur)
+            self._finir_rampe(fin)
+            return
+        self.derniere_erreur = None
+        transition.premier = transition.premier or resultat
+        transition.dernier = resultat
+        # La valeur relue sur le téléviseur, jamais celle demandée.
+        transition.rampe.confirmer(round(float(resultat["nouvelle"])))
+        self._prevenir_details()
+        self._avancer_rampe()
+
+    def _finir_rampe(self, fin: str) -> None:
+        transition, self._transition = self._transition, None
+        if transition.annuler_minuterie is not None:
+            transition.annuler_minuterie()
+        instant = _horloge()
+        self._signal.geler(instant)
+        lux = self._signal.lux_filtre(instant) if self.lux is not None else None
+        if fin == "arrivee" and lux is not None:
+            self._signal.noter_reference(lux)
+        else:
+            # Interrompue : prochaine évaluation sans condition
+            # d'hystérésis.
+            self._signal.oublier_reference()
+        rampe = transition.rampe
+        if transition.dernier is not None:
+            self._noter("application", lux=None if lux is None else round(lux, 1),
+                        lux_brut=self.lux, ancienne=rampe.depart, cible=rampe.valeur,
+                        pas=rampe.pas_confirmes, duree_s=round(rampe.duree(instant), 1),
+                        fin=fin)
+            if rampe.pas_confirmes > 1:
+                self.hass.async_create_background_task(
+                    self._historiser_rampe(transition), f"{DOMAIN} historique de la rampe")
+        elif fin == "non_confirmee":
+            self._noter("erreur", cible=transition.demandee, raison=self.derniere_erreur)
+        if fin != "arret":
+            # Évaluation après le gel : mesure mise de côté, filtre qui
+            # avance encore, ou valeur changée par le téléviseur.
+            self._planifier(max(self._signal.fin_gel - instant, 0.1))
+            self._prevenir()
+
+    async def _historiser_rampe(self, transition: _Transition) -> None:
+        """Une seule entrée pour la rampe, celle du premier pas, complétée de
+        la nouvelle valeur du dernier : le retour arrière restaure le
+        départ."""
+        await self._historique.completer(transition.premier["id_historique"],
+                                         transition.dernier["nouvelle"])
+
+    def _resume_rampe(self) -> dict | None:
+        if self.rampe is None:
+            return None
+        return {"depart": self.rampe.depart,
+                "debut": dt_util.utc_from_timestamp(self.rampe.debut).isoformat()}
 
     def resume(self) -> dict[str, Any]:
         """État transmis au panneau. Sans le lux : il change à chaque mesure
@@ -670,22 +871,23 @@ class LuminositeAdaptative:
             "fin_pause": self.fin_pause.isoformat() if self.fin_pause else None,
             "cause_pause": self.cause_pause,
             "conflit": self.conflit,
+            "rampe": self._resume_rampe(),
         }
 
     def details(self) -> dict[str, Any]:
         """État complet pour la page du panneau, suivi seulement pendant
         qu'elle est ouverte."""
-        try:
-            actuelle = float(self._tv.etat.get(CATEGORIE, {}).get(CLE))
-        except (TypeError, ValueError):
-            actuelle = None
         lux_filtre = self.lux_filtre
         dernier = self._cadence.dernier
+        rampe = self._resume_rampe()
+        if rampe is not None:
+            rampe["pas"] = self.rampe.pas_confirmes
         return {
             **self.resume(),
+            "rampe": rampe,
             "lux": self.lux,
             "lux_filtre": None if lux_filtre is None else round(lux_filtre, 1),
-            "actuelle": actuelle,
+            "actuelle": self._actuelle(),
             "mode_image": self._tv.mode_image,
             "mode_exclu": self.mode_exclu(self._tv.mode_image),
             "economie_energie": self.economie_energie,
@@ -693,6 +895,9 @@ class LuminositeAdaptative:
             "profil": {"nom": self.profil, "plateforme": self._plateforme,
                        "intervalle_s": self._cadence.intervalle()},
             "constantes": asdict(self._signal.constantes),
+            # Valeurs effectives des options avancées laissées vides.
+            "ecart_minimal": self.ecart_minimal,
+            "parametres_rampe": asdict(parametres(self.options)),
             "emplacement": self.options[CONF_EMPLACEMENT],
             "derniere_mesure": (dt_util.utc_from_timestamp(dernier).isoformat()
                                 if dernier is not None else None),
@@ -708,6 +913,7 @@ class LuminositeAdaptative:
             "cause_pause": self.cause_pause["origine"] if self.cause_pause else None,
             "mode_image": self._tv.mode_image,
             "conflit": self.conflit,
+            "rampe": self._resume_rampe(),
             "profil": self.profil,
             "emplacement": self.options[CONF_EMPLACEMENT],
             "derniere_erreur": self.derniere_erreur,

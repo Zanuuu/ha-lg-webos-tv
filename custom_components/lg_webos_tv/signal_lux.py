@@ -1,6 +1,6 @@
 """Signal du capteur de lumière ambiante : filtrage, hystérésis, confirmation
 des sauts, gel après nos écritures, cadence des mesures et profils de
-capteur (docs/etude-luminosite-adaptative.md, § 3.1 et 3.2, lot 1).
+capteur (docs/etude-luminosite-adaptative.md, § 3.1 et 3.2, lots 1 et 2).
 
 Logique seule, sans Home Assistant : les instants (secondes, flottants) sont
 fournis par l'appelant, ce qui la rend testable par séries horodatées.
@@ -198,9 +198,15 @@ class SignalLux:
         self._differee = None
         self._reference = None
 
+    def suspendre(self, t: float) -> None:
+        """Rampe en cours : mesures mises de côté jusqu'à `geler`, appelé à
+        sa fin. L'écran change pendant toute la rampe."""
+        self._avancer(t)
+        self._fin_gel = math.inf
+
     def geler(self, t: float) -> None:
-        """Après une de nos écritures : le capteur peut voir l'écran changer,
-        avec son propre délai de mesure."""
+        """Après nos écritures (fin d'une rampe) : le capteur peut voir
+        l'écran changer, avec son propre délai de mesure."""
         self._avancer(t)
         self._fin_gel = t + self.constantes.gel_s
 
@@ -221,6 +227,11 @@ class SignalLux:
         self._avancer(t)
         y = self._y(t)
         return None if y is None else math.exp(y)
+
+    def lux_vise(self, t: float) -> float | None:
+        """Lux vers lequel le filtre avance : la dernière mesure retenue."""
+        self._avancer(t)
+        return None if self._x is None else math.exp(self._x)
 
     def converge(self, t: float) -> bool:
         y = self._y(t)

@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.6.0 — 2026-10-25
+
+Luminosité adaptative : transitions douces (lot 2 de
+`docs/etude-luminosite-adaptative.md`).
+
+**Changements de comportement** :
+
+- Une transition se fait en **rampe** : la luminosité change point par
+  point (4 points par seconde par défaut : de 40 à 100 en 15 s), chaque
+  pas confirmé par le téléviseur avant le suivant, et suit le lux lissé
+  jusqu'à la cible exacte (en 2.5.0 : 3 à 5 écritures espacées de 5 s,
+  qui pouvaient s'arrêter 2 points avant la cible). En descente, la fin de
+  la transition suit le lissage (≈ 1 min pour une pièce qui s'assombrit
+  franchement), par pas d'un point.
+- **Une seule entrée d'historique par transition** (de la valeur de départ
+  à celle d'arrivée) au lieu d'une par écriture ; son retour arrière
+  restaure la valeur de départ. Une seule ligne au journal de la fonction.
+- Les mesures du capteur sont mises de côté **pendant toute la
+  transition**, puis 5 s après (20 s pour un capteur face à l'écran).
+- **Écart minimal abaissé de 3 à 2.** Une installation qui avait 3 (la
+  valeur par défaut, enregistrée par le formulaire même sans y toucher)
+  passe au nouveau défaut ; toute autre valeur est conservée. Le champ est
+  désormais facultatif : vide, il suit la valeur par défaut.
+
+Détails :
+
+- Une transition s'arrête sur une reprise en main (télécommande, Home
+  Assistant, panneau, preset), un changement de mode d'image ou d'entrée,
+  ou une écriture non confirmée ; elle ne remplace jamais une écriture de
+  l'utilisateur en attente dans la file.
+- Réglages avancés : **taille des pas** (1 point par défaut) et **vitesse**
+  (4 points par seconde par défaut), dans le formulaire des options et
+  dans le panneau.
+- Panneau : transition en cours (départ, cible, progression d'après la
+  valeur du téléviseur) sur la page et sur la ligne des pixels OLED ;
+  journal « Luminosité 60 → 100 en 15 s (60 pas) » avec la cause d'une
+  interruption.
+- Attribut `rampe` de l'état de la fonction.
+- Téléviseur : la notification tardive d'une de nos écritures reste
+  reconnue même après une écriture plus récente de la même clé (elle
+  aurait pu, pendant une rampe, être prise pour une autre application et
+  mettre la fonction en pause).
+- Script `outils/scripts/mesure_rampe.py` pour l'essai réel (débit,
+  latence par pas, écritures non confirmées, déconnexions).
+
 ## 2.5.0 — 2026-10-25
 
 Luminosité adaptative : signal fiable et cohabitation avec le téléviseur

@@ -63,7 +63,7 @@
         "sections": {
           "avance": {
             "name": "Réglages avancés",
-            "description": "Laissés vides, ils suivent le profil du capteur (déduit de son intégration et de la fréquence de ses mesures) et son emplacement.",
+            "description": "Laissés vides, ils suivent leur valeur par défaut, le profil du capteur (déduit de son intégration et de la fréquence de ses mesures) et son emplacement.",
             "data": {
               "ecart_minimal": "Écart minimal",
               "lissage_montee_s": "Lissage à la hausse",
@@ -71,16 +71,20 @@
               "hysteresis_montee": "Seuil à la hausse",
               "hysteresis_descente": "Seuil à la baisse",
               "confirmation_saut_s": "Confirmation des sauts",
-              "gel_ecriture_s": "Pause de mesure après écriture"
+              "gel_ecriture_s": "Pause de mesure après écriture",
+              "rampe_pas": "Taille des pas",
+              "rampe_debit": "Vitesse de la transition"
             },
             "data_description": {
-              "ecart_minimal": "Changement de luminosité ignoré s'il est plus petit.",
+              "ecart_minimal": "Changement de luminosité ignoré s'il est plus petit (2 par défaut).",
               "lissage_montee_s": "Constante de temps du lissage quand la lumière augmente (0 : aucun lissage).",
               "lissage_descente_s": "Constante de temps du lissage quand la lumière baisse ; plus lente qu'à la hausse, pour ne pas suivre une ombre passagère.",
               "hysteresis_montee": "Hausse de la lumière, par rapport à la dernière application, qui déclenche un nouveau calcul.",
               "hysteresis_descente": "Baisse de la lumière, par rapport à la dernière application, qui déclenche un nouveau calcul.",
               "confirmation_saut_s": "Une mesure plus de 4 fois plus forte ou plus faible attend ce délai, ou une deuxième mesure, avant d'être prise en compte (0 : aucune attente).",
-              "gel_ecriture_s": "Après chaque changement de luminosité, les mesures sont mises de côté pendant ce délai : le capteur peut voir l'écran changer."
+              "gel_ecriture_s": "Pendant une transition et ce délai après, les mesures sont mises de côté : le capteur peut voir l'écran changer.",
+              "rampe_pas": "Points de luminosité par écriture pendant une transition (1 par défaut).",
+              "rampe_debit": "Points de luminosité par seconde pendant une transition (4 par défaut : de 40 à 100 en 15 s)."
             }
           }
         }

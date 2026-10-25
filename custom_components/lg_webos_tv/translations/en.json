@@ -63,7 +63,7 @@
         "sections": {
           "avance": {
             "name": "Advanced settings",
-            "description": "Left empty, they follow the sensor profile (derived from its integration and how often it reports) and its location.",
+            "description": "Left empty, they follow their default value, the sensor profile (derived from its integration and how often it reports) and its location.",
             "data": {
               "ecart_minimal": "Minimum change",
               "lissage_montee_s": "Smoothing when brighter",
@@ -71,16 +71,20 @@
               "hysteresis_montee": "Brighter threshold",
               "hysteresis_descente": "Darker threshold",
               "confirmation_saut_s": "Jump confirmation",
-              "gel_ecriture_s": "Reading pause after a write"
+              "gel_ecriture_s": "Reading pause after a write",
+              "rampe_pas": "Step size",
+              "rampe_debit": "Transition speed"
             },
             "data_description": {
-              "ecart_minimal": "Brightness changes smaller than this are ignored.",
+              "ecart_minimal": "Brightness changes smaller than this are ignored (default 2).",
               "lissage_montee_s": "Smoothing time constant when light increases (0: no smoothing).",
               "lissage_descente_s": "Smoothing time constant when light decreases; slower than when brighter, so a passing shadow is not followed.",
               "hysteresis_montee": "Light increase, relative to the last application, that triggers a new calculation.",
               "hysteresis_descente": "Light decrease, relative to the last application, that triggers a new calculation.",
               "confirmation_saut_s": "A reading more than 4 times higher or lower waits this long, or for a second reading, before being used (0: no wait).",
-              "gel_ecriture_s": "After each brightness change, readings are set aside for this long: the sensor may see the screen change."
+              "gel_ecriture_s": "During a transition and for this long afterwards, readings are set aside: the sensor may see the screen change.",
+              "rampe_pas": "Brightness points per write during a transition (default 1).",
+              "rampe_debit": "Brightness points per second during a transition (default 4: from 40 to 100 in 15 s)."
             }
           }
         }

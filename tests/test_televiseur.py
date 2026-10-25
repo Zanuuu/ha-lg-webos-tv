@@ -313,6 +313,27 @@ async def test_notification_tardive_de_notre_ecriture(televiseur, faux_client):
     await televiseur.arreter()
 
 
+async def test_notification_tardive_d_un_pas_precedent(televiseur, faux_client):
+    """Rampe sur la voie directe : la notification du pas 61 arrive après la
+    fin du pas 62. Elle reste reconnue comme nôtre : sinon, prise pour une
+    autre application, elle mettrait la luminosité adaptative en pause."""
+    await televiseur.demarrer()
+    assert await attendre(lambda: televiseur.etat_connexion == "connecte")
+    rappel = faux_client.rappels["picture"]
+
+    async def muet(charge):  # notifications retenues
+        pass
+
+    faux_client.rappels["picture"] = muet
+    for valeur in (61, 62):
+        assert (await televiseur.ecrire("picture", "backlight", valeur))["confirme"]
+    faux_client.rappels["picture"] = rappel
+    evenements = await origines_pendant(televiseur, lambda: faux_client.notifier(
+        "picture", {"backlight": "61"}, caller="com.webos.service.apiadapter"))
+    assert evenements == [("application", {"backlight": 61})]
+    await televiseur.arreter()
+
+
 async def test_stockage_de_cle_accepte_par_bscpylgtv():
     """bscpylgtv vérifie le stockage fourni par isinstance(StorageProto) :
     construit avec le vrai client (sans connexion), il doit être accepté."""

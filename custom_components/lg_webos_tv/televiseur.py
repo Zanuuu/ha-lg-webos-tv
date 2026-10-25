@@ -200,8 +200,10 @@ class Televiseur:
         # Écritures en cours, en attente de leur notification : (catégorie,
         # clé) → [(valeur attendue, futur)].
         self._attentes: dict[tuple[str, str], list[tuple[Any, asyncio.Future]]] = {}
-        # Écritures récentes : (catégorie, clé) → (valeur en texte, échéance).
-        self._recentes: dict[tuple[str, str], tuple[str, float]] = {}
+        # Écritures récentes : (catégorie, clé) → {valeur en texte: échéance}.
+        # Toutes, pas seulement la dernière : pendant une rampe, la
+        # notification tardive d'un pas peut arriver après le pas suivant.
+        self._recentes: dict[tuple[str, str], dict[str, float]] = {}
 
     # ------------------------------------------------------------------ cycle
     async def _creer_client(self):
@@ -403,8 +405,8 @@ class Televiseur:
                 trouvee = True
                 if not futur.done():
                     futur.set_result(None)
-        recente = self._recentes.get((categorie, cle))
-        if recente and recente[0] == texte and recente[1] > time.monotonic():
+        echeance = self._recentes.get((categorie, cle), {}).get(texte)
+        if echeance is not None and echeance > time.monotonic():
             trouvee = True
         return trouvee
 
@@ -476,8 +478,12 @@ class Televiseur:
                 if not attentes:
                     del self._attentes[(categorie, cle)]
                 futur.cancel()
-                self._recentes[(categorie, cle)] = (
-                    str(valeur), time.monotonic() + MEMOIRE_ECRITURES_S)
+                maintenant = time.monotonic()
+                recentes = {texte: echeance for texte, echeance
+                            in self._recentes.get((categorie, cle), {}).items()
+                            if echeance > maintenant}
+                recentes[str(valeur)] = maintenant + MEMOIRE_ECRITURES_S
+                self._recentes[(categorie, cle)] = recentes
             return {
                 "ancienne": ancienne,
                 "nouvelle": relue,

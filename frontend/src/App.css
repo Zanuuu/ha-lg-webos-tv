@@ -765,6 +765,30 @@ select {
   font-size: 0.9rem;
 }
 
+.transition-luminosite progress {
+  flex: 1 1 10rem;
+  max-width: 20rem;
+  height: 0.5rem;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--piste);
+  overflow: hidden;
+}
+
+.transition-luminosite progress::-webkit-progress-bar {
+  background: var(--piste);
+}
+
+.transition-luminosite progress::-webkit-progress-value {
+  background: var(--allume);
+  transition: width var(--duree) linear;
+}
+
+.transition-luminosite progress::-moz-progress-bar {
+  background: var(--allume);
+}
+
 /* Plus large, la courbe prendrait toute la hauteur de l'écran. */
 .courbe-luminosite {
   max-width: 44rem;

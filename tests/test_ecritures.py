@@ -12,8 +12,9 @@ class EcritureLente:
         self.appels = []
         self.liberer = asyncio.Event()
 
-    async def __call__(self, entree_id, valeur, origine, mode_attendu):
+    async def __call__(self, entree_id, valeur, origine, mode_attendu, historiser):
         self.appels.append((entree_id, valeur))
+        self.historiser = historiser
         await self.liberer.wait()
         return {"ok": True, "entree_id": entree_id, "nouvelle": valeur}
 
@@ -43,7 +44,7 @@ async def test_entrees_differentes_dans_l_ordre():
 
 
 async def test_erreur_transmise_et_file_continue():
-    async def ecrire(entree_id, valeur, origine, mode_attendu):
+    async def ecrire(entree_id, valeur, origine, mode_attendu, historiser):
         if entree_id == "mauvaise":
             raise ValueError("invalide")
         return {"ok": True}
@@ -62,3 +63,34 @@ async def test_arreter_annule_les_demandes():
     await file.arreter()
     with pytest.raises(asyncio.CancelledError):
         await demande
+
+
+async def test_historiser_suit_la_derniere_demande():
+    """Un pas de rampe (non historisé) coalescé par une écriture de
+    l'utilisateur : celle-ci reste historisée."""
+    ecrire = EcritureLente()
+    file = FileEcritures(ecrire)
+    occupee = asyncio.create_task(file.demander("b", 1, "home_assistant"))
+    await asyncio.sleep(0)
+    pas = asyncio.create_task(file.demander("a", 50, "luminosite_adaptative",
+                                            historiser=False))
+    utilisateur = asyncio.create_task(file.demander("a", 30, "panneau"))
+    await asyncio.sleep(0)
+    ecrire.liberer.set()
+    await asyncio.gather(occupee, pas, utilisateur)
+    assert ecrire.appels == [("b", 1), ("a", 30)]
+    assert ecrire.historiser is True
+
+
+async def test_origine_en_attente():
+    ecrire = EcritureLente()
+    file = FileEcritures(ecrire)
+    occupee = asyncio.create_task(file.demander("b", 1, "home_assistant"))
+    await asyncio.sleep(0)
+    assert file.origine_en_attente("a") is None
+    attente = asyncio.create_task(file.demander("a", 30, "panneau"))
+    await asyncio.sleep(0)
+    assert file.origine_en_attente("a") == "panneau"
+    ecrire.liberer.set()
+    await asyncio.gather(occupee, attente)
+    assert file.origine_en_attente("a") is None

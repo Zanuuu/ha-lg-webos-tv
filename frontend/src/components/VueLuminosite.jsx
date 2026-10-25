@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import * as api from '../api.js'
 import { useLuminositeAdaptative } from '../hooks/useLuminositeAdaptative.js'
 import {
-  BORNES, EMPLACEMENTS, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT, LIBELLES_PROFIL,
-  MODE_HDR, OPTIONS_AVANCEES, validerOptions,
+  BORNES, EMPLACEMENTS, FINS_RAMPE, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT,
+  LIBELLES_PROFIL, MODE_HDR, OPTIONS_AVANCEES, validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
 import { libelleModeImage } from '../valeurs.js'
@@ -86,8 +86,9 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
       <p className="texte-attenue intro-luminosite">
         Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une
         échelle logarithmique proche de la perception de l'œil. La mesure est lissée, et une
-        variation brève ou isolée est ignorée. Un réglage de la luminosité fait ailleurs
-        (télécommande, Home Assistant, preset) la met en pause.
+        variation brève ou isolée est ignorée, et chaque changement se fait en douceur, point par
+        point. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset)
+        la met en pause.
       </p>
       {luminosite === null ? (
         <MiseEnRoute capteurs={configuration.capteurs} onEnregistrer={enregistrer} />
@@ -103,7 +104,7 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
             index={index}
             configuration={configuration}
             lux={details?.lux_filtre ?? details?.lux ?? null}
-            constantes={details?.constantes ?? null}
+            details={details}
             onEnregistrer={enregistrer}
           />
           <AideFonctionsTeleviseur />
@@ -216,6 +217,9 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
         </div>
       </dl>
 
+      {etat.rampe && <TransitionLuminosite rampe={etat.rampe} cible={etat.cible}
+        actuelle={etat.actuelle} />}
+
       {etat.lux != null && (
         <p className="ligne-carte texte-attenue">
           Dernière mesure du capteur : {formaterLux(etat.lux)}
@@ -287,6 +291,24 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
   )
 }
 
+// Rampe en cours : progression d'après la valeur notifiée par le téléviseur,
+// jamais d'après les pas demandés.
+function TransitionLuminosite({ rampe, cible, actuelle }) {
+  const { depart } = rampe
+  const etendue = cible - depart
+  const progression = actuelle != null && depart != null && etendue !== 0
+    ? Math.min(Math.max((actuelle - depart) / etendue, 0), 1)
+    : null
+  return (
+    <div className="ligne-carte transition-luminosite">
+      <span>Transition en cours : {depart ?? '?'} → {cible}</span>
+      {progression !== null && (
+        <progress max="1" value={progression} aria-label="Progression de la transition" />
+      )}
+    </div>
+  )
+}
+
 function ConflitLuminosite({ conflit, economieEnergie, desactive, onDesactiver }) {
   if (conflit === 'mode_eco') {
     return (
@@ -314,7 +336,7 @@ function ConflitLuminosite({ conflit, economieEnergie, desactive, onDesactiver }
   )
 }
 
-function ReglagesLuminosite({ index, configuration, lux, constantes, onEnregistrer }) {
+function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer }) {
   const { options, capteurs, modes_proposes: modes } = configuration
   const [brouillon, setBrouillon] = useState(options)
   const [envoi, setEnvoi] = useState(false)
@@ -385,9 +407,9 @@ function ReglagesLuminosite({ index, configuration, lux, constantes, onEnregistr
   }
 
   function champAvance(cle) {
-    const { libelle, unite, constante, facteur } = OPTIONS_AVANCEES[cle]
+    const { libelle, unite, auto: valeurAuto } = OPTIONS_AVANCEES[cle]
     const [bas, haut] = BORNES[cle]
-    const auto = constantes ? Math.round(constantes[constante] * facteur) : null
+    const auto = details ? Math.round(valeurAuto(details)) : null
     const valeur = brouillon[cle]
     return (
       <label key={cle} className="champ-luminosite">
@@ -480,12 +502,12 @@ function ReglagesLuminosite({ index, configuration, lux, constantes, onEnregistr
         <p className="texte-attenue">
           La mesure est lissée (plus vite à la hausse qu'à la baisse), une variation trop petite
           par rapport à la dernière application est ignorée, une mesure isolée plus de 4 fois
-          plus forte ou plus faible attend d'être confirmée, et les mesures sont mises de côté
-          juste après chaque changement de luminosité. Laissés vides, ces réglages suivent le
-          profil du capteur et son emplacement.
+          plus forte ou plus faible attend d'être confirmée. La luminosité change ensuite par
+          petits pas réguliers, chacun confirmé par le téléviseur, jusqu'à la cible ; les mesures
+          sont mises de côté pendant la transition et juste après. Laissés vides, ces réglages
+          suivent leur valeur par défaut, le profil du capteur et son emplacement.
         </p>
         <div className="grille-champs">
-          {champNombre('ecart_minimal', 'Écart minimal')}
           {Object.keys(OPTIONS_AVANCEES).map(champAvance)}
         </div>
       </details>
@@ -541,10 +563,7 @@ const CAUSES_CONFLIT = {
 function texteEvenement(evenement) {
   switch (evenement.type) {
     case 'application':
-      return `Luminosité réglée à ${evenement.cible}`
-        + (evenement.ancienne !== null ? ` (était ${evenement.ancienne})` : '')
-        + ` pour une lumière lissée de ${formaterLux(evenement.lux)}`
-        + (evenement.lux_brut != null ? ` (mesure ${formaterLux(evenement.lux_brut)})` : '')
+      return texteTransition(evenement)
     case 'saut_ecarte':
       return 'Mesure isolée écartée (saut de lumière non confirmé)'
     case 'conflit':
@@ -565,6 +584,28 @@ function texteEvenement(evenement) {
     default:
       return evenement.type
   }
+}
+
+// Une ligne par rampe (transition), du départ à l'arrivée.
+function texteTransition(evenement) {
+  const { ancienne, cible, pas, duree_s: duree, fin, lux, lux_brut: luxBrut } = evenement
+  let texte = ancienne != null
+    ? `Luminosité ${ancienne} → ${cible} en ${dureeCourte(duree)} (${pas} pas)`
+    : `Luminosité réglée à ${cible}`
+  if (fin && fin !== 'arrivee') {
+    texte += `, interrompue : ${FINS_RAMPE[fin] || LIBELLES_ETAT[fin]?.toLowerCase() || fin}`
+  }
+  if (lux != null) {
+    texte += ` ; lumière lissée ${formaterLux(lux)}`
+      + (luxBrut != null ? ` (mesure ${formaterLux(luxBrut)})` : '')
+  }
+  return texte
+}
+
+function dureeCourte(secondes) {
+  return secondes < 10
+    ? `${secondes.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} s`
+    : duree(secondes)
 }
 
 function horodatage(iso) {

@@ -46,8 +46,20 @@ CONF_HYSTERESIS_MONTEE = "hysteresis_montee"
 CONF_HYSTERESIS_DESCENTE = "hysteresis_descente"
 CONF_CONFIRMATION_SAUT = "confirmation_saut_s"
 CONF_GEL_ECRITURE = "gel_ecriture_s"
-OPTIONS_AVANCEES = (CONF_LISSAGE_MONTEE, CONF_LISSAGE_DESCENTE, CONF_HYSTERESIS_MONTEE,
-                    CONF_HYSTERESIS_DESCENTE, CONF_CONFIRMATION_SAUT, CONF_GEL_ECRITURE)
+# Rampe de la luminosité (rampe.py) : taille des pas et vitesse en points par
+# seconde.
+CONF_RAMPE_PAS = "rampe_pas"
+CONF_RAMPE_DEBIT = "rampe_debit"
+# Options avancées, toutes facultatives : absentes, elles prennent leur
+# valeur par défaut (écart minimal, rampe) ou celle du profil du capteur
+# (signal).
+OPTIONS_AVANCEES = (CONF_ECART_MINIMAL, CONF_LISSAGE_MONTEE, CONF_LISSAGE_DESCENTE,
+                    CONF_HYSTERESIS_MONTEE, CONF_HYSTERESIS_DESCENTE, CONF_CONFIRMATION_SAUT,
+                    CONF_GEL_ECRITURE, CONF_RAMPE_PAS, CONF_RAMPE_DEBIT)
+# 3 jusqu'à la 2.5.0 : les rampes atteignent la cible exactement, l'écart
+# minimal ne sert plus qu'à ignorer les dérives d'un point.
+ECART_MINIMAL_DEFAUT = 2
+ECART_MINIMAL_ANCIEN_DEFAUT = 3
 # Option groupée des modes HDR et Dolby Vision (hdr*, dolbyHdr*) : leurs
 # libellés français ne figurent pas dans l'arbre des menus.
 MODES_HDR = "hdr"
@@ -56,7 +68,6 @@ OPTIONS_LUMINOSITE_DEFAUT = {
     CONF_LUX_MAX: 300,
     CONF_LUMINOSITE_MIN: 40,
     CONF_LUMINOSITE_MAX: 100,
-    CONF_ECART_MINIMAL: 3,
     CONF_PAUSE_MIN: 120,
     CONF_MODES_EXCLUS: ["filmMaker", "expert1", "expert2", MODES_HDR],
     CONF_EMPLACEMENT: "inconnu",

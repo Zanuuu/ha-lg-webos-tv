@@ -12,7 +12,8 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.typing import ConfigType
 
 from . import panneau, restauration, services, websocket
-from .const import CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, DOMAIN
+from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_ECART_MINIMAL, DOMAIN,
+                    ECART_MINIMAL_ANCIEN_DEFAUT)
 from .ecritures import FileEcritures
 from .entite import descriptions
 from .historique import Historique
@@ -48,6 +49,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -> bool:
+    """1.1 → 1.2 (2.6.0) : l'écart minimal, champ obligatoire du formulaire
+    jusque-là, était enregistré par toutes les installations. Sa valeur par
+    défaut (3) est retirée pour que le nouveau défaut s'applique ; elle est
+    indiscernable d'un choix délibéré. Toute autre valeur est gardée."""
+    if entry.version == 1 and entry.minor_version < 2:
+        options = dict(entry.options)
+        if options.get(CONF_ECART_MINIMAL) == ECART_MINIMAL_ANCIEN_DEFAUT:
+            del options[CONF_ECART_MINIMAL]
+        hass.config_entries.async_update_entry(entry, options=options, minor_version=2)
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) -> bool:
     # Bases SQLite hors de .storage (réservé au stockage JSON de HA), mais
     # dans le dossier de configuration : incluses dans les sauvegardes.
@@ -61,9 +75,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
         televiseur = Televiseur(entry.data[CONF_HOST], entry.data[CONF_CLE_CLIENT])
         historique = Historique(dossier / "historique.sqlite")
 
-        async def ecrire(entree_id, valeur, origine, mode_attendu):
+        async def ecrire(entree_id, valeur, origine, mode_attendu, historiser):
             return await restauration.ecrire_par_entree(
-                televiseur, historique, entree_id, valeur, origine, mode_attendu)
+                televiseur, historique, entree_id, valeur, origine, mode_attendu,
+                historiser)
 
         return DonneesLgWebosTv(
             televiseur=televiseur, historique=historique,

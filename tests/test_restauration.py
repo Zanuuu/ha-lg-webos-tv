@@ -49,6 +49,15 @@ async def test_annuler_ecriture(tv, historique):
     assert [h["origine"] for h in histo] == ["annulation", "panneau"]
 
 
+async def test_ecriture_sans_historique(tv, historique):
+    """Pas intermédiaire d'une rampe : écrit et confirmé, non historisé."""
+    resultat = await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 25,
+                                                    "luminosite_adaptative",
+                                                    historiser=False)
+    assert resultat["ok"] is True and resultat["nouvelle"] == 25
+    assert await historique.lister() == []
+
+
 async def test_annuler_refuse_si_mode_image_different(tv, historique, faux_client):
     await restauration.ecrire_par_entree(tv, historique, ID_NETTETE, 25, "panneau")
     id_ecriture = (await historique.lister())[0]["id"]

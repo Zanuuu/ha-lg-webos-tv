@@ -14,8 +14,9 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-# (entree_id, valeur, origine, mode_attendu) → résultat de restauration.ecrire
-Ecrire = Callable[[str, Any, str, str | None], Awaitable[dict]]
+# (entree_id, valeur, origine, mode_attendu, historiser) → résultat de
+# restauration.ecrire
+Ecrire = Callable[[str, Any, str, str | None, bool], Awaitable[dict]]
 
 
 class FileEcritures:
@@ -27,11 +28,13 @@ class FileEcritures:
         self._travailleur: asyncio.Task | None = None
 
     async def demander(self, entree_id: str, valeur: Any, origine: str,
-                       mode_attendu: str | None = None) -> dict:
+                       mode_attendu: str | None = None, historiser: bool = True) -> dict:
         """Écrit `valeur` (ou une valeur plus récente demandée entre-temps
-        pour la même entrée) et renvoie le résultat de restauration.ecrire."""
+        pour la même entrée) et renvoie le résultat de restauration.ecrire.
+        `historiser` suit la dernière demande, comme la valeur : un pas de
+        rampe coalescé par une écriture de l'utilisateur est historisé."""
         futur = asyncio.get_running_loop().create_future()
-        parametres = (valeur, origine, mode_attendu)
+        parametres = (valeur, origine, mode_attendu, historiser)
         if entree_id in self._en_attente:
             _, futurs = self._en_attente[entree_id]
             self._en_attente[entree_id] = (parametres, [*futurs, futur])
@@ -40,6 +43,15 @@ class FileEcritures:
         if self._travailleur is None or self._travailleur.done():
             self._travailleur = asyncio.create_task(self._travailler())
         return await futur
+
+    def origine_en_attente(self, entree_id: str) -> str | None:
+        """Origine de l'écriture qui attend son tour pour cette entrée : une
+        rampe ne doit pas la coalescer, elle effacerait la demande de
+        l'utilisateur."""
+        if entree_id not in self._en_attente:
+            return None
+        (_, origine, _, _), _ = self._en_attente[entree_id]
+        return origine
 
     async def _travailler(self) -> None:
         while self._en_attente:

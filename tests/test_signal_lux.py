@@ -176,6 +176,30 @@ def test_gel_differe_la_derniere_mesure():
     assert s.lux_filtre(6) == pytest.approx(25)
 
 
+def test_suspension_pendant_la_rampe_puis_gel():
+    """Rampe de 1 à 30 s : mesures mises de côté pendant toute la rampe, puis
+    pendant le gel qui suit sa fin ; la plus récente s'applique alors."""
+    s = signal(lissage_montee_s=0, lissage_descente_s=0)
+    s.mesurer(0, 20)
+    s.suspendre(1)
+    s.mesurer(10, 40)
+    s.mesurer(25, 35)
+    assert s.gele(29) and s.lux_filtre(29) == pytest.approx(20)
+    s.geler(30)
+    assert s.fin_gel == 30 + RAPIDE.gel_s
+    assert s.lux_filtre(34) == pytest.approx(20)
+    assert s.lux_filtre(35) == pytest.approx(35)
+
+
+def test_lux_vise_par_le_filtre():
+    s = signal()
+    assert s.lux_vise(0) is None
+    s.mesurer(0, 20)
+    s.mesurer(1, 40)
+    assert s.lux_filtre(2) < 40
+    assert s.lux_vise(2) == pytest.approx(40)
+
+
 def test_gel_espace_les_applications():
     """Grand saut : quelques écritures espacées du gel, pas une par seconde."""
     s = signal()

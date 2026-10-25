@@ -84,6 +84,21 @@ class Historique:
             ecouteur(ecriture)
         return id_
 
+    def _completer_sync(self, id_: int, nouvelle) -> dict | None:
+        with self._connexion() as co:
+            co.execute("UPDATE ecritures SET nouvelle = ? WHERE id = ?",
+                       (json.dumps(nouvelle, ensure_ascii=False), id_))
+        return self._recuperer_sync(id_)
+
+    async def completer(self, id_: int, nouvelle) -> None:
+        """Nouvelle valeur d'une entrée : arrivée d'une rampe de la
+        luminosité adaptative, dont seul le premier pas a été enregistré (à
+        sa place parmi les autres écritures)."""
+        ligne = await asyncio.to_thread(self._completer_sync, id_, nouvelle)
+        if ligne is not None:
+            for ecouteur in list(self._ecouteurs):
+                ecouteur(ligne)
+
     def _lister_sync(self, limite: int) -> list[dict]:
         with self._connexion() as co:
             lignes = co.execute(

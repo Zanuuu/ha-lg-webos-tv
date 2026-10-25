@@ -1193,6 +1193,23 @@ ensuite parce qu'elles sont le gain le plus visible une fois le signal
 fiable ; les diagnostics précèdent la mise en route guidée parce que
 celle-ci réutilise leurs détections.
 
+**Lot 2 livré en 2.6.0 : choix de mise en œuvre.**
+
+- La rampe vise la cible **lissée** du moment et ne s'arrête qu'à
+  l'arrivée du filtre, au point près : une transition = une rampe, cible
+  atteinte exactement. Le filtre garde son rôle anti-bruit et son
+  asymétrie ; le prix est une queue de rampe d'environ 1 min en descente
+  (τ 15 s, pas d'un point espacés), mesures mises de côté pendant ce temps.
+- Débit tenu malgré la latence : un pas lent est rattrapé au suivant, sans
+  dépasser deux fois la taille du pas.
+- Historique : le **premier pas** est historisé normalement, dans la file,
+  donc à sa place parmi les autres écritures (une reprise en main pendant
+  la rampe vient après lui, et le retour à un instant donné reste juste) ;
+  sa nouvelle valeur est complétée à la fin de la rampe.
+- Écart minimal : retiré des options s'il valait 3 (migration 1.1 → 1.2
+  de l'entrée), le formulaire l'ayant toujours enregistré.
+- P4 se mesure avec `outils/scripts/mesure_rampe.py`.
+
 ---
 
 ## 8. Points ouverts

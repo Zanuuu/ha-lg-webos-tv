@@ -20,6 +20,7 @@ from custom_components.lg_webos_tv.const import (CONF_CAPTEUR_LUX, DOMAIN,
                                                  OPTIONS_LUMINOSITE_DEFAUT)
 from custom_components.lg_webos_tv.luminosite_adaptative import (
     BORNES, ID_MODE, ID_OLED, modes_proposes, valider_options)
+from custom_components.lg_webos_tv import restauration
 from custom_components.lg_webos_tv.presets import capturer_snapshot
 
 from .conftest import entite
@@ -52,16 +53,20 @@ async def _pas(hass, secondes):
     await hass.async_block_till_done(wait_background_tasks=True)
 
 
+# Un pas de rampe par tick : 2 points toutes les 0,5 s, le débit par défaut.
+TICK_S = 0.5
+
+
 async def _pas_a_pas(hass, secondes):
     while secondes > 0:
-        await _pas(hass, min(secondes, 1.0))
-        secondes -= 1.0
+        await _pas(hass, min(secondes, TICK_S))
+        secondes -= TICK_S
 
 
 async def passer_le_temps(hass, secondes=2.0):
-    """Par pas d'une seconde, pour que chaque évaluation programmée par la
-    précédente ait lieu à son heure ; au-delà de deux minutes, une minute pas
-    à pas, un saut, puis une minute pas à pas."""
+    """Par pas d'une demi-seconde, pour que chaque évaluation ou pas de rampe
+    programmé par le précédent ait lieu à son heure ; au-delà de deux
+    minutes, une minute pas à pas, un saut, puis une minute pas à pas."""
     if secondes > 120:
         await _pas_a_pas(hass, 60)
         await _pas(hass, secondes - 120)
@@ -69,9 +74,11 @@ async def passer_le_temps(hass, secondes=2.0):
     await _pas_a_pas(hass, secondes)
 
 
-# Assez pour un saut confirmé (8 s), le filtre (15 s en descente) et les
-# écritures espacées du gel (5 s).
+# Assez pour un saut confirmé (8 s), le filtre (15 s en descente) et la
+# rampe qui le suit jusqu'à son arrivée.
 STABILISATION_S = 120
+# Une rampe de 40 points à 4 points par seconde, avec de la marge.
+RAMPE_S = 20
 
 
 async def regler_lux(hass, lux, secondes=STABILISATION_S):
@@ -119,10 +126,14 @@ async def test_echelle_logarithmique(hass: HomeAssistant, fonction, faux_client)
 
 
 async def test_petit_ecart_ignore(hass: HomeAssistant, fonction, faux_client):
-    historique = fonction.runtime_data.historique
-    ecritures = len(await historique.lister())
-    await regler_lux(hass, 22)  # cible 62 : écart de 2 < 3
-    assert len(await historique.lister()) == ecritures
+    """Écart minimal de 2 par défaut. Une valeur rappelée par le téléviseur
+    (changement d'entrée) relance le calcul sans hystérésis."""
+    await faux_client.notifier("picture", {"backlight": "61"}, caller=None)
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 61
+    await faux_client.notifier("picture", {"backlight": "62"}, caller=None)
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 60
 
 
 async def test_ecritures_historisees_avec_leur_origine(hass: HomeAssistant, fonction):
@@ -137,7 +148,7 @@ async def test_changement_d_entree_reapplique(hass: HomeAssistant, fonction, fau
     # Autre entrée HDMI : le téléviseur rappelle la luminosité qui lui est
     # propre, sans changement de mode.
     await faux_client.notifier("picture", {"backlight": "85"}, caller=None)
-    await passer_le_temps(hass)
+    await passer_le_temps(hass, RAMPE_S)
     assert luminosite(faux_client) == 60
 
 
@@ -155,7 +166,7 @@ async def test_pause_apres_reglage_manuel_puis_rallumage(hass: HomeAssistant, fo
     tv = fonction.runtime_data.televiseur
     await tv._changer_etat("deconnecte")
     await tv._changer_etat("connecte")
-    await passer_le_temps(hass)
+    await passer_le_temps(hass, RAMPE_S)
     assert luminosite(faux_client) == 100
     assert etat(hass).state == "active"
 
@@ -216,7 +227,7 @@ async def test_lot_en_cours_repousse_l_application(hass: HomeAssistant, fonction
         "contrast", 100, 90, "vivid", "preset")
     await passer_le_temps(hass, 2)
     assert luminosite(faux_client) == 85
-    await passer_le_temps(hass, 4)
+    await passer_le_temps(hass, RAMPE_S)
     assert luminosite(faux_client) == 60
 
 
@@ -272,7 +283,7 @@ async def test_interrupteur_et_bouton_reprendre(hass: HomeAssistant, fonction, f
 
     await hass.services.async_call("switch", "turn_on", {"entity_id": interrupteur},
                                    blocking=True)
-    await hass.async_block_till_done(wait_background_tasks=True)
+    await passer_le_temps(hass, RAMPE_S)
     assert luminosite(faux_client) == 100
 
     await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
@@ -281,8 +292,7 @@ async def test_interrupteur_et_bouton_reprendre(hass: HomeAssistant, fonction, f
     await hass.services.async_call("button", "press", {
         "entity_id": entite(hass, "button", "luminosite_adaptative_reprendre")},
         blocking=True)
-    # Gel de 5 s après l'écriture de l'allumage.
-    await passer_le_temps(hass, 6)
+    await passer_le_temps(hass, RAMPE_S)
     assert luminosite(faux_client) == 100
     assert etat(hass).state == "active"
 
@@ -307,7 +317,7 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     instantane = (await ws.client.receive_json())["event"]
     assert instantane["luminosite_adaptative"] == {
         "etat": "active", "entree_id": ID_OLED, "cible": 60, "fin_pause": None,
-        "cause_pause": None, "conflit": None}
+        "cause_pause": None, "conflit": None, "rampe": None}
 
     await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
     await hass.async_block_till_done()
@@ -325,7 +335,7 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     evenements, reponse = await commande(ws, "lg_webos_tv/luminosite_adaptative/reprendre")
     assert etats_luminosite(evenements) == ["active"]
     assert reponse["result"]["etat"] == "active" and reponse["result"]["fin_pause"] is None
-    await hass.async_block_till_done(wait_background_tasks=True)
+    await passer_le_temps(hass, 5)
     assert luminosite(faux_client) == 60
 
     # Désabonnement : l'écouteur de la fonction est retiré.
@@ -345,7 +355,7 @@ async def test_cause_de_pause_et_journal(hass: HomeAssistant, fonction, faux_cli
     la = fonction.runtime_data.luminosite_adaptative
     assert la.journal[-1] | {"horodatage": None} == {
         "horodatage": None, "type": "application", "lux": 20.0, "lux_brut": 20.0,
-        "cible": 60, "ancienne": 80.0}
+        "cible": 60, "ancienne": 80, "pas": 11, "duree_s": 5.0, "fin": "arrivee"}
 
     await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
     await hass.async_block_till_done()
@@ -353,7 +363,7 @@ async def test_cause_de_pause_et_journal(hass: HomeAssistant, fonction, faux_cli
     assert la.journal[-1]["type"] == "pause" and la.journal[-1]["origine"] == "manuel"
 
     la.reprendre()
-    await hass.async_block_till_done(wait_background_tasks=True)
+    await passer_le_temps(hass, 5)
     assert la.cause_pause is None
     assert types_journal(fonction)[-2:] == ["reprise", "application"]
     assert la.journal[-2]["raison"] == "bouton"
@@ -395,13 +405,13 @@ async def test_journal_plafonne(hass: HomeAssistant, fonction):
 async def test_reconfiguration_a_chaud(hass: HomeAssistant, fonction, faux_client):
     la = fonction.runtime_data.luminosite_adaptative
     la.reconfigurer({**la.options, "luminosite_max": 80})
-    await passer_le_temps(hass)
+    await passer_le_temps(hass, RAMPE_S)
     # ln(20/5) / ln(300/5) = 0,339 → 40 + 0,339 × 40 = 53,5
     assert luminosite(faux_client) == 54
 
     hass.states.async_set("sensor.bureau_lux", "300", {"device_class": "illuminance"})
     la.reconfigurer({**la.options, CONF_CAPTEUR_LUX: "sensor.bureau_lux"})
-    await passer_le_temps(hass)
+    await passer_le_temps(hass, RAMPE_S)
     assert luminosite(faux_client) == 80
     # L'ancien capteur n'est plus suivi.
     await regler_lux(hass, 5)
@@ -501,9 +511,29 @@ async def test_page_suivi(hass: HomeAssistant, fonction, faux_client, ws):
     assert [e["evenement"]["type"] for e in evenements if e["type"] == "journal"] == ["pause"]
 
     la = fonction.runtime_data.luminosite_adaptative
-    avant = len(la._ecouteurs), len(la._ecouteurs_journal)
+    ecouteurs = la._ecouteurs, la._ecouteurs_details, la._ecouteurs_journal
+    avant = [len(liste) for liste in ecouteurs]
     await commande(ws, "unsubscribe_events", subscription=abonnement["id"])
-    assert (len(la._ecouteurs), len(la._ecouteurs_journal)) == (avant[0] - 1, avant[1] - 1)
+    assert [len(liste) for liste in ecouteurs] == [n - 1 for n in avant]
+
+
+async def test_page_suit_la_rampe_pas_a_pas(hass: HomeAssistant, fonction, ws, ecrites):
+    """La valeur du téléviseur est transmise à chaque pas, sans réécrire
+    l'état des entités."""
+    await ws("luminosite_adaptative/suivre")
+    await ws.client.receive_json()
+    etats_ecrits = []
+    hass.bus.async_listen("state_changed", lambda e: etats_ecrits.append(
+        e.data["entity_id"]) if "luminosite_adaptative_etat" in e.data["entity_id"] else None)
+    await demarrer_rampe(hass, fonction)
+    evenements, _ = await commande(ws, "lg_webos_tv/reglages")
+    details = [e["details"] for e in evenements if e["type"] == "details"]
+    vues = sorted({d["actuelle"] for d in details if d["rampe"] is not None})
+    assert len(vues) >= 3 and vues[0] >= 60
+    # Chaque pas confirmé est transmis, pas seulement les changements de cible.
+    assert set(ecrites) <= {d["actuelle"] for d in details}
+    assert all(d["rampe"]["depart"] == 60 for d in details if d["rampe"] is not None)
+    assert len(etats_ecrits) < len(vues)
 
 
 @pytest.mark.parametrize("options_entree", [{}])
@@ -583,16 +613,233 @@ async def test_petite_variation_dans_la_bande_ignoree(hass: HomeAssistant, fonct
     assert luminosite(faux_client) == 60
 
 
-async def test_transition_en_ecritures_espacees_du_gel(hass: HomeAssistant, fonction,
-                                                       faux_client):
+# ------------------------------------------------------------------- rampes
+
+@pytest.fixture
+def ecrites(faux_client):
+    """Valeurs de la luminosité OLED écrites sur le téléviseur, dans l'ordre."""
+    valeurs = []
+    requete = faux_client.request
+
+    async def espion(uri, payload=None):
+        if uri == "settings/setSystemSettings" and "backlight" in payload["settings"]:
+            valeurs.append(payload["settings"]["backlight"])
+        return await requete(uri, payload)
+
+    faux_client.request = espion
+    return valeurs
+
+
+async def ecritures_depuis(fonction_entree, avant: int) -> list[dict]:
+    """Entrées d'historique ajoutées depuis qu'il en comptait `avant`, des
+    plus anciennes aux plus récentes."""
+    lignes = await fonction_entree.runtime_data.historique.lister()
+    return list(reversed(lignes[:len(lignes) - avant]))
+
+
+async def demarrer_rampe(hass, fonction_entree, lux=300):
+    """Lux qui passe de 20 à 300 : saut confirmé en 8 s, puis rampe vers
+    100 ; rend la main en pleine rampe, vers 70."""
+    await regler_lux(hass, lux, secondes=12)
+    la = fonction_entree.runtime_data.luminosite_adaptative
+    assert la.rampe is not None
+    return la
+
+
+async def test_une_rampe_une_entree_d_historique(hass: HomeAssistant, fonction, faux_client,
+                                                 ecrites):
+    avant = len(await fonction.runtime_data.historique.lister())
     nombre = len(applications(fonction))
     await regler_lux(hass, 300)
-    nouvelles = applications(fonction)[nombre:]
-    instants = [dt_util.parse_datetime(e["horodatage"]) for e in nouvelles]
-    assert 2 <= len(nouvelles) <= 6
-    assert all((b - a).total_seconds() >= 5 for a, b in zip(instants, instants[1:]))
-    # Saut de plus d'un facteur 4 : confirmé au bout de 8 s.
-    assert luminosite(faux_client) >= 98
+    # Arrivée exacte : la rampe suit le filtre jusqu'au bout.
+    assert luminosite(faux_client) == 100
+    assert len(ecrites) >= 20
+    assert all(0 < b - a <= 2 for a, b in zip([60, *ecrites], ecrites))
+    [entree] = await ecritures_depuis(fonction, avant)
+    assert (entree["ancienne"], entree["nouvelle"]) == (60, 100)
+    assert entree["origine"] == "luminosite_adaptative" and entree["mode_image"] == "vivid"
+    [ligne] = applications(fonction)[nombre:]
+    assert (ligne["ancienne"], ligne["cible"], ligne["fin"]) == (60, 100, "arrivee")
+    assert ligne["pas"] == len(ecrites)
+    assert fonction.runtime_data.luminosite_adaptative.rampe is None
+
+
+async def test_descente_suit_le_filtre_jusqu_a_la_cible(hass: HomeAssistant, fonction,
+                                                        faux_client, ecrites):
+    """Lot 1 : le téléviseur pouvait s'arrêter 2 points avant la cible."""
+    await regler_lux(hass, 300)
+    avant = len(await fonction.runtime_data.historique.lister())
+    del ecrites[:]
+    await regler_lux(hass, 20)
+    assert luminosite(faux_client) == 60
+    assert all(0 < a - b <= 2 for a, b in zip([100, *ecrites], ecrites))
+    [entree] = await ecritures_depuis(fonction, avant)
+    assert (entree["ancienne"], entree["nouvelle"]) == (100, 60)
+
+
+async def test_cible_changee_en_cours_de_rampe(hass: HomeAssistant, fonction, faux_client,
+                                               ecrites):
+    avant = len(await fonction.runtime_data.historique.lister())
+    la = await demarrer_rampe(hass, fonction)
+    assert la.resume()["rampe"]["depart"] == 60
+    details = la.details()
+    assert details["rampe"]["pas"] >= 1
+    assert details["ecart_minimal"] == 2
+    assert details["parametres_rampe"] == {"pas": 1, "debit": 4}
+    assert etat(hass).attributes["rampe"]["depart"] == 60
+    la.reconfigurer({**la.options, "luminosite_max": 80})
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 80
+    assert max(ecrites) == 80
+    [entree] = await ecritures_depuis(fonction, avant)
+    assert (entree["ancienne"], entree["nouvelle"]) == (60, 80)
+    assert la.resume()["rampe"] is None
+
+
+async def test_reprise_en_main_pendant_la_rampe(hass: HomeAssistant, fonction, faux_client,
+                                                ecrites):
+    avant = len(await fonction.runtime_data.historique.lister())
+    nombre = len(applications(fonction))
+    await demarrer_rampe(hass, fonction)
+    await faux_client.notifier("picture", {"backlight": "45"}, caller=TELECOMMANDE)
+    ecrites_avant = len(ecrites)
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 45
+    assert etat(hass).state == "pause"
+    assert len(ecrites) == ecrites_avant
+    [entree] = await ecritures_depuis(fonction, avant)
+    assert entree["ancienne"] == 60 and 60 < entree["nouvelle"] < 100
+    [ligne] = applications(fonction)[nombre:]
+    assert ligne["fin"] == "reprise_en_main"
+
+
+async def test_reglage_depuis_home_assistant_pendant_la_rampe(hass: HomeAssistant, fonction,
+                                                              faux_client):
+    precedente, *_ = lignes = await fonction.runtime_data.historique.lister()
+    avant = len(lignes)
+    await demarrer_rampe(hass, fonction)
+    await hass.services.async_call("number", "set_value", {
+        "entity_id": entite(hass, "number", ID_OLED), "value": 30}, blocking=True)
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 30
+    assert etat(hass).state == "pause"
+    rampe, utilisateur = await ecritures_depuis(fonction, avant)
+    assert rampe["origine"] == "luminosite_adaptative"
+    assert (utilisateur["origine"], utilisateur["nouvelle"]) == ("home_assistant", 30)
+
+    # Entrée de la rampe à sa place, avant celle de l'utilisateur : le retour
+    # à un instant antérieur retrouve le départ de la rampe.
+    d = fonction.runtime_data
+    await restauration.revenir_a(d.televiseur, d.historique,
+                                 (precedente["horodatage"] + rampe["horodatage"]) / 2)
+    assert luminosite(faux_client) == 60
+
+
+async def test_changement_de_mode_pendant_la_rampe(hass: HomeAssistant, fonction, faux_client):
+    """La garde de mode arrête la rampe ; une nouvelle part de la luminosité
+    propre au nouveau mode."""
+    avant = len(await fonction.runtime_data.historique.lister())
+    nombre = len(applications(fonction))
+    await demarrer_rampe(hass, fonction)
+    await faux_client.notifier("picture", {"pictureMode": "cinema"}, caller=TELECOMMANDE)
+    await faux_client.notifier("picture", {"backlight": "50"}, caller=None)
+    await passer_le_temps(hass, 2 * RAMPE_S)
+    assert luminosite(faux_client) == 100
+    premiere, seconde = await ecritures_depuis(fonction, avant)
+    assert premiere["mode_image"] == "vivid" and premiere["ancienne"] == 60
+    assert (seconde["mode_image"], seconde["ancienne"], seconde["nouvelle"]) == (
+        "cinema", 50, 100)
+    assert [e["fin"] for e in applications(fonction)[nombre:]] == ["mode", "arrivee"]
+
+
+async def test_rampe_arretee_par_un_mode_laisse_de_cote(hass: HomeAssistant, fonction,
+                                                        faux_client, ecrites):
+    await demarrer_rampe(hass, fonction)
+    await faux_client.notifier("picture", {"pictureMode": "expert1"}, caller=TELECOMMANDE)
+    await faux_client.notifier("picture", {"backlight": "50"}, caller=None)
+    ecrites_avant = len(ecrites)
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 50
+    assert len(ecrites) == ecrites_avant
+    assert etat(hass).state == "mode_exclu"
+
+
+async def test_changement_d_entree_pendant_la_rampe(hass: HomeAssistant, fonction,
+                                                    faux_client):
+    nombre = len(applications(fonction))
+    await demarrer_rampe(hass, fonction)
+    await faux_client.notifier("picture", {"backlight": "90"}, caller=None)
+    await passer_le_temps(hass, RAMPE_S)
+    assert luminosite(faux_client) == 100
+    lignes = applications(fonction)[nombre:]
+    assert [e["fin"] for e in lignes] == ["changement_exterieur", "arrivee"]
+    assert lignes[1]["ancienne"] == 90
+    assert etat(hass).state == "active"
+
+
+async def test_ecriture_non_confirmee_arrete_la_rampe(hass: HomeAssistant, fonction,
+                                                      faux_client):
+    avant = len(await fonction.runtime_data.historique.lister())
+    nombre = len(applications(fonction))
+    await demarrer_rampe(hass, fonction)
+    faux_client.refuser.add(("picture", "backlight"))
+    await passer_le_temps(hass, 2)
+    la = fonction.runtime_data.luminosite_adaptative
+    assert la.rampe is None
+    assert "refusée" in la.derniere_erreur
+    [entree] = await ecritures_depuis(fonction, avant)
+    assert entree["nouvelle"] == luminosite(faux_client)
+    assert applications(fonction)[nombre]["fin"] == "non_confirmee"
+
+
+async def test_retour_arriere_d_une_rampe(hass: HomeAssistant, fonction, faux_client):
+    d = fonction.runtime_data
+    avant = len(await d.historique.lister())
+    await regler_lux(hass, 300)
+    [entree] = await ecritures_depuis(fonction, avant)
+    resultat = await restauration.annuler_ecriture(d.televiseur, d.historique, entree["id"])
+    assert resultat["ok"]
+    await passer_le_temps(hass, RAMPE_S)
+    # Le départ de la rampe, d'un coup ; et la fonction en pause.
+    assert luminosite(faux_client) == 60
+    assert etat(hass).state == "pause"
+    assert la_cause(fonction) == "annulation"
+
+
+def la_cause(fonction_entree) -> str:
+    return fonction_entree.runtime_data.luminosite_adaptative.cause_pause["origine"]
+
+
+async def test_mesures_mises_de_cote_pendant_la_rampe(hass: HomeAssistant, fonction,
+                                                      faux_client, ecrites):
+    """Le lux redescend en pleine rampe : la rampe va au bout, puis la
+    mesure s'applique après le gel qui suit sa fin."""
+    nombre = len(applications(fonction))
+    await demarrer_rampe(hass, fonction)
+    await regler_lux(hass, 20)
+    assert max(ecrites) == 100
+    assert luminosite(faux_client) == 60
+    montee, descente = applications(fonction)[nombre:]
+    fin_montee = dt_util.parse_datetime(montee["horodatage"])
+    debut_descente = (dt_util.parse_datetime(descente["horodatage"])
+                      - timedelta(seconds=descente["duree_s"]))
+    # Gel de 5 s après la rampe, puis confirmation du saut (facteur 15) en 8 s.
+    assert (debut_descente - fin_montee).total_seconds() >= 5 + 8
+
+
+async def test_emplacement_d_allonge_le_gel_apres_la_rampe(hass: HomeAssistant, fonction,
+                                                           faux_client):
+    la = fonction.runtime_data.luminosite_adaptative
+    la.reconfigurer({**la.options, "emplacement_capteur": "d"})
+    assert la.details()["constantes"]["gel_s"] == 20
+    nombre = len(applications(fonction))
+    await demarrer_rampe(hass, fonction)
+    await regler_lux(hass, 20, secondes=200)
+    montee, descente = applications(fonction)[nombre:]
+    fin_montee = dt_util.parse_datetime(montee["horodatage"])
+    debut_descente = (dt_util.parse_datetime(descente["horodatage"])
+                      - timedelta(seconds=descente["duree_s"]))
+    assert (debut_descente - fin_montee).total_seconds() >= 20 + 8
 
 
 async def test_saut_isole_ecarte(hass: HomeAssistant, fonction, faux_client):
@@ -600,18 +847,6 @@ async def test_saut_isole_ecarte(hass: HomeAssistant, fonction, faux_client):
     await regler_lux(hass, 20, secondes=30)
     assert luminosite(faux_client) == 60
     assert "saut_ecarte" in types_journal(fonction)
-
-
-async def test_emplacement_d_allonge_le_gel(hass: HomeAssistant, fonction, faux_client):
-    la = fonction.runtime_data.luminosite_adaptative
-    la.reconfigurer({**la.options, "emplacement_capteur": "d"})
-    assert la.details()["constantes"]["gel_s"] == 20
-    nombre = len(applications(fonction))
-    await regler_lux(hass, 300, secondes=200)
-    instants = [dt_util.parse_datetime(e["horodatage"])
-                for e in applications(fonction)[nombre:]]
-    assert len(instants) >= 2
-    assert all((b - a).total_seconds() >= 20 for a, b in zip(instants, instants[1:]))
 
 
 async def test_profil_d_apres_la_plateforme_puis_la_cadence(hass: HomeAssistant, fonction):
@@ -767,14 +1002,43 @@ async def test_formulaire_section_avancee(hass: HomeAssistant, installe):
     flux = await hass.config_entries.options.async_init(installe.entry_id)
     saisie = {**{k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items() if k != "ecart_minimal"},
               CONF_CAPTEUR_LUX: LUX, "emplacement_capteur": "b",
-              "avance": {"ecart_minimal": 2, "confirmation_saut_s": 0}}
+              "avance": {"ecart_minimal": 3, "confirmation_saut_s": 0, "rampe_debit": 6}}
     flux = await hass.config_entries.options.async_configure(flux["flow_id"], saisie)
     assert flux["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert installe.options["ecart_minimal"] == 2
+    assert installe.options["ecart_minimal"] == 3
     assert installe.options["confirmation_saut_s"] == 0
+    assert installe.options["rampe_debit"] == 6
     assert installe.options["emplacement_capteur"] == "b"
     assert "avance" not in installe.options and "lissage_montee_s" not in installe.options
+
+
+@pytest.mark.parametrize(("options_entree", "attendu"), [
+    ({CONF_CAPTEUR_LUX: LUX, "ecart_minimal": 3}, None),
+    ({CONF_CAPTEUR_LUX: LUX, "ecart_minimal": 5}, 5),
+])
+async def test_migration_de_l_ecart_minimal(hass: HomeAssistant, installe, attendu):
+    """Entrées d'avant la 2.6.0 (version 1.1) : l'ancien défaut est retiré,
+    un choix différent gardé."""
+    assert installe.minor_version == 2
+    assert installe.options.get("ecart_minimal") == attendu
+    la = installe.runtime_data.luminosite_adaptative
+    assert la.ecart_minimal == (2 if attendu is None else attendu)
+
+
+async def test_page_options_de_rampe(hass: HomeAssistant, fonction, ws):
+    reponse = await ws("luminosite_adaptative/configurer", options={
+        "rampe_pas": 2, "rampe_debit": 8, "ecart_minimal": 4})
+    assert reponse["result"] == {"recharge": False}
+    la = fonction.runtime_data.luminosite_adaptative
+    assert la.details()["parametres_rampe"] == {"pas": 2, "debit": 8}
+    assert la.details()["ecart_minimal"] == 4
+    reponse = await ws("luminosite_adaptative/configurer", options={"rampe_debit": 50})
+    assert not reponse["success"]
+    await ws("luminosite_adaptative/configurer", options={
+        "rampe_pas": None, "rampe_debit": None, "ecart_minimal": None})
+    assert la.details()["parametres_rampe"] == {"pas": 1, "debit": 4}
+    assert "ecart_minimal" not in fonction.options
 
 
 def test_bornes_du_panneau_alignees():

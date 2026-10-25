@@ -277,7 +277,9 @@ async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
         connection.send_message(websocket_api.event_message(
             msg["id"], {"type": "journal", "evenement": evenement}))
 
-    ne_plus_ecouter = [fonction.ecouter(signaler), fonction.ecouter_journal(noter)]
+    # Le détail suit aussi chaque pas d'une rampe (valeur du téléviseur).
+    ne_plus_ecouter = [fonction.ecouter(signaler), fonction.ecouter_details(signaler),
+                       fonction.ecouter_journal(noter)]
 
     @callback
     def desabonner() -> None:

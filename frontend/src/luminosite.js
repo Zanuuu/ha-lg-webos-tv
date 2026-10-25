@@ -46,18 +46,38 @@ export const BORNES = {
   hysteresis_descente: [0, 90],
   confirmation_saut_s: [0, 60],
   gel_ecriture_s: [0, 120],
+  rampe_pas: [1, 10],
+  rampe_debit: [1, 20],
 }
 
-// Options avancées du signal (const.OPTIONS_AVANCEES) : vides (null), elles
-// suivent le profil du capteur. Champ de details.constantes correspondant et
-// facteur d'affichage (les seuils sont des fractions côté intégration).
+// Options avancées (const.OPTIONS_AVANCEES) : vides (null), elles prennent
+// leur valeur par défaut ou celle du profil du capteur. `auto` lit dans les
+// détails de la fonction la valeur appliquée (les seuils sont des fractions
+// côté intégration).
+const constante = (champ, facteur = 1) => (details) => details.constantes[champ] * facteur
 export const OPTIONS_AVANCEES = {
-  lissage_montee_s: { libelle: 'Lissage à la hausse', unite: 's', constante: 'lissage_montee_s', facteur: 1 },
-  lissage_descente_s: { libelle: 'Lissage à la baisse', unite: 's', constante: 'lissage_descente_s', facteur: 1 },
-  hysteresis_montee: { libelle: 'Seuil à la hausse', unite: '%', constante: 'hysteresis_montee', facteur: 100 },
-  hysteresis_descente: { libelle: 'Seuil à la baisse', unite: '%', constante: 'hysteresis_descente', facteur: 100 },
-  confirmation_saut_s: { libelle: 'Confirmation des sauts', unite: 's', constante: 'confirmation_saut_s', facteur: 1 },
-  gel_ecriture_s: { libelle: 'Pause de mesure après écriture', unite: 's', constante: 'gel_s', facteur: 1 },
+  ecart_minimal: { libelle: 'Écart minimal', unite: '', auto: (details) => details.ecart_minimal },
+  lissage_montee_s: { libelle: 'Lissage à la hausse', unite: 's', auto: constante('lissage_montee_s') },
+  lissage_descente_s: { libelle: 'Lissage à la baisse', unite: 's', auto: constante('lissage_descente_s') },
+  hysteresis_montee: { libelle: 'Seuil à la hausse', unite: '%', auto: constante('hysteresis_montee', 100) },
+  hysteresis_descente: { libelle: 'Seuil à la baisse', unite: '%', auto: constante('hysteresis_descente', 100) },
+  confirmation_saut_s: { libelle: 'Confirmation des sauts', unite: 's', auto: constante('confirmation_saut_s') },
+  gel_ecriture_s: { libelle: 'Pause de mesure après une transition', unite: 's', auto: constante('gel_s') },
+  rampe_pas: { libelle: 'Taille des pas', unite: 'points', auto: (details) => details.parametres_rampe.pas },
+  rampe_debit: { libelle: 'Vitesse de la transition', unite: 'points/s', auto: (details) => details.parametres_rampe.debit },
+}
+
+// Pourquoi une transition s'est arrêtée avant la cible (fin d'une rampe,
+// journal) ; les états de la fonction ont leur libellé dans LIBELLES_ETAT.
+export const FINS_RAMPE = {
+  reprise_en_main: 'réglage fait ailleurs',
+  pause_manuelle: 'pause demandée',
+  mode: 'changement de mode d\'image',
+  changement_exterieur: 'luminosité changée par le téléviseur (autre entrée ?)',
+  non_confirmee: 'écriture non confirmée',
+  preset: 'application d\'un preset',
+  annulation: 'retour arrière dans l\'historique',
+  arret: 'arrêt de l\'intégration',
 }
 
 // Profils du capteur (signal_lux.profil).
