@@ -34,6 +34,20 @@ CONF_LUMINOSITE_MAX = "luminosite_max"
 CONF_ECART_MINIMAL = "ecart_minimal"
 CONF_PAUSE_MIN = "pause"
 CONF_MODES_EXCLUS = "modes_exclus"
+# Où se trouve le capteur (docs/etude-luminosite-adaptative.md, § 3.3) :
+# A à G, ou inconnu.
+CONF_EMPLACEMENT = "emplacement_capteur"
+EMPLACEMENTS = ["inconnu", "a", "b", "c", "d", "e", "f", "g"]
+# Options avancées du signal : absentes, elles suivent le profil du capteur
+# et son emplacement (signal_lux.constantes).
+CONF_LISSAGE_MONTEE = "lissage_montee_s"
+CONF_LISSAGE_DESCENTE = "lissage_descente_s"
+CONF_HYSTERESIS_MONTEE = "hysteresis_montee"
+CONF_HYSTERESIS_DESCENTE = "hysteresis_descente"
+CONF_CONFIRMATION_SAUT = "confirmation_saut_s"
+CONF_GEL_ECRITURE = "gel_ecriture_s"
+OPTIONS_AVANCEES = (CONF_LISSAGE_MONTEE, CONF_LISSAGE_DESCENTE, CONF_HYSTERESIS_MONTEE,
+                    CONF_HYSTERESIS_DESCENTE, CONF_CONFIRMATION_SAUT, CONF_GEL_ECRITURE)
 # Option groupée des modes HDR et Dolby Vision (hdr*, dolbyHdr*) : leurs
 # libellés français ne figurent pas dans l'arbre des menus.
 MODES_HDR = "hdr"
@@ -45,4 +59,5 @@ OPTIONS_LUMINOSITE_DEFAUT = {
     CONF_ECART_MINIMAL: 3,
     CONF_PAUSE_MIN: 120,
     CONF_MODES_EXCLUS: ["filmMaker", "expert1", "expert2", MODES_HDR],
+    CONF_EMPLACEMENT: "inconnu",
 }

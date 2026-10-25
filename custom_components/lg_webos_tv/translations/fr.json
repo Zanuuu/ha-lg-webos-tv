@@ -41,24 +41,48 @@
     "step": {
       "init": {
         "title": "Luminosité adaptative",
-        "description": "Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une échelle logarithmique proche de la perception de l'œil. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset) met la fonction en pause. Sans capteur, la fonction est désactivée.",
+        "description": "Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une échelle logarithmique proche de la perception de l'œil. La mesure est lissée, et une variation brève ou isolée est ignorée. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset) met la fonction en pause. Si « Fonction Économie d'énergie » ou le mode d'image Éco règlent déjà la luminosité, la fonction s'efface et le signale dans Réparations. Sans capteur, la fonction est désactivée.",
         "data": {
           "capteur_lux": "Capteur de luminosité ambiante",
+          "emplacement_capteur": "Emplacement du capteur",
           "lux_min": "Pièce sombre",
           "lux_max": "Pièce lumineuse",
           "luminosite_min": "Luminosité minimale",
           "luminosite_max": "Luminosité maximale",
-          "ecart_minimal": "Écart minimal",
           "pause": "Pause après un réglage manuel",
           "modes_exclus": "Modes d'image laissés de côté"
         },
         "data_description": {
           "capteur_lux": "Laisser vide pour désactiver la fonction et retirer ses entités.",
+          "emplacement_capteur": "À côté de l'écran, tourné vers la pièce, est le meilleur choix. Face à l'écran (D), l'écran éclaire le capteur : la fonction attend plus longtemps après chaque changement. Schéma et conseils dans le panneau.",
           "lux_min": "En dessous, la luminosité minimale s'applique.",
           "lux_max": "Au-dessus, la luminosité maximale s'applique.",
-          "ecart_minimal": "Changement ignoré s'il est plus petit, pour ne pas suivre chaque frémissement du capteur.",
           "pause": "La pause prend fin aussi au prochain allumage du téléviseur, ou avec le bouton « Reprendre ».",
           "modes_exclus": "Modes où la luminosité n'est jamais modifiée (modes calibrés)."
+        },
+        "sections": {
+          "avance": {
+            "name": "Réglages avancés",
+            "description": "Laissés vides, ils suivent le profil du capteur (déduit de son intégration et de la fréquence de ses mesures) et son emplacement.",
+            "data": {
+              "ecart_minimal": "Écart minimal",
+              "lissage_montee_s": "Lissage à la hausse",
+              "lissage_descente_s": "Lissage à la baisse",
+              "hysteresis_montee": "Seuil à la hausse",
+              "hysteresis_descente": "Seuil à la baisse",
+              "confirmation_saut_s": "Confirmation des sauts",
+              "gel_ecriture_s": "Pause de mesure après écriture"
+            },
+            "data_description": {
+              "ecart_minimal": "Changement de luminosité ignoré s'il est plus petit.",
+              "lissage_montee_s": "Constante de temps du lissage quand la lumière augmente (0 : aucun lissage).",
+              "lissage_descente_s": "Constante de temps du lissage quand la lumière baisse ; plus lente qu'à la hausse, pour ne pas suivre une ombre passagère.",
+              "hysteresis_montee": "Hausse de la lumière, par rapport à la dernière application, qui déclenche un nouveau calcul.",
+              "hysteresis_descente": "Baisse de la lumière, par rapport à la dernière application, qui déclenche un nouveau calcul.",
+              "confirmation_saut_s": "Une mesure plus de 4 fois plus forte ou plus faible attend ce délai, ou une deuxième mesure, avant d'être prise en compte (0 : aucune attente).",
+              "gel_ecriture_s": "Après chaque changement de luminosité, les mesures sont mises de côté pendant ce délai : le capteur peut voir l'écran changer."
+            }
+          }
         }
       }
     },
@@ -66,7 +90,8 @@
       "lux_max_trop_bas": "Doit dépasser la valeur « Pièce sombre ».",
       "luminosite_max_trop_basse": "Doit être au moins égale à la luminosité minimale.",
       "hors_bornes": "Valeur hors des limites autorisées.",
-      "mode_inconnu": "Mode d'image inconnu."
+      "mode_inconnu": "Mode d'image inconnu.",
+      "emplacement_inconnu": "Emplacement inconnu."
     }
   },
   "entity": {
@@ -95,7 +120,9 @@
           "consultation": "Écriture impossible",
           "pause": "En pause (réglage manuel)",
           "mode_exclu": "Mode d'image laissé de côté",
+          "conflit_economie_energie": "En conflit avec l'économie d'énergie du téléviseur",
           "capteur_indisponible": "Capteur indisponible",
+          "capteur_fige": "Capteur figé",
           "active": "Active"
         }
       }
@@ -131,6 +158,30 @@
     "ecriture_impossible": {
       "title": "Le téléviseur refuse l'écriture des réglages",
       "description": "Le téléviseur n'accorde plus aucune voie d'écriture à l'intégration, probablement après une mise à jour de son logiciel. Les réglages restent consultables en temps réel, mais ne peuvent plus être modifiés depuis Home Assistant. L'écriture se réactivera d'elle-même si un logiciel ultérieur la rouvre."
+    },
+    "conflit_economie_energie": {
+      "title": "L'économie d'énergie du téléviseur contrarie la luminosité adaptative",
+      "description": "« Fonction Économie d'énergie » (Général › Économie d'énergie) n'est pas sur Désactivé : le téléviseur règle déjà lui-même la luminosité de l'écran (en Auto, d'après son propre capteur). Les deux régulations se contrarieraient : la luminosité adaptative n'écrit plus rien tant que ce réglage reste actif. Corriger le règle sur Désactivé.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Désactiver l'économie d'énergie",
+            "description": "« Fonction Économie d'énergie » sera réglée sur Désactivé, et la luminosité adaptative reprendra la main. La consommation de l'écran peut augmenter."
+          }
+        },
+        "abort": {
+          "non_configuree": "La luminosité adaptative n'est pas configurée.",
+          "ecriture_echouee": "Écriture impossible : {raison}."
+        }
+      }
+    },
+    "conflit_mode_eco": {
+      "title": "Le mode d'image Éco contrarie la luminosité adaptative",
+      "description": "En mode Éco, le capteur du téléviseur ajuste lui-même la luminosité des pixels OLED selon l'éclairage ambiant. La luminosité adaptative n'écrit rien dans ce mode. Choisissez un autre mode d'image, ou laissez Éco de côté dans les options de la fonction."
+    },
+    "capteur_fige": {
+      "title": "Le capteur de luminosité ne donne plus de mesure",
+      "description": "{capteur} n'a envoyé aucune mesure depuis le {depuis}, bien plus longtemps que d'habitude, alors que le téléviseur est allumé. Pile vide, ou appareil injoignable (réseau Zigbee, Wi-Fi) ? La luminosité adaptative garde la luminosité actuelle jusqu'à la prochaine mesure."
     }
   },
   "services": {
@@ -193,6 +244,18 @@
         "expert1": "Expert (pièce lumineuse, journée)",
         "expert2": "Expert (pièce sombre, nuit)",
         "hdr": "Contenus HDR et Dolby Vision"
+      }
+    },
+    "emplacement_capteur": {
+      "options": {
+        "inconnu": "Autre, ou je ne sais pas",
+        "a": "A — À côté de l'écran, tourné vers la pièce (recommandé)",
+        "b": "B — Derrière le téléviseur, tourné vers le mur",
+        "c": "C — Au plafond, tourné vers le bas",
+        "d": "D — Au canapé, tourné vers l'écran (déconseillé)",
+        "e": "E — Au canapé, tourné vers le haut",
+        "f": "F — Près d'une fenêtre (déconseillé seul)",
+        "g": "G — À l'extérieur (déconseillé seul)"
       }
     }
   },

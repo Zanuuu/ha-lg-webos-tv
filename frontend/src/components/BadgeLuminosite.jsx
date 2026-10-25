@@ -4,7 +4,10 @@ import { heure, LIBELLES_ETAT } from '../luminosite.js'
 // États signalés sur la ligne. Désactivée et téléviseur déconnecté ne le
 // sont pas : rien n'agit sur la ligne, et le bandeau dit déjà que la TV est
 // injoignable.
-const ETATS_SIGNALES = ['active', 'pause', 'mode_exclu', 'capteur_indisponible', 'consultation']
+const ETATS_SIGNALES = [
+  'active', 'pause', 'mode_exclu', 'conflit_economie_energie', 'capteur_indisponible',
+  'capteur_fige', 'consultation',
+]
 
 export default function BadgeLuminosite({ luminosite, lectureSeule, onReprendre, onDetails }) {
   const [envoi, setEnvoi] = useState(false)

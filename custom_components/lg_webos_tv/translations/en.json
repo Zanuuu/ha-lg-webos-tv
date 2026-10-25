@@ -41,24 +41,48 @@
     "step": {
       "init": {
         "title": "Adaptive brightness",
-        "description": "Sets the OLED pixel brightness from an ambient light sensor, on a logarithmic scale close to how the eye perceives light. A brightness change made elsewhere (remote, Home Assistant, preset) pauses the feature. Without a sensor, the feature is off.",
+        "description": "Sets the OLED pixel brightness from an ambient light sensor, on a logarithmic scale close to how the eye perceives light. The reading is smoothed, and a brief or isolated change is ignored. A brightness change made elsewhere (remote, Home Assistant, preset) pauses the feature. If the TV's Energy Saving or the Eco picture mode already adjusts brightness, the feature steps back and reports it in Repairs. Without a sensor, the feature is off.",
         "data": {
           "capteur_lux": "Ambient light sensor",
+          "emplacement_capteur": "Sensor location",
           "lux_min": "Dark room",
           "lux_max": "Bright room",
           "luminosite_min": "Minimum brightness",
           "luminosite_max": "Maximum brightness",
-          "ecart_minimal": "Minimum change",
           "pause": "Pause after a manual change",
           "modes_exclus": "Picture modes left alone"
         },
         "data_description": {
           "capteur_lux": "Leave empty to turn the feature off and remove its entities.",
+          "emplacement_capteur": "Next to the screen, facing the room, is the best choice. Facing the screen (D), the screen lights the sensor: the feature waits longer after each change. Diagram and advice in the panel.",
           "lux_min": "Below this, the minimum brightness applies.",
           "lux_max": "Above this, the maximum brightness applies.",
-          "ecart_minimal": "Smaller changes are ignored, so the TV does not follow every flicker of the sensor.",
           "pause": "The pause also ends the next time the TV is turned on, or with the Resume button.",
           "modes_exclus": "Modes where brightness is never changed (calibrated modes)."
+        },
+        "sections": {
+          "avance": {
+            "name": "Advanced settings",
+            "description": "Left empty, they follow the sensor profile (derived from its integration and how often it reports) and its location.",
+            "data": {
+              "ecart_minimal": "Minimum change",
+              "lissage_montee_s": "Smoothing when brighter",
+              "lissage_descente_s": "Smoothing when darker",
+              "hysteresis_montee": "Brighter threshold",
+              "hysteresis_descente": "Darker threshold",
+              "confirmation_saut_s": "Jump confirmation",
+              "gel_ecriture_s": "Reading pause after a write"
+            },
+            "data_description": {
+              "ecart_minimal": "Brightness changes smaller than this are ignored.",
+              "lissage_montee_s": "Smoothing time constant when light increases (0: no smoothing).",
+              "lissage_descente_s": "Smoothing time constant when light decreases; slower than when brighter, so a passing shadow is not followed.",
+              "hysteresis_montee": "Light increase, relative to the last application, that triggers a new calculation.",
+              "hysteresis_descente": "Light decrease, relative to the last application, that triggers a new calculation.",
+              "confirmation_saut_s": "A reading more than 4 times higher or lower waits this long, or for a second reading, before being used (0: no wait).",
+              "gel_ecriture_s": "After each brightness change, readings are set aside for this long: the sensor may see the screen change."
+            }
+          }
         }
       }
     },
@@ -66,7 +90,8 @@
       "lux_max_trop_bas": "Must be above the dark room value.",
       "luminosite_max_trop_basse": "Must be at least the minimum brightness.",
       "hors_bornes": "Value outside the allowed range.",
-      "mode_inconnu": "Unknown picture mode."
+      "mode_inconnu": "Unknown picture mode.",
+      "emplacement_inconnu": "Unknown location."
     }
   },
   "entity": {
@@ -95,7 +120,9 @@
           "consultation": "Write unavailable",
           "pause": "Paused (manual change)",
           "mode_exclu": "Picture mode left alone",
+          "conflit_economie_energie": "Conflicts with the TV's energy saving",
           "capteur_indisponible": "Sensor unavailable",
+          "capteur_fige": "Sensor stuck",
           "active": "Active"
         }
       }
@@ -131,6 +158,30 @@
     "ecriture_impossible": {
       "title": "The TV refuses settings changes",
       "description": "The TV no longer grants the integration any way to write settings, probably after a software update. Settings remain readable in real time but can no longer be changed from Home Assistant. Writing will come back by itself if a later software version allows it again."
+    },
+    "conflit_economie_energie": {
+      "title": "The TV's energy saving conflicts with adaptive brightness",
+      "description": "Energy Saving (General › Energy Saving) is not Off: the TV already adjusts the screen brightness itself (in Auto, from its own sensor). The two would fight each other: adaptive brightness writes nothing while this setting stays on. Fix sets it to Off.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Turn energy saving off",
+            "description": "Energy Saving will be set to Off, and adaptive brightness will take over. The screen may use more power."
+          }
+        },
+        "abort": {
+          "non_configuree": "Adaptive brightness is not configured.",
+          "ecriture_echouee": "Write failed: {raison}."
+        }
+      }
+    },
+    "conflit_mode_eco": {
+      "title": "The Eco picture mode conflicts with adaptive brightness",
+      "description": "In Eco mode, the TV's sensor adjusts the OLED pixel brightness itself from the ambient light. Adaptive brightness writes nothing in this mode. Choose another picture mode, or leave Eco alone in the feature's options."
+    },
+    "capteur_fige": {
+      "title": "The light sensor no longer reports",
+      "description": "{capteur} has sent no reading since {depuis}, much longer than usual, while the TV is on. Flat battery, or device unreachable (Zigbee network, Wi-Fi)? Adaptive brightness keeps the current brightness until the next reading."
     }
   },
   "services": {
@@ -193,6 +244,18 @@
         "expert1": "Expert (bright space, daytime)",
         "expert2": "Expert (dark space, night)",
         "hdr": "HDR and Dolby Vision content"
+      }
+    },
+    "emplacement_capteur": {
+      "options": {
+        "inconnu": "Other, or I don't know",
+        "a": "A — Next to the screen, facing the room (recommended)",
+        "b": "B — Behind the TV, facing the wall",
+        "c": "C — On the ceiling, facing down",
+        "d": "D — At the sofa, facing the screen (not recommended)",
+        "e": "E — At the sofa, facing up",
+        "f": "F — Near a window (not recommended alone)",
+        "g": "G — Outdoors (not recommended alone)"
       }
     }
   },

@@ -14,23 +14,32 @@ from homeassistant.config_entries import (SOURCE_REAUTH, ConfigEntry,
                                           OptionsFlowWithReload)
 from homeassistant.const import CONF_HOST
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (EntitySelector,
                                             EntitySelectorConfig,
                                             NumberSelector,
                                             NumberSelectorConfig,
                                             NumberSelectorMode, SelectSelector,
-                                            SelectSelectorConfig)
+                                            SelectSelectorConfig,
+                                            SelectSelectorMode)
 from homeassistant.helpers.service_info.ssdp import (ATTR_UPNP_FRIENDLY_NAME,
                                                      SsdpServiceInfo)
 
-from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_ECART_MINIMAL,
+from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_CONFIRMATION_SAUT,
+                    CONF_ECART_MINIMAL, CONF_EMPLACEMENT, CONF_GEL_ECRITURE,
+                    CONF_HYSTERESIS_DESCENTE, CONF_HYSTERESIS_MONTEE,
+                    CONF_LISSAGE_DESCENTE, CONF_LISSAGE_MONTEE,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN, DOMAIN,
-                    OPTIONS_LUMINOSITE_DEFAUT)
+                    EMPLACEMENTS, OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from .luminosite_adaptative import BORNES, modes_proposes, valider_options
 from .televiseur import AppairageEchoue, appairer
 
 TITRE_DEFAUT = "LG webOS TV"
+# Section repliée du formulaire : écart minimal et constantes du signal,
+# qui suivent sinon le profil du capteur et son emplacement.
+SECTION_AVANCEE = "avance"
+CLES_AVANCEES = (CONF_ECART_MINIMAL, *OPTIONS_AVANCEES)
 
 
 class LgWebosTvConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -173,25 +182,43 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
         erreurs = {}
         # Lecture de l'arbre (en cache une fois l'entrée chargée).
         modes = await self.hass.async_add_executor_job(modes_proposes)
+        saisie = None
         if user_input is not None:
-            options, erreurs = valider_options(user_input, modes)
+            # Options stockées à plat : la section n'est qu'une présentation.
+            saisie = {**user_input, **user_input.get(SECTION_AVANCEE, {})}
+            saisie.pop(SECTION_AVANCEE, None)
+            options, erreurs = valider_options(saisie, modes)
             if not erreurs:
                 return self.async_create_entry(data=options)
 
+        avance = vol.Schema({
+            vol.Required(CONF_ECART_MINIMAL): _nombre(CONF_ECART_MINIMAL),
+            # Vides : valeur du profil du capteur.
+            vol.Optional(CONF_LISSAGE_MONTEE): _nombre(CONF_LISSAGE_MONTEE, "s"),
+            vol.Optional(CONF_LISSAGE_DESCENTE): _nombre(CONF_LISSAGE_DESCENTE, "s"),
+            vol.Optional(CONF_HYSTERESIS_MONTEE): _nombre(CONF_HYSTERESIS_MONTEE, "%"),
+            vol.Optional(CONF_HYSTERESIS_DESCENTE): _nombre(CONF_HYSTERESIS_DESCENTE, "%"),
+            vol.Optional(CONF_CONFIRMATION_SAUT): _nombre(CONF_CONFIRMATION_SAUT, "s"),
+            vol.Optional(CONF_GEL_ECRITURE): _nombre(CONF_GEL_ECRITURE, "s"),
+        })
         schema = vol.Schema({
             vol.Optional(CONF_CAPTEUR_LUX): EntitySelector(EntitySelectorConfig(
                 domain="sensor", device_class="illuminance")),
+            vol.Required(CONF_EMPLACEMENT): SelectSelector(SelectSelectorConfig(
+                options=EMPLACEMENTS, mode=SelectSelectorMode.DROPDOWN,
+                translation_key=CONF_EMPLACEMENT)),
             vol.Required(CONF_LUX_MIN): _nombre(CONF_LUX_MIN, "lx"),
             vol.Required(CONF_LUX_MAX): _nombre(CONF_LUX_MAX, "lx"),
             vol.Required(CONF_LUMINOSITE_MIN): _nombre(CONF_LUMINOSITE_MIN),
             vol.Required(CONF_LUMINOSITE_MAX): _nombre(CONF_LUMINOSITE_MAX),
-            vol.Required(CONF_ECART_MINIMAL): _nombre(CONF_ECART_MINIMAL),
             vol.Required(CONF_PAUSE_MIN): _nombre(CONF_PAUSE_MIN, "min"),
             vol.Required(CONF_MODES_EXCLUS): SelectSelector(SelectSelectorConfig(
                 options=modes, multiple=True, translation_key=CONF_MODES_EXCLUS)),
+            vol.Required(SECTION_AVANCEE): section(avance, {"collapsed": True}),
         })
-        valeurs = {**OPTIONS_LUMINOSITE_DEFAUT, **self.config_entry.options,
-                   **(user_input or {})}
+        valeurs = {**OPTIONS_LUMINOSITE_DEFAUT, **self.config_entry.options, **(saisie or {})}
+        valeurs[SECTION_AVANCEE] = {cle: valeurs.pop(cle) for cle in CLES_AVANCEES
+                                    if cle in valeurs}
         return self.async_show_form(
             step_id="init", errors=erreurs,
             data_schema=self.add_suggested_values_to_schema(schema, valeurs))

@@ -32,6 +32,8 @@ export const pauseLuminosite = (minutes) => commande('luminosite_adaptative/paus
 export const recupererConfigLuminosite = () => commande('luminosite_adaptative/configuration')
 export const configurerLuminosite = (options) =>
   commande('luminosite_adaptative/configurer', { options })
+export const desactiverEconomieEnergie = () =>
+  commande('luminosite_adaptative/desactiver_economie_energie')
 
 export const recupererHistorique = (limite = 100) => commande('historique', { limite })
 export const annulerEcriture = (id) => commande('historique/annuler', { ecriture_id: id })

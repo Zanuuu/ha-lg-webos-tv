@@ -843,6 +843,145 @@ select {
   cursor: default;
 }
 
+/* Conflit avec une fonction du téléviseur, emplacement déconseillé : à
+   corriger, sans être une erreur du panneau. */
+.message-conflit {
+  border-left-color: var(--etat-attente);
+}
+
+.message-conflit p {
+  margin: 0 0 0.6rem;
+}
+
+.message-conflit p:last-child {
+  margin-bottom: 0;
+}
+
+.emplacement-capteur {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .emplacement-capteur {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.schema-emplacement {
+  margin: 0;
+}
+
+.schema-emplacement svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.schema-emplacement figcaption {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.piece-schema {
+  fill: none;
+  stroke: var(--trait);
+  stroke-width: 2;
+}
+
+.fenetre-schema {
+  stroke: var(--gris-texte);
+  stroke-width: 5;
+}
+
+.tv-schema {
+  fill: var(--blanc-ecran);
+}
+
+.canape-schema {
+  fill: var(--trait);
+}
+
+.legende-schema {
+  fill: var(--gris-texte);
+  font-size: 10px;
+}
+
+.marqueur-schema {
+  cursor: pointer;
+}
+
+.marqueur-schema circle {
+  fill: var(--trait);
+  stroke: var(--gris-texte);
+  stroke-width: 1;
+}
+
+.marqueur-schema text {
+  fill: var(--blanc-ecran);
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.marqueur-schema .plafond-schema {
+  fill: none;
+  stroke-dasharray: 3 3;
+}
+
+.fleche-schema {
+  fill: none;
+  stroke: var(--gris-texte);
+  stroke-width: 1.5;
+}
+
+.marqueur-deconseille circle {
+  stroke: var(--etat-attente);
+}
+
+.marqueur-choisi circle {
+  fill: var(--allume);
+  stroke: var(--allume);
+}
+
+.marqueur-choisi .plafond-schema {
+  fill: none;
+}
+
+.marqueur-choisi text {
+  fill: var(--noir);
+}
+
+.marqueur-choisi .fleche-schema {
+  stroke: var(--allume);
+}
+
+.reglages-avances,
+.aide-luminosite {
+  margin: 0 0 1rem;
+}
+
+.reglages-avances summary,
+.aide-luminosite summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.3rem 0;
+}
+
+.reglages-avances[open] summary {
+  margin-bottom: 0.5rem;
+}
+
+.aide-luminosite p {
+  margin: 0.3rem 0 0.5rem;
+  font-size: 0.9rem;
+  max-width: 70ch;
+}
+
 .grille-champs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

@@ -152,18 +152,46 @@ Appareils et services → LG webOS TV → **Configurer** : choisir un capteur
 de luminosité ambiante (lux) active la fonction et crée ses trois entités ;
 effacer le capteur la retire (l'intégration est alors rechargée).
 
-La page du panneau montre l'état en direct (lux mesuré, luminosité
-calculée, luminosité du téléviseur, mode d'image), la **cause d'une pause**
-et son heure de fin, avec « Reprendre » ou « Pause 1 h » ; la **courbe**
-lux → luminosité, dont on déplace les deux points à la souris, au doigt ou
-au clavier ; les autres réglages (capteur, durée de pause, écart minimal,
-modes laissés de côté), appliqués sans recharger l'intégration ; et un
-**journal** des 50 derniers événements (applications, pauses, reprises,
-erreurs), tenu en mémoire depuis le démarrage de Home Assistant.
+La page du panneau montre l'état en direct (lux lissé et dernière mesure,
+profil du capteur, luminosité calculée, luminosité du téléviseur, mode
+d'image), la **cause d'une pause** et son heure de fin, avec « Reprendre »
+ou « Pause 1 h » ; la **courbe** lux → luminosité, dont on déplace les deux
+points à la souris, au doigt ou au clavier ; l'**emplacement du capteur**
+avec un schéma de la pièce ; les autres réglages (capteur, durée de pause,
+modes laissés de côté, réglages avancés repliés), appliqués sans recharger
+l'intégration ; et un **journal** des 50 derniers événements (applications,
+pauses, reprises, mesures écartées, conflits, erreurs), tenu en mémoire
+depuis le démarrage de Home Assistant.
 
 - Échelle logarithmique, proche de la perception de l'œil, entre une pièce
   sombre (luminosité minimale) et une pièce lumineuse (luminosité
-  maximale) ; changement ignoré sous un écart minimal.
+  maximale).
+- **Mesure fiabilisée** : le lux est lissé (plus vite quand la lumière
+  monte que quand elle baisse), la luminosité n'est recalculée que si la
+  lumière a changé d'au moins +10 % / −20 % depuis la dernière
+  application, une mesure isolée plus de 4 fois plus forte ou plus faible
+  attend 8 s ou une deuxième mesure, et les mesures sont mises de côté 5 s
+  après chaque changement de luminosité (le capteur peut voir l'écran). Un
+  grand changement de lumière se suit donc en quelques pas espacés de 5 s.
+  Un changement plus petit que l'écart minimal (3 par défaut) est ignoré.
+- **Profil du capteur**, déduit de son intégration (ZHA, Zigbee2MQTT, Hue,
+  Z-Wave JS…) puis de la fréquence observée de ses mesures : il n'ajuste
+  que le lissage et la confirmation des sauts, jamais la courbe. Ces
+  constantes peuvent être fixées à la main (réglages avancés).
+- **Emplacement du capteur** : à côté de l'écran, tourné vers la pièce, est
+  recommandé ; face à l'écran (au canapé), la mise de côté passe à 20 s,
+  et les emplacements déconseillés sont signalés.
+- **Fonctions du téléviseur** : si « Fonction Économie d'énergie » n'est pas
+  sur Désactivé, ou en mode d'image Éco, le téléviseur règle déjà lui-même
+  la luminosité ; la fonction n'écrit plus rien, l'état devient
+  `conflit_economie_energie` et une alerte apparaît dans Paramètres →
+  Réparations. L'économie d'énergie se désactive par le bouton de la page
+  ou par « Corriger » dans Réparations (jamais sans action de votre part).
+  « Lumière ambiante du MODE FILMMAKER » et « Paramètres de luminosité AI »
+  ne sont pas lisibles par l'intégration : la page explique leur effet.
+- **Capteur figé** : sans mesure depuis plus de 3 fois son intervalle
+  habituel (au moins 2 h), téléviseur allumé, la luminosité est conservée,
+  l'état devient `capteur_fige` et une alerte apparaît dans Réparations.
 - Réappliquée quand le téléviseur rappelle une autre luminosité : il en
   garde une par mode d'image **et par entrée**.
 - **Pause** dès que la luminosité OLED est réglée ailleurs : télécommande,
@@ -177,9 +205,11 @@ erreurs), tenu en mémoire depuis le démarrage de Home Assistant.
   mode absent de la liste (« Créateur » par exemple) est aussi laissé de
   côté.
 - L'entité « État de la luminosité adaptative » dit ce que fait la
-  fonction (`active`, `pause`, `mode_exclu`, `capteur_indisponible`…), avec
-  les attributs `lux`, `cible`, `fin_pause`, `cause_pause` (origine du
-  réglage qui l'a mise en pause) et `derniere_erreur`. Ses
+  fonction (`active`, `pause`, `mode_exclu`, `conflit_economie_energie`,
+  `capteur_indisponible`, `capteur_fige`…), avec les attributs `lux`,
+  `lux_filtre`, `cible`, `fin_pause`, `cause_pause` (origine du réglage qui
+  l'a mise en pause), `conflit`, `profil`, `emplacement` et
+  `derniere_erreur`. Ses
   écritures apparaissent dans l'historique du panneau (origine
   « Luminosité adaptative »), et peuvent y être annulées.
 

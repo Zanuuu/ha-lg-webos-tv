@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import * as api from '../api.js'
 import { useLuminositeAdaptative } from '../hooks/useLuminositeAdaptative.js'
 import {
-  BORNES, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT, MODE_HDR, validerOptions,
+  BORNES, EMPLACEMENTS, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT, LIBELLES_PROFIL,
+  MODE_HDR, OPTIONS_AVANCEES, validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
 import { libelleModeImage } from '../valeurs.js'
 import Interrupteur from './controles/Interrupteur.jsx'
 import CourbeLuminosite from './CourbeLuminosite.jsx'
+import SchemaEmplacement from './SchemaEmplacement.jsx'
 
 const PAUSE_MANUELLE_MIN = 60
 
@@ -18,6 +20,37 @@ const RAISONS_REPRISE = {
 }
 
 const formaterLux = (lux) => `${lux.toLocaleString('fr-FR')} lx`
+
+// Plateformes courantes des capteurs de lux (registre des entités).
+const NOMS_PLATEFORME = {
+  esphome: 'ESPHome', zha: 'ZHA', mqtt: 'MQTT', hue: 'Philips Hue', deconz: 'deCONZ',
+  zwave_js: 'Z-Wave JS', matter: 'Matter',
+}
+
+function duree(secondes) {
+  if (secondes < 90) return `${Math.round(secondes)} s`
+  if (secondes < 5400) return `${Math.round(secondes / 60)} min`
+  return `${Math.round(secondes / 3600)} h`
+}
+
+function texteProfil(profil) {
+  if (!profil) return null
+  const plateforme = profil.plateforme && (NOMS_PLATEFORME[profil.plateforme] || profil.plateforme)
+  let texte = `Profil du capteur : ${LIBELLES_PROFIL[profil.nom] || profil.nom}`
+  if (plateforme) texte += ` (${plateforme})`
+  texte += profil.intervalle_s
+    ? `, une mesure toutes les ${duree(profil.intervalle_s)}.`
+    : ', fréquence des mesures pas encore observée.'
+  return texte
+}
+
+// Les options avancées vides (null) suivent le profil : sans effet sur la
+// comparaison avec les options enregistrées, où elles sont absentes.
+function normaliser(options) {
+  return JSON.stringify(Object.fromEntries(Object.entries(options)
+    .filter(([cle, valeur]) => !(cle in OPTIONS_AVANCEES && valeur == null))
+    .sort(([a], [b]) => a.localeCompare(b))))
+}
 
 function libelleCapteur(capteur) {
   const valeur = capteur.unite ? `${capteur.valeur} ${capteur.unite}` : capteur.valeur
@@ -52,8 +85,9 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
     <>
       <p className="texte-attenue intro-luminosite">
         Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une
-        échelle logarithmique proche de la perception de l'œil. Un réglage de la luminosité fait
-        ailleurs (télécommande, Home Assistant, preset) la met en pause.
+        échelle logarithmique proche de la perception de l'œil. La mesure est lissée, et une
+        variation brève ou isolée est ignorée. Un réglage de la luminosité fait ailleurs
+        (télécommande, Home Assistant, preset) la met en pause.
       </p>
       {luminosite === null ? (
         <MiseEnRoute capteurs={configuration.capteurs} onEnregistrer={enregistrer} />
@@ -68,9 +102,11 @@ export default function VueLuminosite({ index, luminosite, lectureSeule, onRepre
           <ReglagesLuminosite
             index={index}
             configuration={configuration}
-            lux={details?.lux ?? null}
+            lux={details?.lux_filtre ?? details?.lux ?? null}
+            constantes={details?.constantes ?? null}
             onEnregistrer={enregistrer}
           />
+          <AideFonctionsTeleviseur />
           <JournalLuminosite journal={journal} />
         </>
       )}
@@ -167,8 +203,8 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
 
       <dl className="mesures-luminosite" aria-live="off">
         <div>
-          <dt>Lumière ambiante</dt>
-          <dd>{etat.lux !== undefined && etat.lux !== null ? formaterLux(etat.lux) : '—'}</dd>
+          <dt>Lumière ambiante (lissée)</dt>
+          <dd>{etat.lux_filtre != null ? formaterLux(etat.lux_filtre) : '—'}</dd>
         </div>
         <div>
           <dt>Luminosité calculée</dt>
@@ -180,10 +216,35 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
         </div>
       </dl>
 
+      {etat.lux != null && (
+        <p className="ligne-carte texte-attenue">
+          Dernière mesure du capteur : {formaterLux(etat.lux)}
+          {etat.derniere_mesure && ` à ${heure(etat.derniere_mesure)}`}.
+          {' '}{texteProfil(etat.profil)}
+        </p>
+      )}
       {etat.mode_image && (
         <p className="ligne-carte">
           Mode d'image : {libelleModeImage(index, etat.mode_image)}
           {etat.mode_exclu && <span className="texte-attenue"> — laissé de côté</span>}
+        </p>
+      )}
+
+      {etat.conflit && (
+        <ConflitLuminosite
+          conflit={etat.conflit}
+          economieEnergie={etat.economie_energie}
+          desactive={lectureSeule || envoi}
+          onDesactiver={() => agir(api.desactiverEconomieEnergie)}
+        />
+      )}
+      {etat.etat === 'capteur_fige' && (
+        <p className="message">
+          Aucune mesure du capteur depuis
+          {etat.derniere_mesure ? ` ${heure(etat.derniere_mesure)}` : ' longtemps'}, bien plus
+          longtemps que d'habitude, alors que le téléviseur est allumé. Pile vide, ou appareil
+          injoignable (réseau Zigbee, Wi-Fi) ? La luminosité actuelle est conservée jusqu'à la
+          prochaine mesure.
         </p>
       )}
 
@@ -226,12 +287,39 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
   )
 }
 
-function ReglagesLuminosite({ index, configuration, lux, onEnregistrer }) {
+function ConflitLuminosite({ conflit, economieEnergie, desactive, onDesactiver }) {
+  if (conflit === 'mode_eco') {
+    return (
+      <p className="message message-conflit">
+        En mode d'image Éco, le capteur du téléviseur ajuste lui-même la luminosité des pixels
+        OLED selon l'éclairage ambiant : la luminosité adaptative n'écrit rien dans ce mode.
+        Choisissez un autre mode d'image, ou laissez Éco de côté dans les réglages ci-dessous.
+      </p>
+    )
+  }
+  return (
+    <div className="message message-conflit">
+      <p>
+        La « Fonction Économie d'énergie » du téléviseur (Général › Économie d'énergie) règle
+        déjà la luminosité de l'écran
+        {economieEnergie === 'auto' ? ' selon son propre capteur' : ''}. Les deux régulations se
+        contrarieraient : la luminosité adaptative n'écrit plus rien tant qu'elle reste active.
+      </p>
+      <button type="button" className="bouton-principal" disabled={desactive} onClick={onDesactiver}>
+        {economieEnergie === 'auto'
+          ? 'Désactiver l\'économie d\'énergie automatique'
+          : 'Désactiver l\'économie d\'énergie'}
+      </button>
+    </div>
+  )
+}
+
+function ReglagesLuminosite({ index, configuration, lux, constantes, onEnregistrer }) {
   const { options, capteurs, modes_proposes: modes } = configuration
   const [brouillon, setBrouillon] = useState(options)
   const [envoi, setEnvoi] = useState(false)
   const [message, setMessage] = useState(null)
-  const modifie = JSON.stringify(brouillon) !== JSON.stringify(options)
+  const modifie = normaliser(brouillon) !== normaliser(options)
   const erreurs = validerOptions(brouillon)
   const valide = Object.keys(erreurs).length === 0
 
@@ -296,6 +384,33 @@ function ReglagesLuminosite({ index, configuration, lux, onEnregistrer }) {
     )
   }
 
+  function champAvance(cle) {
+    const { libelle, unite, constante, facteur } = OPTIONS_AVANCEES[cle]
+    const [bas, haut] = BORNES[cle]
+    const auto = constantes ? Math.round(constantes[constante] * facteur) : null
+    const valeur = brouillon[cle]
+    return (
+      <label key={cle} className="champ-luminosite">
+        <span>{libelle}</span>
+        <span className="saisie-unite">
+          <input
+            type="number"
+            min={bas}
+            max={haut}
+            step="1"
+            value={valeur == null || Number.isNaN(valeur) ? '' : valeur}
+            placeholder={auto !== null ? `auto : ${auto}` : 'auto'}
+            aria-invalid={erreurs[cle] ? true : undefined}
+            onChange={(e) => changer({ [cle]: e.target.value === '' ? null : e.target.valueAsNumber })}
+          />
+          <span className="texte-attenue">{unite}</span>
+        </span>
+        {erreurs[cle] && <span className="erreur-reglage">{erreurs[cle]}</span>}
+      </label>
+    )
+  }
+
+  const emplacement = EMPLACEMENTS[brouillon.emplacement_capteur] || EMPLACEMENTS.inconnu
   const capteurConnu = capteurs.some((c) => c.entity_id === brouillon.capteur_lux)
   const retrait = !brouillon.capteur_lux
 
@@ -332,13 +447,48 @@ function ReglagesLuminosite({ index, configuration, lux, onEnregistrer }) {
             <option value="">Aucun : désactiver la fonction</option>
           </select>
         </label>
-        {champNombre('pause', 'Pause après un réglage manuel', 'min')}
-        {champNombre('ecart_minimal', 'Écart minimal')}
+        <label className="champ-luminosite champ-large">
+          <span>Emplacement du capteur</span>
+          <select
+            value={brouillon.emplacement_capteur}
+            disabled={envoi}
+            onChange={(e) => changer({ emplacement_capteur: e.target.value })}
+          >
+            {Object.entries(EMPLACEMENTS).map(([cle, { libelle }]) => (
+              <option key={cle} value={cle}>{libelle}</option>
+            ))}
+          </select>
+        </label>
       </div>
-      <p className="texte-attenue">
-        L'écart minimal évite de suivre chaque frémissement du capteur. La pause prend fin aussi
-        au prochain allumage du téléviseur.
-      </p>
+      <div className="emplacement-capteur">
+        <SchemaEmplacement
+          choisi={brouillon.emplacement_capteur}
+          desactive={envoi}
+          onChoisir={(cle) => changer({ emplacement_capteur: cle })}
+        />
+        <p className={emplacement.avertissement ? 'message message-conflit' : 'texte-attenue'}>
+          {emplacement.texte}
+        </p>
+      </div>
+      <div className="grille-champs">
+        {champNombre('pause', 'Pause après un réglage manuel', 'min')}
+      </div>
+      <p className="texte-attenue">La pause prend fin aussi au prochain allumage du téléviseur.</p>
+
+      <details className="reglages-avances">
+        <summary>Réglages avancés</summary>
+        <p className="texte-attenue">
+          La mesure est lissée (plus vite à la hausse qu'à la baisse), une variation trop petite
+          par rapport à la dernière application est ignorée, une mesure isolée plus de 4 fois
+          plus forte ou plus faible attend d'être confirmée, et les mesures sont mises de côté
+          juste après chaque changement de luminosité. Laissés vides, ces réglages suivent le
+          profil du capteur et son emplacement.
+        </p>
+        <div className="grille-champs">
+          {champNombre('ecart_minimal', 'Écart minimal')}
+          {Object.keys(OPTIONS_AVANCEES).map(champAvance)}
+        </div>
+      </details>
 
       <fieldset className="modes-exclus">
         <legend>Modes d'image laissés de côté</legend>
@@ -383,12 +533,24 @@ function ReglagesLuminosite({ index, configuration, lux, onEnregistrer }) {
   )
 }
 
+const CAUSES_CONFLIT = {
+  economie_energie: 'Fonction Économie d\'énergie du téléviseur active',
+  mode_eco: 'mode d\'image Éco',
+}
+
 function texteEvenement(evenement) {
   switch (evenement.type) {
     case 'application':
       return `Luminosité réglée à ${evenement.cible}`
         + (evenement.ancienne !== null ? ` (était ${evenement.ancienne})` : '')
-        + ` pour ${formaterLux(evenement.lux)}`
+        + ` pour une lumière lissée de ${formaterLux(evenement.lux)}`
+        + (evenement.lux_brut != null ? ` (mesure ${formaterLux(evenement.lux_brut)})` : '')
+    case 'saut_ecarte':
+      return 'Mesure isolée écartée (saut de lumière non confirmé)'
+    case 'conflit':
+      return `En retrait : ${CAUSES_CONFLIT[evenement.cause] || evenement.cause}`
+    case 'capteur_fige':
+      return 'Capteur figé : aucune mesure depuis bien plus longtemps que d\'habitude'
     case 'erreur':
       return `Écriture de ${evenement.cible} impossible : ${evenement.raison}`
     case 'pause':
@@ -411,6 +573,34 @@ function horodatage(iso) {
   return aujourdhui
     ? date.toLocaleTimeString('fr-FR')
     : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' })
+}
+
+// Réglages du téléviseur qui touchent aussi à la luminosité mais que l'API
+// ne laisse pas lire : l'intégration ne peut ni les détecter ni les signaler.
+function AideFonctionsTeleviseur() {
+  return (
+    <section className="carte-luminosite" aria-labelledby="titre-aide-tv">
+      <h3 id="titre-aide-tv">Fonctions du téléviseur que l'intégration ne peut pas lire</h3>
+      <details className="aide-luminosite">
+        <summary>Lumière ambiante du MODE FILMMAKER</summary>
+        <p>
+          Image › Paramètres avancés › Luminosité, en FILMMAKER MODE seulement : le téléviseur
+          optimise l'image « en fonction de la luminosité détectée par le capteur de lumière
+          ambiante ». FILMMAKER MODE est laissé de côté par défaut : dans ce mode, c'est cette
+          compensation du téléviseur qu'il faut utiliser, pas la luminosité adaptative.
+        </p>
+      </details>
+      <details className="aide-luminosite">
+        <summary>Paramètres de luminosité AI</summary>
+        <p>
+          Général › Service d'AI : l'IA « exprime efficacement les zones plus sombres en fonction
+          de l'environnement et des caractéristiques du contenu ». Activée, elle s'ajoute à la
+          luminosité adaptative ; son effet exact n'est pas connu. Si la luminosité vous semble
+          varier sans raison, désactivez-la pour comparer.
+        </p>
+      </details>
+    </section>
+  )
 }
 
 function JournalLuminosite({ journal }) {

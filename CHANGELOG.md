@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.5.0 — 2026-10-25
+
+Luminosité adaptative : signal fiable et cohabitation avec le téléviseur
+(lot 1 de `docs/etude-luminosite-adaptative.md`).
+
+**Changement de comportement** : la fonction réagit à un signal lissé et
+non plus à chaque mesure brute. Une lampe qu'on allume est suivie en
+quelques pas espacés de 5 s (au lieu d'un saut une seconde après), un saut
+de lumière de plus d'un facteur 4 attend 8 s de confirmation, et une
+petite variation (+10 % / −20 % depuis la dernière application) ne change
+plus rien. Chaque pas reste une écriture distincte dans l'historique.
+
+- **Filtre** exponentiel sur le logarithme du lux, défini en temps (capteurs
+  à 1 s comme à 5 min), plus rapide à la hausse (5 s) qu'à la baisse
+  (15 s), réévalué entre deux mesures ; **hystérésis** relative ;
+  **confirmation des sauts** isolés ; **mise de côté des mesures** 5 s après
+  chaque écriture de la fonction (20 s pour un capteur face à l'écran) ; une
+  rafale de mesures ne repousse plus l'application (défaut de la 2.4.0 avec
+  un capteur à moins d'une seconde).
+- **Profil du capteur** (rapide, périodique, sur variation, lent) d'après
+  son intégration puis la fréquence observée de ses mesures ; il n'ajuste
+  que les constantes du filtre.
+- **Capteur figé** (silence de plus de 3 fois l'intervalle habituel, au
+  moins 2 h, téléviseur allumé) : état `capteur_fige`, luminosité
+  conservée, Réparation.
+- **Conflit avec le téléviseur** : « Fonction Économie d'énergie » autre que
+  Désactivé, ou mode d'image Éco → état `conflit_economie_energie`, aucune
+  écriture, Réparation ; pour l'économie d'énergie, « Corriger » (ou le
+  bouton de la page) la règle sur Désactivé par la file d'écriture.
+- **Emplacement du capteur** (A à G) : option, schéma de la pièce et
+  conseils dans le panneau, emplacements déconseillés signalés.
+- Formulaire des options : emplacement ; **réglages avancés** repliés
+  (écart minimal, lissage, seuils, confirmation, mise de côté), vides par
+  défaut pour suivre le profil. Options de la 2.4.0 reprises sans
+  migration.
+- Panneau : lux lissé et dernière mesure, profil, conflit avec son bouton,
+  capteur figé, aide sur « Lumière ambiante du MODE FILMMAKER » et
+  « Paramètres de luminosité AI » (illisibles par l'API), nouveaux
+  événements du journal.
+- Commande websocket `luminosite_adaptative/desactiver_economie_energie` ;
+  attributs `lux_filtre`, `conflit`, `profil`, `emplacement` de l'état.
+
 ## 2.4.0 — 2026-10-25
 
 Panneau : page **Luminosité adaptative** dans la barre latérale (lien

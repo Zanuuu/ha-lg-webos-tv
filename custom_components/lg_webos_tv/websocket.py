@@ -12,7 +12,8 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
 from . import arbre, restauration
-from .const import CONF_CAPTEUR_LUX, DOMAIN, OPTIONS_LUMINOSITE_DEFAUT
+from .const import (CONF_CAPTEUR_LUX, DOMAIN, OPTIONS_AVANCEES,
+                    OPTIONS_LUMINOSITE_DEFAUT)
 from .luminosite_adaptative import modes_proposes, valider_options
 from .presets import PresetExistant, PresetInconnu, capturer_snapshot
 
@@ -22,6 +23,7 @@ ERREURS_OPTIONS = {
     "lux_max_trop_bas": "doit dépasser la valeur « Pièce sombre »",
     "luminosite_max_trop_basse": "doit être au moins égale à la luminosité minimale",
     "mode_inconnu": "mode d'image inconnu",
+    "emplacement_inconnu": "emplacement inconnu",
     "capteur_inconnu": "capteur introuvable",
 }
 
@@ -219,9 +221,10 @@ async def _configuration_luminosite(hass, connection, msg, donnees) -> None:
 async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
     """Mêmes options que le formulaire. Sans rechargement de l'intégration
     (qui couperait la connexion au téléviseur), sauf pour créer ou retirer
-    la fonction : ses entités n'existent que si un capteur est choisi."""
+    la fonction : ses entités n'existent que si un capteur est choisi. Une
+    option avancée à `null` revient à la valeur du profil du capteur."""
     entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
-    connues = {*OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX}
+    connues = {*OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX, *OPTIONS_AVANCEES}
     saisie = {**OPTIONS_LUMINOSITE_DEFAUT, **entree.options,
               **{cle: valeur for cle, valeur in msg["options"].items() if cle in connues}}
     capteur = saisie.pop(CONF_CAPTEUR_LUX, None) or None
@@ -243,6 +246,14 @@ async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
     elif donnees.luminosite_adaptative is not None:
         donnees.luminosite_adaptative.reconfigurer(options)
     connection.send_result(msg["id"], {"recharge": recharge})
+
+
+async def _desactiver_economie_energie(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    resultat = await fonction.desactiver_economie_energie("panneau")
+    if not _echec_ecriture(connection, msg, resultat):
+        connection.send_result(msg["id"], resultat)
 
 
 async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
@@ -356,6 +367,8 @@ COMMANDES = [
     _commande(_type("luminosite_adaptative/configuration"), _configuration_luminosite),
     _commande({**_type("luminosite_adaptative/configurer"), vol.Required("options"): dict},
               _configurer_luminosite),
+    _commande(_type("luminosite_adaptative/desactiver_economie_energie"),
+              _desactiver_economie_energie),
     _commande(_type("luminosite_adaptative/suivre"), _suivre_luminosite),
     _commande(_type("abonner"), _abonner),
 ]
