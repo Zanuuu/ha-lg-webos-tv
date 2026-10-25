@@ -214,6 +214,11 @@ une écriture non confirmée (refus présenté comme tel dans l'interface,
 rien n'est inscrit à l'historique). Le mode consultation ne s'applique plus
 que si aucune des deux voies n'est accordée.
 
+**Rien à l'écran.** L'alerte, fermée aussitôt, n'apparaît pas sur le
+téléviseur : les écritures restent invisibles pour le spectateur
+(constaté à l'usage, 25/10/2026). Des écritures fréquentes (luminosité
+adaptative) ne sont donc limitées que par le délai et le débit.
+
 **Limites.** Le message d'erreur du téléviseur (hors plage, clé refusée)
 est perdu. LG peut fermer la voie par une mise à jour (relèvement du niveau
 de `WRITE_NOTIFICATION_TOAST`, filtrage des URI `luna://` des alertes) :
