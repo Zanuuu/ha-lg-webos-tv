@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.8.1 — 2026-10-25
+
+- Nouvel identifiant d'application pour l'appairage
+  (`io.github.zanuuu.reglages-tv`) : le téléviseur peut redemander
+  l'appairage une fois ; Home Assistant propose alors de le refaire, il
+  suffit d'accepter la demande à l'écran.
+- Versions publiées en releases GitHub : HACS affiche le numéro de version
+  au lieu du commit.
+- Liens de documentation et de signalement vers GitHub.
+
 ## 2.8.0 — 2026-10-25
 
 Luminosité adaptative : mise en route guidée et point intermédiaire de la
@@ -333,9 +343,8 @@ Nouvelle interface et ouverture du projet à la communauté.
 
 ## 1.1.0 — 2026-09-24
 
-Distribution par dépôt d'apps Home Assistant
-(https://github.com/Zanuuu/ha-lg-webos-tv) au lieu d'une copie
-dans `/addons`.
+Distribution par dépôt d'apps Home Assistant au lieu d'une copie dans
+`/addons`.
 
 - Identifiant de l'app : `lg_webos_tv`. C'est une nouvelle app pour le
   Superviseur : les données de l'app locale (historique, presets, clé

@@ -3,8 +3,8 @@
 ## Structure du dépôt
 
 Le dépôt est une **intégration Home Assistant distribuée par HACS**
-(`hacs.json` à la racine), publiée sur GitHub
-(« Publier une version » ci-dessous).
+(`hacs.json` à la racine), publiée sur GitHub (« Publier une version »
+ci-dessous).
 
 - `custom_components/lg_webos_tv/` : l'intégration, seule partie installée
   par HACS.
@@ -69,9 +69,18 @@ uv pip install --python .venv -r outils/requirements.txt
 
 1. Incrémenter `version` dans `custom_components/lg_webos_tv/manifest.json`
    et compléter `CHANGELOG.md` ; refaire le build du panneau s'il a changé.
-2. Commiter et pousser sur `main`.
-3. Dans HACS : l'intégration → menu ⋮ → Mettre à jour (ou attendre la
+2. Commiter et pousser sur `main`, puis poser le tag de la version :
+   `git tag -a vX.Y.Z -m "Version X.Y.Z"` et `git push origin vX.Y.Z`.
+3. Sur GitHub : Releases → Draft a new release → tag `vX.Y.Z` existant,
+   notes reprises de la section du `CHANGELOG.md`. HACS n'affiche un
+   numéro de version que pour une **release** GitHub : un tag seul ne
+   suffit pas, sans release il affiche le hash du dernier commit.
+4. Dans HACS : l'intégration → menu ⋮ → Mettre à jour (ou attendre la
    détection), puis redémarrer Home Assistant.
+
+Les versions 1.x (ancienne app) sont taguées pour l'historique mais
+n'ont pas de release GitHub : elles ne contiennent pas l'intégration et
+HACS les proposerait à l'installation.
 
 ## Après une mise à jour du firmware du téléviseur
 
