@@ -9,7 +9,7 @@ from custom_components.lg_webos_tv.const import (CONF_EMPLACEMENT, CONF_LUX_MAX,
                                                  CONF_LUX_MIN,
                                                  OPTIONS_LUMINOSITE_DEFAUT)
 from custom_components.lg_webos_tv.sante import (
-    Accumulateur, Contexte, Inversions, Retroaction, StatsJour, ambiance, arrondi,
+    Accumulateur, Contexte, Inversions, Retroaction, StatsJour, arrondi,
     centile_lux, evaluer, part_au_dessus, resume, tranche_lux)
 from custom_components.lg_webos_tv.signal_lux import PROFILS
 
@@ -19,7 +19,7 @@ JOUR = "2026-10-25"
 def contexte(**options) -> Contexte:
     autres = {cle: options.pop(cle) for cle in list(options)
               if cle in ("profil", "plateforme", "conflit", "fige", "ecriture_possible",
-                         "piece_capteur", "piece_televiseur")}
+                         "piece_capteur", "piece_televiseur", "secours")}
     return Contexte(options={**OPTIONS_LUMINOSITE_DEFAUT, **options},
                     constantes=PROFILS["rapide"], **{"profil": "rapide", **autres})
 
@@ -58,10 +58,7 @@ def test_tranches_et_centiles():
     assert centile_lux([0.0] * 60, 0.5) is None
 
 
-def test_ambiance_et_arrondi():
-    assert ambiance(5, 5, 300) == "sombre"
-    assert ambiance(40, 5, 300) == "intermediaire"
-    assert ambiance(300, 5, 300) == "claire"
+def test_arrondi():
     assert arrondi(3177.4) == 3200
     assert arrondi(4.96) == 5.0
     assert arrondi(2.54) == 2.5
@@ -410,3 +407,41 @@ def test_options_actuelles_utilisees():
     """La courbe se juge avec les options du moment (lux_max changé)."""
     jour = _repartis(400, 4000, 12)
     assert diagnostic([jour], "courbe", **{CONF_LUX_MAX: 5000}).niveau != "avertissement"
+
+
+# ------------------------------------------------------------- secours
+def secours(**valeurs) -> dict:
+    return {"etat": "stable", "facteur": 2.0, "echantillons": 120, "requis": 30,
+            "dispersion": 1.1, "zeros": {"principal": 0, "secours": 0}, "fige": False,
+            "disponible": True, "actif": False, **valeurs}
+
+
+def test_sans_secours_pas_de_diagnostic():
+    assert all(d.id != "secours" for d in evaluer([StatsJour(JOUR)], JOUR, contexte()))
+
+
+@pytest.mark.parametrize(("valeurs", "niveau"), [
+    ({}, "ok"),
+    ({"etat": "apprentissage", "echantillons": 12, "facteur": None}, "attente"),
+    ({"etat": "instable"}, "avertissement"),
+    ({"etat": "incoherent"}, "avertissement"),
+    ({"fige": True}, "avertissement"),
+    ({"disponible": False}, "avertissement"),
+    ({"actif": True}, "info"),
+])
+def test_diagnostic_du_secours(valeurs, niveau):
+    d = diagnostic([StatsJour(JOUR)], "secours", secours=secours(**valeurs))
+    assert d.niveau == niveau
+    if niveau == "attente":
+        assert d.valeurs["progression"] == [12, 30]
+
+
+def test_principal_fige_relaye_par_le_secours():
+    jours = [StatsJour(JOUR)]
+    d = diagnostic(jours, "capteur_fige", fige=True, secours=secours(actif=True))
+    assert (d.niveau, d.valeurs) == ("avertissement", {"relais": True})
+    # Un seul message pour le relais.
+    ids = [d.id for d in evaluer(jours, JOUR, contexte(fige=True, secours=secours(actif=True)))]
+    assert "secours" not in ids
+    d = diagnostic(jours, "capteur_fige", fige=True, secours=secours(etat="apprentissage"))
+    assert (d.niveau, d.valeurs) == ("bloquant", {"relais": False})

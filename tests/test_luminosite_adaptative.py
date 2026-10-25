@@ -21,7 +21,7 @@ from pytest_homeassistant_custom_component.common import async_fire_time_changed
 from custom_components.lg_webos_tv.const import (CONF_CAPTEUR_LUX, DOMAIN,
                                                  OPTIONS_LUMINOSITE_DEFAUT)
 from custom_components.lg_webos_tv.luminosite_adaptative import (
-    BORNES, ID_MODE, ID_OLED, modes_proposes, valider_options)
+    BORNES, ENTITES, ID_MODE, ID_OLED, modes_proposes, valider_options)
 from custom_components.lg_webos_tv import restauration
 from custom_components.lg_webos_tv.diagnostics import \
     async_get_config_entry_diagnostics
@@ -326,7 +326,8 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     instantane = (await ws.client.receive_json())["event"]
     assert instantane["luminosite_adaptative"] == {
         "etat": "active", "entree_id": ID_OLED, "cible": 60, "fin_pause": None,
-        "cause_pause": None, "conflit": None, "rampe": None, "reprise_lux": None}
+        "cause_pause": None, "conflit": None, "rampe": None, "reprise_lux": None,
+        "decalage": 0, "capteur_actif": "principal", "ambiance": "intermediaire"}
 
     await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
     await hass.async_block_till_done()
@@ -394,7 +395,9 @@ async def test_pause_manuelle(hass: HomeAssistant, fonction, faux_client):
     assert la.cause_pause["origine"] == "pause_manuelle"
     await passer_le_temps(hass, 61 * 60)
     assert luminosite(faux_client) == 100
-    assert la.journal[-2]["raison"] == "delai"
+    # L'ambiance claire, tenue 10 minutes pendant le saut d'horloge, peut
+    # être notée avant ou après la reprise.
+    assert next(e for e in reversed(la.journal) if e["type"] == "reprise")["raison"] == "delai"
 
 
 async def test_desactivation_notee_sans_reprise(hass: HomeAssistant, fonction, faux_client):
@@ -445,7 +448,8 @@ async def test_page_configuration(hass: HomeAssistant, fonction, ws):
     hass.states.async_set("sensor.temperature", "21", {"device_class": "temperature"})
     reponse = await ws("luminosite_adaptative/configuration")
     resultat = reponse["result"]
-    assert resultat["options"] == {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: LUX}
+    assert resultat["options"] == {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: LUX,
+                                   "capteur_secours": None}
     assert resultat["modes_proposes"] == modes_proposes()
     assert [c["entity_id"] for c in resultat["capteurs"]] == [LUX]
     assert resultat["capteurs"][0]["valeur"] == "20"
@@ -576,9 +580,7 @@ async def test_options_creent_puis_retirent_la_fonction(hass: HomeAssistant, ins
     assert flux["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
     assert installe.options[CONF_CAPTEUR_LUX] == LUX
-    for plateforme, unique_id in (("switch", "luminosite_adaptative"),
-                                  ("sensor", "luminosite_adaptative_etat"),
-                                  ("button", "luminosite_adaptative_reprendre")):
+    for plateforme, unique_id in ENTITES:
         assert entite(hass, plateforme, unique_id) is not None
 
     flux = await hass.config_entries.options.async_init(installe.entry_id)
@@ -586,8 +588,8 @@ async def test_options_creent_puis_retirent_la_fonction(hass: HomeAssistant, ins
     await hass.config_entries.options.async_configure(flux["flow_id"], sans_capteur)
     await hass.async_block_till_done()
     assert installe.runtime_data.luminosite_adaptative is None
-    assert entite(hass, "switch", "luminosite_adaptative") is None
-    assert entite(hass, "button", "luminosite_adaptative_reprendre") is None
+    for plateforme, unique_id in ENTITES:
+        assert entite(hass, plateforme, unique_id) is None
 
 
 @pytest.mark.parametrize("langue", ["fr", "en"])

@@ -2,6 +2,8 @@
 // l'intégration (sante.py). Les chiffres et propositions viennent tels quels
 // de l'intégration : aucun calcul n'est refait ici.
 
+import { texteRapportSecours } from './luminosite.js'
+
 export const NIVEAUX_ACTIFS = ['bloquant', 'avertissement', 'info']
 
 export const AMBIANCES = {
@@ -55,6 +57,9 @@ export function texteControle(d) {
         return `Mesure dans le noir : ${nombre(acquis)} h de téléviseur allumé sur ${requis} h.`
       case 'courbe':
         return `Calage de la courbe : ${nombre(acquis)} h de fonctionnement sur ${requis} h.`
+      case 'secours':
+        return `Capteur de secours : rapport avec le principal en apprentissage, ${acquis} `
+          + `mesures communes sur ${requis}.`
       case 'retroaction':
         return `Effet de l'écran sur le capteur : ${acquis} allumage${acquis > 1 ? 's' : ''} ou `
           + `extinction${acquis > 1 ? 's' : ''} mesuré${acquis > 1 ? 's' : ''} sur ${requis} `
@@ -92,6 +97,8 @@ export function texteControle(d) {
       return `Reprises en main : ${v.reprises} en 7 jours.`
     case 'pieces_differentes':
       return `Capteur et téléviseur dans la même pièce (${v.televiseur}).`
+    case 'secours':
+      return `Capteur de secours : prêt à prendre le relais. ${texteRapportSecours(v)}`
     default:
       return d.id
   }
@@ -103,6 +110,17 @@ export function texteDiagnostic(d, options, suggestions = 0) {
   const v = d.valeurs
   switch (d.id) {
     case 'capteur_fige':
+      if (v.relais) {
+        return {
+          titre: 'Capteur principal figé : le secours a pris le relais',
+          pourquoi: 'Aucune mesure du capteur principal depuis bien plus longtemps que '
+            + 'd\'habitude, alors que le téléviseur est allumé. La luminosité suit le capteur de '
+            + 'secours, converti avec leur rapport habituel ; souvent moins bien placé, il ne '
+            + 'devrait servir que le temps de la réparation.',
+          action: 'Pile vide, ou appareil injoignable (réseau Zigbee, Wi-Fi) ? Le principal '
+            + 'reprendra la main dès sa prochaine mesure. Voir aussi Paramètres › Réparations.',
+        }
+      }
       return {
         titre: 'Capteur figé',
         pourquoi: 'Aucune mesure du capteur depuis bien plus longtemps que d\'habitude, alors que '
@@ -259,6 +277,8 @@ export function texteDiagnostic(d, options, suggestions = 0) {
             + 'même éclairage, une suggestion de courbe apparaît sous la courbe.',
         lienSuggestion: suggestions > 0,
       }
+    case 'secours':
+      return texteSecours(v)
     case 'pieces_differentes':
       return {
         titre: 'Capteur dans une autre pièce',
@@ -269,5 +289,31 @@ export function texteDiagnostic(d, options, suggestions = 0) {
       }
     default:
       return { titre: d.id, pourquoi: JSON.stringify(v), action: null }
+  }
+}
+
+// Capteur de secours (diagnostic `secours`) : en relais, ou qui ne pourrait
+// pas le prendre.
+function texteSecours(v) {
+  if (v.actif) {
+    return {
+      titre: 'Le capteur de secours a pris le relais',
+      pourquoi: 'Le capteur principal ne donne plus de mesure utilisable : la luminosité suit '
+        + `le secours, converti avec leur rapport habituel. ${texteRapportSecours(v) ?? ''}`,
+      action: 'Le principal reprendra la main dès qu\'il mesurera de nouveau.',
+    }
+  }
+  if (!v.disponible || v.fige) {
+    return {
+      titre: v.disponible ? 'Capteur de secours figé' : 'Capteur de secours indisponible',
+      pourquoi: 'Il ne pourrait pas prendre le relais si le capteur principal tombait en panne.',
+      action: 'Pile vide, ou appareil injoignable (réseau Zigbee, Wi-Fi) ?',
+    }
+  }
+  return {
+    titre: v.etat === 'incoherent' ? 'Capteurs incohérents' : 'Rapport entre les capteurs instable',
+    pourquoi: texteRapportSecours(v),
+    action: 'Choisissez un secours placé comme le principal, dans la même pièce et à '
+      + 'l\'abri du jour direct, ou retirez-le.',
   }
 }

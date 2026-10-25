@@ -58,13 +58,14 @@ def _en_ln(options: dict) -> list[tuple[float, float]]:
     return [(math.log(lux), valeur) for lux, valeur in points(options)]
 
 
-def calculer_cible(lux: float, options: dict) -> int:
+def calculer_cible(lux: float, options: dict, decalage: float = 0) -> int:
     """Interpolation par morceaux sur le logarithme du lux, bornée aux
-    extrémités."""
-    valeur = _valeur(math.log(max(lux, LUX_PLANCHER)), _en_ln(options))
+    extrémités, plus le décalage pilotable (entité « Décalage »), le tout
+    borné à 0–100 : le décalage peut dépasser les luminosités de la courbe."""
+    valeur = _valeur(math.log(max(lux, LUX_PLANCHER)), _en_ln(options)) + decalage
     # Arrondi « commercial » (0,5 vers le haut), comme Jinja dans l'ancien
     # blueprint, plutôt que l'arrondi au pair de round().
-    return int(math.floor(valeur + 0.5))
+    return min(max(int(math.floor(valeur + 0.5)), 0), 100)
 
 
 def _nombre(valeur) -> bool:

@@ -49,3 +49,14 @@ async def test_meme_fichier_que_l_historique(tmp_path):
     await stats.enregistrer(LUX, [jour("2026-10-25")])
     assert len(await historique.lister()) == 1
     assert len(await stats.charger(LUX, "2026-10-01")) == 1
+
+
+async def test_rapport_des_capteurs_par_paire(tmp_path):
+    stats = StatsLuminosite(tmp_path / "historique.sqlite")
+    assert await stats.charger_rapport(LUX, AUTRE) == []
+    await stats.enregistrer_rapport(LUX, AUTRE, [[0, 100, 50], [60, 100, 50]])
+    await stats.enregistrer_rapport(LUX, AUTRE, [[0, 100, 50], [60, 100, 50], [120, 90, 45]])
+    await stats.enregistrer_rapport(AUTRE, LUX, [[0, 50, 100]])
+    assert await stats.charger_rapport(LUX, AUTRE) == [[0, 100, 50], [60, 100, 50],
+                                                       [120, 90, 45]]
+    assert await stats.charger_rapport(AUTRE, LUX) == [[0, 50, 100]]

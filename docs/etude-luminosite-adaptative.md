@@ -1185,7 +1185,7 @@ Dans l'ordre ; chacun livrable seul, validé par vous avant le suivant.
 | **3 — Santé de l'installation** | R5 : statistiques journalières, diagnostics du § 4.5 (rétroaction comprise), page du panneau | lot 1 | 2.7.0 |
 | **4 — Mise en route guidée** | R6 (pièce, profil, vérifications, point d'ancrage), R9 (point intermédiaire de la courbe) | lots 1, 3 (P7 à l'essai réel) | 2.8.0 |
 | **5 — Reprise en main et suggestions** | R7 (levée sur changement d'ambiance), R8 (corrections, suggestions, points sur la courbe) | lot 4 ; arbitrage A2 | 2.9.0 |
-| **6 — Options** | R11 (décalage pilotable), R12 (capteur de secours), R14a (entités « Lux filtré » et « Ambiance ») | arbitrage A1 | ultérieur |
+| **6 — Options** | R11 (décalage pilotable), R12 (capteur de secours), R14a (entités « Lux filtré » et « Ambiance ») | arbitrage A1 | 2.10.0 |
 | **7 — Soirée et autres réglages** | R15 (soirée), R16 (niveau noir compensé), R13 (gamma) ; R14b (ambiances intégrées) écarté pour l'instant (décision A8) | P5 bis, P9, P10 (P11 à l'essai réel) | ultérieur |
 
 Le lot 1 passe en premier pour les raisons du § 1.2 ; les rampes viennent
@@ -1308,6 +1308,43 @@ celle-ci réutilise leurs détections.
   corrections = réglages isolés (télécommande, autre application, Home
   Assistant, panneau) ; bouton « Ignorer », qui écarte toutes les
   corrections de la plage (gardées à l'affichage).
+
+**Lot 6 livré en 2.10.0 : choix de mise en œuvre.**
+
+- Décalage (R11) : entité `number` restaurée au redémarrage (état de la
+  fonction, pas une option : une automatisation peut le changer souvent
+  sans réécrire l'entrée de configuration). Cible = courbe + décalage,
+  bornée à 0–100 ; un changement relance l'application sans condition
+  d'hystérésis, une rampe en cours suit la nouvelle cible. Jamais de
+  pause, et une pause en cours n'est pas levée (appliqué à la reprise).
+- Arbitrages de l'utilisateur (25/10/2026) : corrections et ancrage
+  mesurés à **courbe + décalage du moment** (colonne `decalage` de la
+  table `corrections`, 0 pour les anciennes ; une correction en
+  observation est écartée si le décalage change) ; seuils d'ambiance
+  **tiers de la courbe par défaut, figeables** ; secours utilisé
+  **seulement facteur appris et rapport stable** ; **Réparation
+  `capteur_fige` conservée** quand le secours relaie (exception assumée à
+  A6 : panne matérielle à réparer), texte adapté.
+- Secours (R12) : module pur `secours.py`. Échantillons (principal,
+  secours) une fois par minute au plus, principal en service, les deux
+  disponibles et non figés, filtre arrivé et hors gel ; facteur = médiane
+  de ln(l1/l2) sur ceux où les deux dépassent 2 lx, 1 000 gardés, 30 au
+  moins ; rapport instable au-delà d'une dispersion robuste (IQR/1,349)
+  de ln 1,5 ; incohérent dès 5 échantillons où l'un est à 0 quand l'autre
+  dépasse 20 lx. Rapport conservé par paire (table `rapport_capteurs`).
+  Un seul filtre pour le lux effectif : à la bascule, la mesure convertie
+  entre dans le filtre et la référence d'hystérésis est gardée (aucune
+  écriture si le facteur est juste) ; constantes du profil du secours
+  pendant le relais. Statistiques du principal (cadence, résolution,
+  plancher, plafond), rétroaction et corrections : principal seul ; le
+  temps actif et l'histogramme du lux filtré continuent. Seuils de
+  départ, à confirmer par P6.
+- Ambiance (R14a) : module pur `ambiance.py` (déplace `AMBIANCES` et
+  remplace `sante.ambiance`, pour une seule définition des seuils).
+  Hystérésis ×1,25 autour du seuil franchi, 10 min continues avant
+  publication, première valeur immédiate, état restauré au redémarrage.
+  « Lux filtré » au dixième sous 100 lx, suivi tant que le filtre avance,
+  quel que soit l'état de la fonction.
 
 ---
 

@@ -28,7 +28,7 @@ from .const import (CLES_COURBE, CONF_ANCRAGES, CONF_LUMINOSITE_MAX,
                     CONF_LUMINOSITE_MIN, CONF_LUX_MAX, CONF_LUX_MIN,
                     CONF_POINT_INTERMEDIAIRE)
 from .courbe import LUX_PLANCHER, _encadrer, _valeur, calculer_cible, points
-from .sante import ambiance
+from .ambiance import nommer, seuils
 from .signal_lux import LN_CONVERGENCE
 
 # Levée de la pause : lux filtré doublé ou diminué de moitié depuis la
@@ -107,6 +107,9 @@ class Correction:
     id: int | None = None
     # Écartée des suggestions par « Ignorer » ; reste affichée.
     ecartee: bool = False
+    # Décalage pilotable au moment de la correction : l'utilisateur a corrigé
+    # la cible décalée, l'écart se mesure donc à la courbe plus ce décalage.
+    decalage: int = 0
 
 
 @dataclass
@@ -120,6 +123,7 @@ class SuiviCorrection:
     origine: str
     # Plus grande constante de temps du lissage du lux filtré.
     lissage_s: float = 0
+    decalage: int = 0
     lux_min: float | None = None
     lux_max: float | None = None
 
@@ -169,8 +173,9 @@ class SuiviCorrection:
 
     def correction(self, t: float, options: dict) -> Correction:
         return Correction(horodatage=t, lux=round(self.lux, 1), valeur=self.valeur,
-                          cible=calculer_cible(self.lux, options),
-                          mode_image=self.mode_image, origine=self.origine)
+                          cible=calculer_cible(self.lux, options, self.decalage),
+                          mode_image=self.mode_image, origine=self.origine,
+                          decalage=self.decalage)
 
 
 def plage(lux: float) -> int:
@@ -183,8 +188,10 @@ def bornes_plage(indice: int) -> tuple[float, float]:
 
 
 def ecart(correction: Correction, options: dict) -> int:
-    """Écart à la courbe actuelle (et non à celle du moment)."""
-    return correction.valeur - calculer_cible(correction.lux, options)
+    """Écart à la courbe actuelle (et non à celle du moment), plus le
+    décalage du moment de la correction : une suggestion retouche la courbe
+    seule, le décalage reste l'affaire des automatisations."""
+    return correction.valeur - calculer_cible(correction.lux, options, correction.decalage)
 
 
 # ------------------------------------------------------------ suggestions
@@ -307,7 +314,7 @@ def _proposer(indice: int, corrections: list[Correction], options: dict) -> Sugg
         return None
     return Suggestion(
         plage=indice, lux=round(lux, 1), ecart=mediane,
-        ambiance=ambiance(lux, options[CONF_LUX_MIN], options[CONF_LUX_MAX]),
+        ambiance=nommer(lux, seuils(options)),
         corrections=[c.id for c in recentes], options=proposees, **compte_rendu)
 
 

@@ -1,5 +1,44 @@
 # Changelog
 
+## 2.10.0 — 2026-10-25
+
+Luminosité adaptative : options (lot 6 de
+`docs/etude-luminosite-adaptative.md`).
+
+- **Décalage pilotable** : nouvelle entité « Décalage de la luminosité
+  adaptative » (`number`, −30 à +30, catégorie configuration), ajoutée à
+  la luminosité de la courbe, résultat borné à 0–100, conservée au
+  redémarrage. Les automatisations la règlent selon l'heure, la présence
+  ou l'application ; un changement est appliqué aussitôt, en rampe, sans
+  jamais mettre la fonction en pause (pendant une pause, il s'applique à
+  la reprise). Curseur sur la page, courbe appliquée tracée en pointillé,
+  changements au journal. Les corrections enregistrent le décalage du
+  moment et se mesurent à la courbe plus ce décalage ; le point d'ancrage
+  cale la courbe sur la valeur choisie moins le décalage.
+- **Capteur de secours** facultatif (formulaire, page, mise en route) : il
+  prend le relais quand le principal est indisponible ou figé, une fois
+  appris leur rapport habituel (médiane de ln(l1/l2), une mesure commune
+  par minute, lumière stable, au moins 30) et si ce rapport est stable ;
+  ses mesures sont converties, sans saut de luminosité. Rapport conservé
+  par paire de capteurs (table `rapport_capteurs`). Bascule et retour au
+  journal ; la Réparation « capteur figé » mentionne le relais ; nouveau
+  diagnostic de la page Santé (apprentissage, rapport instable, l'un à
+  0 lx quand l'autre dépasse 20 lx, secours figé). Pendant le relais, ni
+  correction, ni mesure de l'effet de l'écran, ni statistique du capteur
+  principal.
+- **Entités « Lux filtré » et « Ambiance »** pour les automatisations,
+  disponibles téléviseur éteint et fonction en pause : le lux lissé et
+  confirmé, et l'ambiance sombre / intermédiaire / claire (tiers de la
+  courbe par défaut, seuils figeables dans les réglages avancés, marge de
+  25 % et 10 minutes avant tout changement, restaurée au redémarrage).
+  Deux exemples d'automatisation au README.
+- Commande websocket `luminosite_adaptative/decalage` (administrateurs) ;
+  `configurer` accepte le capteur de secours et les seuils d'ambiance ; le
+  « Lux filtré » de la fonction n'est pas proposé comme capteur.
+- Rétrocompatible sans migration : sans ces options, comportement de la
+  2.9.0 ; la base des corrections reçoit une colonne `decalage` (0 pour les
+  corrections existantes).
+
 ## 2.9.0 — 2026-10-25
 
 Luminosité adaptative : reprise en main et suggestions (lot 5 de

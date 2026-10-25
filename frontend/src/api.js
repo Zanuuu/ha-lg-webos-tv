@@ -33,6 +33,8 @@ export const recupererConfigLuminosite = () => commande('luminosite_adaptative/c
 export const configurerLuminosite = (options) =>
   commande('luminosite_adaptative/configurer', { options })
 export const ancrerLuminosite = () => commande('luminosite_adaptative/ancrer')
+// Décalage pilotable : même effet que l'entité, sans pause.
+export const reglerDecalage = (valeur) => commande('luminosite_adaptative/decalage', { valeur })
 export const desactiverEconomieEnergie = () =>
   commande('luminosite_adaptative/desactiver_economie_energie')
 // Corrections retenues et suggestions de courbe : calculées par

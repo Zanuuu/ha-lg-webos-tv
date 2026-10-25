@@ -20,6 +20,7 @@ from datetime import date, timedelta
 from .const import (CONF_EMPLACEMENT, CONF_HYSTERESIS_DESCENTE,
                     CONF_HYSTERESIS_MONTEE, CONF_LISSAGE_DESCENTE,
                     CONF_LUMINOSITE_MIN, CONF_LUX_MAX, CONF_LUX_MIN)
+from .ambiance import AMBIANCES
 from .signal_lux import PLATEFORMES_SUR_VARIATION, Constantes
 
 CONSERVATION_JOURS = 30
@@ -36,7 +37,6 @@ NB_TRANCHES_LUX = 1 + math.ceil(TRANCHES_PAR_DECADE * math.log10(200_000))
 # base.
 MAX_EVENEMENTS_TV = 20
 MAX_REPONSES_RAMPES = 50
-AMBIANCES = ("sombre", "intermediaire", "claire")
 
 # --------------------------------------------------------------- seuils
 # Capteur trop lent : intervalle médian entre deux rapports, téléviseur
@@ -166,12 +166,6 @@ def mediane_intervalles(histogramme: list[int], sommes: list[float]) -> float | 
 def tranche_intervalle(secondes: float) -> int:
     return next((i for i, borne in enumerate(BORNES_INTERVALLES) if secondes < borne),
                 len(BORNES_INTERVALLES))
-
-
-def ambiance(lux: float, lux_min: float, lux_max: float) -> str:
-    """Tiers de la plage logarithmique de la courbe."""
-    t = (math.log(max(lux, 1)) - math.log(lux_min)) / (math.log(lux_max) - math.log(lux_min))
-    return AMBIANCES[0] if t < 1 / 3 else AMBIANCES[1] if t < 2 / 3 else AMBIANCES[2]
 
 
 def arrondi(valeur: float) -> float | int:
@@ -482,6 +476,9 @@ class Contexte:
     ecriture_possible: bool | None = None
     piece_capteur: str | None = None
     piece_televiseur: str | None = None
+    # Capteur de secours (secours.RapportCapteurs.resume, plus `fige`,
+    # `disponible` et `actif`), sans identifiant ; None sans secours.
+    secours: dict | None = None
 
 
 @dataclass
@@ -698,12 +695,43 @@ def _refus(jours, ctx: Contexte) -> Diagnostic:
     return Diagnostic("ecritures_refusees", "ok", valeurs)
 
 
+def _fige(ctx: Contexte) -> Diagnostic:
+    """Principal figé : bloquant, sauf si le secours a pris le relais (la
+    luminosité suit encore, mais la panne est à réparer)."""
+    relais = ctx.secours is not None and ctx.secours["actif"]
+    if not ctx.fige:
+        return Diagnostic("capteur_fige", "ok")
+    return Diagnostic("capteur_fige", "avertissement" if relais else "bloquant",
+                      {"relais": relais})
+
+
+def _secours(ctx: Contexte) -> Diagnostic | None:
+    """Capteur de secours (§ 3.5) : apprentissage du facteur, rapport stable,
+    incohérences, et s'il pourrait prendre le relais aujourd'hui."""
+    secours = ctx.secours
+    if secours is None:
+        return None
+    valeurs = dict(secours)
+    if secours["actif"]:
+        # Principal figé : son propre diagnostic dit déjà que le secours a
+        # pris le relais.
+        return None if ctx.fige else Diagnostic("secours", "info", valeurs)
+    if not secours["disponible"] or secours["fige"]:
+        return Diagnostic("secours", "avertissement", valeurs)
+    if secours["etat"] == "apprentissage":
+        valeurs = {cle: v for cle, v in valeurs.items() if cle not in ("echantillons", "requis")}
+        return _attente("secours", secours["echantillons"], secours["requis"], **valeurs)
+    if secours["etat"] in ("instable", "incoherent"):
+        return Diagnostic("secours", "avertissement", valeurs)
+    return Diagnostic("secours", "ok", valeurs)
+
+
 def evaluer(jours: list[StatsJour], aujourdhui: str, ctx: Contexte) -> list[Diagnostic]:
     """Diagnostics sur les 7 derniers jours, les cas bloquants d'abord."""
     jours = fenetre(jours, aujourdhui)
     resultat = [
         Diagnostic("conflit", "bloquant" if ctx.conflit else "ok", {"cause": ctx.conflit}),
-        Diagnostic("capteur_fige", "bloquant" if ctx.fige else "ok"),
+        _fige(ctx),
         _retroaction(jours, ctx),
         _courbe(jours, ctx),
         _lent(jours, ctx),
@@ -713,6 +741,7 @@ def evaluer(jours: list[StatsJour], aujourdhui: str, ctx: Contexte) -> list[Diag
         _allers_retours(jours, ctx),
         _refus(jours, ctx),
         _pauses(jours, ctx),
+        _secours(ctx),
     ]
     if ctx.piece_capteur is not None and ctx.piece_televiseur is not None:
         differentes = ctx.piece_capteur != ctx.piece_televiseur

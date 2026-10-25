@@ -30,16 +30,23 @@ function libelleCorrection(c) {
   const date = new Date(c.horodatage).toLocaleString('fr-FR', {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   const ecart = c.ecart > 0 ? `+${c.ecart}` : `${c.ecart}`
-  return `Correction du ${date} : luminosité ${c.valeur} à ${formaterLux(c.lux)} `
+  const decalage = c.decalage
+    ? ` avec un décalage de ${c.decalage > 0 ? '+' : ''}${c.decalage}` : ''
+  return `Correction du ${date} : luminosité ${c.valeur} à ${formaterLux(c.lux)}${decalage} `
     + `(courbe ${ecart})${c.ecartee ? ', écartée des suggestions' : ''}`
 }
 
+const seuilTexte = (lux) => formaterLux(Math.round(lux * 10) / 10)
+
 // `ancrages` : points d'ancrage de la mise en route, affichés en losanges ;
-// `corrections` : réglages manuels retenus, en points ; `apercu` : options
-// d'une courbe suggérée, tracée en pointillé. Sans `onChanger`, la courbe est
-// un aperçu, sans poignées.
+// `corrections` : réglages manuels retenus, en points, ramenés sur la courbe
+// seule (valeur moins le décalage du moment, comme leur écart) ; `apercu` :
+// options d'une courbe suggérée, tracée en tirets ; `decalage` : décalage
+// pilotable, la courbe appliquée est tracée en pointillé ; `seuils` : seuils
+// de l'ambiance, en repères verticaux. Sans `onChanger`, la courbe est un
+// aperçu, sans poignées.
 export default function CourbeLuminosite({ options, lux, ancrages = [], corrections = [],
-  apercu = null, desactive, onChanger }) {
+  apercu = null, decalage = 0, seuils = null, desactive, onChanger }) {
   const svgRef = useRef(null)
   const luxFin = domaineLux(options, lux)
   const xDeLux = (l) => X0 + (Math.log10(borner(l, 1, luxFin)) / Math.log10(luxFin)) * (X1 - X0)
@@ -61,7 +68,28 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
   const dernier = points[points.length - 1]
   const trace = tracer(options)
 
-  const cible = lux !== null && lux !== undefined ? calculerCible(lux, options) : null
+  // Courbe plus décalage, bornée à 0–100 : échantillonnée, la borne peut
+  // couper un segment en son milieu.
+  function tracerApplique() {
+    const n = 160
+    const enLn = pointsCourbe(options).map(([lx, v]) => [Math.log(lx), v])
+    const valeur = (ln) => {
+      if (ln <= enLn[0][0]) return enLn[0][1]
+      for (let k = 1; k < enLn.length; k += 1) {
+        const [x0, v0] = enLn[k - 1]
+        const [x1, v1] = enLn[k]
+        if (ln <= x1) return v0 + ((ln - x0) / (x1 - x0)) * (v1 - v0)
+      }
+      return enLn[enLn.length - 1][1]
+    }
+    return Array.from({ length: n + 1 }, (_, i) => {
+      const x = X0 + ((X1 - X0) * i) / n
+      const v = valeur(Math.log(Math.max(luxDeX(x), 1)))
+      return `${i === 0 ? 'M' : 'L'} ${x} ${yDeLum(borner(v + decalage, 0, 100))}`
+    }).join(' ')
+  }
+
+  const cible = lux !== null && lux !== undefined ? calculerCible(lux, options, decalage) : null
   const maintenant = cible !== null ? { x: xDeLux(Math.max(lux, 1)), y: yDeLum(cible) } : null
   const milieu = options.point_intermediaire
 
@@ -196,10 +224,19 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
             </text>
           </g>
         ))}
+        {seuils && seuils.map((s, i) => s <= luxFin && (
+          <line key={`seuil${i}`} x1={xDeLux(s)} x2={xDeLux(s)} y1={Y1} y2={Y0}
+            className="seuil-ambiance">
+            <title>{i === 0 ? `Ambiance sombre sous ${seuilTexte(s)}`
+              : `Ambiance claire au-delà de ${seuilTexte(s)}`}</title>
+          </line>
+        ))}
         <path d={trace} className="trace-courbe" />
+        {decalage !== 0 && <path d={tracerApplique()} className="trace-appliquee" />}
         {apercu && <path d={tracer(apercu)} className="trace-apercu" />}
         {corrections.map((c) => (
-          <circle key={c.id} cx={xDeLux(Math.max(c.lux, 1))} cy={yDeLum(c.valeur)} r="5"
+          <circle key={c.id} cx={xDeLux(Math.max(c.lux, 1))}
+            cy={yDeLum(borner(c.valeur - (c.decalage ?? 0), 0, 100))} r="5"
             className={`correction-courbe${c.ecartee ? ' correction-ecartee' : ''}`}>
             <title>{libelleCorrection(c)}</title>
           </circle>
@@ -236,8 +273,12 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
             + 'du clavier.'
           : '.'}
         {ancrages.length > 0 && ' Losanges : vos points d\'ancrage.'}
+        {decalage !== 0 && ` Pointillé : la courbe appliquée, décalage `
+          + `${decalage > 0 ? '+' : ''}${decalage}.`}
         {corrections.length > 0 && ' Points : vos corrections retenues.'}
-        {apercu && ' Pointillé : la courbe suggérée.'}
+        {apercu && ' Tirets : la courbe suggérée.'}
+        {seuils && ` Repères verticaux : ambiance sombre sous ${seuilTexte(seuils[0])}, claire `
+          + `au-delà de ${seuilTexte(seuils[1])}.`}
       </figcaption>
       {onChanger && (
         <div className="actions-courbe">

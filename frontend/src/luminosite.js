@@ -47,6 +47,49 @@ export const RAISONS_CORRECTION_ECARTEE = {
   mise_en_route: 'mise en route ouverte',
   preset: 'application d\'un preset',
   annulation: 'retour arrière dans l\'historique',
+  secours: 'mesurée avec le capteur de secours',
+  decalage: 'décalage changé entre-temps',
+}
+
+// Ambiances de la pièce (ambiance.AMBIANCES).
+export const LIBELLES_AMBIANCE = {
+  sombre: 'sombre',
+  intermediaire: 'intermédiaire',
+  claire: 'claire',
+}
+
+// Bornes du décalage pilotable (const.DECALAGE_MIN, DECALAGE_MAX).
+export const DECALAGE = [-30, 30]
+
+// Rapport habituel entre le principal et le secours (secours.RapportCapteurs
+// .resume) : `facteur` = lux du principal / lux du secours.
+export function texteRapportSecours(secours) {
+  if (!secours) return null
+  const { etat, facteur, echantillons, requis, dispersion } = secours
+  const fois = (f) => f.toLocaleString('fr-FR', { maximumSignificantDigits: 2 })
+  switch (etat) {
+    case 'apprentissage':
+      return `Rapport avec le capteur principal en apprentissage : ${echantillons} mesures communes `
+        + `sur ${requis} (une par minute, lumière stable, au moins 2 lx sur chacun).`
+    case 'stable': {
+      const rapport = Math.abs(facteur - 1) < 0.05
+        ? 'le secours mesure comme le principal'
+        : facteur > 1
+          ? `le secours mesure ${fois(facteur)} fois moins que le principal`
+          : `le secours mesure ${fois(1 / facteur)} fois plus que le principal`
+      return `Rapport habituel : ${rapport} (${echantillons} mesures, à ×${fois(dispersion)} près) ; `
+        + 'ses mesures sont converties en conséquence pendant le relais.'
+    }
+    case 'instable':
+      return `Rapport instable : il varie couramment d'un facteur ${fois(dispersion)}, le secours `
+        + 'ne prendra pas le relais. Capteur extérieur, près d\'une fenêtre, ou dans une autre '
+        + 'pièce ?'
+    case 'incoherent':
+      return 'Mesures incohérentes : l\'un des capteurs affiche 0 lx quand l\'autre dépasse '
+        + '20 lx ; le secours ne prendra pas le relais.'
+    default:
+      return null
+  }
 }
 
 // Option groupée des modes HDR et Dolby Vision (const.MODES_HDR), absente
@@ -71,7 +114,13 @@ export const BORNES = {
   gel_ecriture_s: [0, 120],
   rampe_pas: [1, 10],
   rampe_debit: [1, 20],
+  ambiance_sombre: [1, 100000],
+  ambiance_claire: [1, 100000],
 }
+
+// Seuils de l'ambiance (const.OPTIONS_AMBIANCE) : vides, les tiers de la
+// courbe.
+export const OPTIONS_AMBIANCE = ['ambiance_sombre', 'ambiance_claire']
 
 // Options avancées (const.OPTIONS_AVANCEES) : vides (null), elles prennent
 // leur valeur par défaut ou celle du profil du capteur. `auto` lit dans les
@@ -186,8 +235,9 @@ export function pointsCourbe(options) {
 
 // Portage de courbe.calculer_cible (vecteurs partagés :
 // tests/vecteurs_courbe.json) : interpolation par morceaux sur le logarithme
-// du lux, plate au-delà des extrémités, arrondi 0,5 vers le haut.
-export function calculerCible(lux, options) {
+// du lux, plate au-delà des extrémités, plus le décalage pilotable, arrondi
+// 0,5 vers le haut, borné à 0–100.
+export function calculerCible(lux, options, decalage = 0) {
   const courbe = pointsCourbe(options).map(([l, v]) => [Math.log(l), v])
   const x = Math.log(Math.max(lux, 1))
   let valeur = courbe[courbe.length - 1][1]
@@ -203,7 +253,15 @@ export function calculerCible(lux, options) {
       }
     }
   }
-  return Math.floor(valeur + 0.5)
+  return Math.min(Math.max(Math.floor(valeur + decalage + 0.5), 0), 100)
+}
+
+// Tiers de la plage de la courbe en ln(lux) (ambiance.seuils_courbe) :
+// seuils de l'ambiance quand ils ne sont pas figés.
+export function seuilsCourbe(options) {
+  const bas = Math.log(options.lux_min)
+  const haut = Math.log(options.lux_max)
+  return [Math.exp(bas + (haut - bas) / 3), Math.exp(bas + (2 * (haut - bas)) / 3)]
 }
 
 const estNombre = (v) => typeof v === 'number' && !Number.isNaN(v)
@@ -214,7 +272,8 @@ export function validerOptions(options) {
   const erreurs = {}
   for (const [cle, [bas, haut]] of Object.entries(BORNES)) {
     const valeur = options[cle]
-    if (cle in OPTIONS_AVANCEES && (valeur === null || valeur === undefined)) continue
+    if ((cle in OPTIONS_AVANCEES || OPTIONS_AMBIANCE.includes(cle))
+        && (valeur === null || valeur === undefined)) continue
     if (!estNombre(valeur) || valeur < bas || valeur > haut) {
       erreurs[cle] = `Entre ${bas} et ${haut}.`
     }
@@ -241,6 +300,16 @@ export function validerOptions(options) {
       erreurs.point_intermediaire = 'Doit tomber entre la pièce sombre et la pièce lumineuse, '
         + 'et entre les luminosités minimale et maximale.'
     }
+  }
+  if (Object.keys(erreurs).length === 0) {
+    const [sombre, claire] = seuilsCourbe(options)
+    if ((options.ambiance_sombre ?? sombre) >= (options.ambiance_claire ?? claire)) {
+      erreurs[options.ambiance_claire != null ? 'ambiance_claire' : 'ambiance_sombre'] = 'Le seuil '
+        + 'de l\'ambiance claire doit dépasser celui de l\'ambiance sombre.'
+    }
+  }
+  if (options.capteur_secours && options.capteur_secours === options.capteur_lux) {
+    erreurs.capteur_secours = 'Doit être différent du capteur principal.'
   }
   if (options.emplacement_capteur !== undefined && !(options.emplacement_capteur in EMPLACEMENTS)) {
     erreurs.emplacement_capteur = 'Emplacement inconnu.'

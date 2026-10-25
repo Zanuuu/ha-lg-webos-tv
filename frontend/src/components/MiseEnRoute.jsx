@@ -35,6 +35,7 @@ export default function MiseEnRoute({
   const [etape, setEtape] = useState(depart === 'ancrage' ? ETAPE_ANCRAGE : 0)
   const [capteur, setCapteur] = useState(options.capteur_lux || capteurs[0]?.entity_id || '')
   const [emplacement, setEmplacement] = useState(options.emplacement_capteur)
+  const [secours, setSecours] = useState(options.capteur_secours || '')
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState(null)
   const [ancrage, setAncrage] = useState(null)
@@ -62,10 +63,13 @@ export default function MiseEnRoute({
   }
 
   async function enregistrerCapteur() {
+    // Un secours égal au nouveau principal n'a plus lieu d'être.
+    const secoursRetenu = secours && secours !== capteur ? secours : null
     const inchange = capteur === options.capteur_lux
       && emplacement === options.emplacement_capteur
+      && secoursRetenu === (options.capteur_secours || null)
     if (inchange || await agir(() => onEnregistrer({
-      capteur_lux: capteur, emplacement_capteur: emplacement,
+      capteur_lux: capteur, emplacement_capteur: emplacement, capteur_secours: secoursRetenu,
     }))) setEtape(2)
   }
 
@@ -94,7 +98,7 @@ export default function MiseEnRoute({
   if (etape === 0) {
     contenu = (
       <EtapeCapteur capteurs={capteurs} pieceTv={configuration.piece_televiseur}
-        choisi={capteur} onChoisir={setCapteur} />
+        choisi={capteur} onChoisir={setCapteur} secours={secours} onChoisirSecours={setSecours} />
     )
   } else if (etape === 1) {
     contenu = <EtapeEmplacement choisi={emplacement} onChoisir={setEmplacement} desactive={envoi} />
@@ -207,43 +211,65 @@ function bloquage(details, connexion, ecriturePossible) {
   return null
 }
 
-function EtapeCapteur({ capteurs, pieceTv, choisi, onChoisir }) {
+function EtapeCapteur({ capteurs, pieceTv, choisi, onChoisir, secours, onChoisirSecours }) {
+  const autres = capteurs.filter((c) => c.entity_id !== choisi)
   return (
-    <fieldset className="etape-mise-en-route">
-      <legend className="texte-attenue">
-        {pieceTv
-          ? `Les capteurs de la pièce du téléviseur (${pieceTv}) sont proposés en premier, puis ceux
-            qui ont donné une mesure dans l'heure.`
-          : 'Les capteurs qui ont donné une mesure dans l\'heure sont proposés en premier. '
-            + 'Rangez le téléviseur dans une pièce (Paramètres › Appareils) pour voir d\'abord '
-            + 'les capteurs de cette pièce.'}
-      </legend>
-      <ul className="liste-capteurs">
-        {capteurs.map((c) => {
-          const plateforme = c.plateforme && (NOMS_PLATEFORME[c.plateforme] || c.plateforme)
-          return (
-            <li key={c.entity_id}>
-              <label className={`choix-capteur${choisi === c.entity_id ? ' choix-capteur-choisi' : ''}`}>
-                <input type="radio" name="capteur" value={c.entity_id}
-                  checked={choisi === c.entity_id} onChange={() => onChoisir(c.entity_id)} />
-                <span className="nom-capteur">{c.nom}</span>
-                <span className="texte-attenue">
-                  {c.piece ?? 'Pièce non renseignée'}
-                  {c.meme_piece && <strong className="badge-piece"> · même pièce que le téléviseur</strong>}
-                </span>
-                <span>
-                  {c.unite ? `${c.valeur} ${c.unite}` : c.valeur}, {age(c.age_s)}
-                </span>
-                <span className="texte-attenue">
-                  Profil pressenti : {LIBELLES_PROFIL[c.profil] || c.profil}
-                  {plateforme && ` (${plateforme})`}
-                </span>
-              </label>
-            </li>
-          )
-        })}
-      </ul>
-    </fieldset>
+    <>
+      <fieldset className="etape-mise-en-route">
+        <legend className="texte-attenue">
+          {pieceTv
+            ? `Les capteurs de la pièce du téléviseur (${pieceTv}) sont proposés en premier, puis ceux
+              qui ont donné une mesure dans l'heure.`
+            : 'Les capteurs qui ont donné une mesure dans l\'heure sont proposés en premier. '
+              + 'Rangez le téléviseur dans une pièce (Paramètres › Appareils) pour voir d\'abord '
+              + 'les capteurs de cette pièce.'}
+        </legend>
+        <ul className="liste-capteurs">
+          {capteurs.map((c) => {
+            const plateforme = c.plateforme && (NOMS_PLATEFORME[c.plateforme] || c.plateforme)
+            return (
+              <li key={c.entity_id}>
+                <label className={`choix-capteur${choisi === c.entity_id ? ' choix-capteur-choisi' : ''}`}>
+                  <input type="radio" name="capteur" value={c.entity_id}
+                    checked={choisi === c.entity_id} onChange={() => onChoisir(c.entity_id)} />
+                  <span className="nom-capteur">{c.nom}</span>
+                  <span className="texte-attenue">
+                    {c.piece ?? 'Pièce non renseignée'}
+                    {c.meme_piece && <strong className="badge-piece"> · même pièce que le téléviseur</strong>}
+                  </span>
+                  <span>
+                    {c.unite ? `${c.valeur} ${c.unite}` : c.valeur}, {age(c.age_s)}
+                  </span>
+                  <span className="texte-attenue">
+                    Profil pressenti : {LIBELLES_PROFIL[c.profil] || c.profil}
+                    {plateforme && ` (${plateforme})`}
+                  </span>
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+      </fieldset>
+      {autres.length > 0 && (
+        <label className="champ-luminosite champ-large choix-secours">
+          <span>Capteur de secours (facultatif)</span>
+          <select value={secours === choisi ? '' : secours}
+            onChange={(e) => onChoisirSecours(e.target.value)}>
+            <option value="">Aucun</option>
+            {autres.map((c) => (
+              <option key={c.entity_id} value={c.entity_id}>
+                {c.nom}{c.piece ? ` (${c.piece})` : ''}
+              </option>
+            ))}
+          </select>
+          <span className="texte-attenue">
+            Il prend le relais si le capteur choisi tombe en panne (pile, réseau), une fois appris
+            leur rapport habituel. Choisissez-le dans la même pièce, à l'abri du jour direct : un
+            capteur extérieur ou près d'une fenêtre ne sera pas utilisé.
+          </span>
+        </label>
+      )}
+    </>
   )
 }
 
@@ -345,6 +371,11 @@ function texteCompteRendu({ compte_rendu: cr, options }) {
     phrases.push(`La pièce sombre est plafonnée à ${formaterLux(options.lux_min)} : la courbe `
       + 'n\'approche votre réglage qu\'à quelques points près.')
   }
+  if (cr.decalage) {
+    phrases.push(`Un décalage de ${cr.decalage > 0 ? '+' : ''}${cr.decalage} est en place (réglé `
+      + 'par une automatisation ou sur la page) : la courbe est calée sans lui, et lui ajoutée '
+      + 'redonne votre réglage.')
+  }
   if (cr.ancien_oublie) {
     phrases.push('Votre point précédent contredisait celui-ci (moins de lumière, luminosité plus '
       + 'haute) : seul le nouveau est retenu.')
@@ -373,6 +404,13 @@ function EtapeAncrage({ index, details, reglages, options, ancrage, envoi, bloqu
         </p>
       ) : (
         <>
+          {details.decalage ? (
+            <p className="texte-attenue">
+              Décalage en place : {details.decalage > 0 ? '+' : ''}{details.decalage}. Il est
+              déduit de votre réglage pour caler la courbe, puis s'y ajoute : vous retrouverez la
+              luminosité choisie.
+            </p>
+          ) : null}
           <dl className="mesures-luminosite">
             <div>
               <dt>Lumière ambiante (lissée)</dt>
@@ -402,7 +440,7 @@ function EtapeAncrage({ index, details, reglages, options, ancrage, envoi, bloqu
         <div role="status">
           <p className="message">{texteCompteRendu(ancrage)}</p>
           <CourbeLuminosite options={ancrage.options} lux={details.lux_filtre}
-            ancrages={ancrages} />
+            ancrages={ancrages} decalage={details.decalage ?? 0} />
           <p className="texte-attenue">
             Courbe : {pointsCourbe(ancrage.options)
               .map(([l, v]) => `${formaterLux(l)} → ${v}`).join(', ')}.

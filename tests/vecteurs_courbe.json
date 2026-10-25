@@ -1,5 +1,5 @@
 {
- "_note": "Vecteurs partagés entre tests/test_courbe.py et frontend/tests/courbe.test.js : calcul de la cible et validation des options de la courbe, identiques côté intégration et panneau.",
+ "_note": "Vecteurs partagés entre tests/test_courbe.py et frontend/tests/courbe.test.js : calcul de la cible (décalage compris) et validation des options de la courbe, identiques côté intégration et panneau.",
  "cibles": [
   {
    "nom": "2 points, 0 lx",
@@ -260,6 +260,82 @@
    },
    "lux": 0,
    "cible": 30
+  },
+  {
+   "nom": "décalage −10, 20 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 20,
+   "decalage": -10,
+   "cible": 50
+  },
+  {
+   "nom": "décalage +10, 20 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 20,
+   "decalage": 10,
+   "cible": 70
+  },
+  {
+   "nom": "décalage +10 borné à 100",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 300,
+   "decalage": 10,
+   "cible": 100
+  },
+  {
+   "nom": "décalage −30 borné à 0",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 20,
+    "luminosite_max": 100
+   },
+   "lux": 2,
+   "decalage": -30,
+   "cible": 0
+  },
+  {
+   "nom": "décalage +30 au-dessus de la luminosité maximale",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 60
+   },
+   "lux": 1000,
+   "decalage": 30,
+   "cible": 90
+  },
+  {
+   "nom": "décalage +5, 3 points, 40 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "point_intermediaire": [
+     40,
+     80
+    ]
+   },
+   "lux": 40,
+   "decalage": 5,
+   "cible": 85
   }
  ],
  "validation": [
@@ -481,6 +557,116 @@
    "erreurs": [
     "reprise_sur_changement"
    ]
+  },
+  {
+   "nom": "seuils d'ambiance figés",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "ambiance_sombre": 10,
+    "ambiance_claire": 150.5
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "seuil clair figé sous le seuil sombre de la courbe",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "ambiance_claire": 15
+   },
+   "erreurs": [
+    "ambiance_claire"
+   ]
+  },
+  {
+   "nom": "seuils d'ambiance croisés",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "ambiance_sombre": 200,
+    "ambiance_claire": 100
+   },
+   "erreurs": [
+    "ambiance_claire"
+   ]
+  },
+  {
+   "nom": "seuil d'ambiance hors bornes",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "ambiance_sombre": 0
+   },
+   "erreurs": [
+    "ambiance_sombre"
+   ]
+  },
+  {
+   "nom": "seuil d'ambiance vide",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "ambiance_sombre": null
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "secours identique au principal",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "capteur_lux": "sensor.a",
+    "capteur_secours": "sensor.a"
+   },
+   "erreurs": [
+    "capteur_secours"
+   ]
+  },
+  {
+   "nom": "secours distinct",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "capteur_lux": "sensor.a",
+    "capteur_secours": "sensor.b"
+   },
+   "erreurs": []
   }
  ]
 }

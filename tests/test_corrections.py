@@ -67,3 +67,36 @@ async def test_meme_fichier_que_l_historique(tmp_path):
     base = CorrectionsLuminosite(chemin)
     await base.ajouter("sensor.a", correction(1))
     assert len(await base.charger("sensor.a")) == 1
+
+
+async def test_decalage_enregistre(tmp_path):
+    base = CorrectionsLuminosite(tmp_path / "historique.sqlite")
+    await base.ajouter("sensor.a", Correction(horodatage=1, lux=2.0, valeur=38, cible=30,
+                                              mode_image="vivid", origine="manuel",
+                                              decalage=-10))
+    [lue] = await base.charger("sensor.a")
+    assert lue.decalage == -10
+
+
+async def test_base_2_9_0_sans_colonne_decalage(tmp_path):
+    """Base créée par la 2.9.0 : la colonne est ajoutée, les corrections
+    existantes valent pour un décalage nul."""
+    import sqlite3
+    chemin = tmp_path / "historique.sqlite"
+    with sqlite3.connect(chemin) as co:
+        co.executescript("""
+            CREATE TABLE corrections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, horodatage REAL NOT NULL,
+                capteur TEXT NOT NULL, lux REAL NOT NULL, valeur INTEGER NOT NULL,
+                cible INTEGER NOT NULL, mode_image TEXT, origine TEXT,
+                ecartee INTEGER NOT NULL DEFAULT 0);
+            INSERT INTO corrections (horodatage, capteur, lux, valeur, cible, mode_image, origine)
+                VALUES (1, 'sensor.a', 2.0, 48, 40, 'vivid', 'manuel');
+        """)
+    base = CorrectionsLuminosite(chemin)
+    [lue] = await base.charger("sensor.a")
+    assert (lue.valeur, lue.decalage) == (48, 0)
+    await base.ajouter("sensor.a", correction(2))
+    assert len(await base.charger("sensor.a")) == 2
+    # Une seconde ouverture ne réessaie pas d'ajouter la colonne.
+    CorrectionsLuminosite(chemin)

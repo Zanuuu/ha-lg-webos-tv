@@ -739,7 +739,7 @@ select {
 
 .mesures-luminosite {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 1rem;
   margin: 0 0 0.75rem;
 }
@@ -754,6 +754,38 @@ select {
   font-size: 1.6rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* Précision sous une mesure : courbe et décalage, heure de l'ambiance. */
+.detail-cible {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.decalage-luminosite {
+  margin-top: 0.75rem;
+}
+
+.champ-decalage {
+  display: flex;
+  flex: 1 1 18rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.valeur-decalage {
+  min-width: 3.5ch;
+  font-size: 1.6rem;
+}
+
+.decalage-luminosite > p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.choix-secours {
+  margin-top: 1rem;
 }
 
 .ligne-carte {
@@ -820,6 +852,21 @@ select {
   stroke: var(--blanc-ecran);
   stroke-width: 2.5;
   stroke-linejoin: round;
+}
+
+/* Courbe plus décalage : celle que la fonction applique. */
+.trace-appliquee {
+  fill: none;
+  stroke: var(--blanc-ecran);
+  stroke-width: 2.5;
+  stroke-dasharray: 0.5 6;
+  stroke-linecap: round;
+}
+
+.seuil-ambiance {
+  stroke: var(--gris-texte);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
 }
 
 .point-maintenant line {
@@ -1617,8 +1664,18 @@ table.table-historique {
     font-size: 24px;
   }
 
-  .trace-courbe {
+  .trace-courbe,
+  .trace-appliquee {
     stroke-width: 5;
+  }
+
+  .trace-appliquee {
+    stroke-dasharray: 1 12;
+  }
+
+  .seuil-ambiance {
+    stroke-width: 2;
+    stroke-dasharray: 6 8;
   }
 
   .point-maintenant line {

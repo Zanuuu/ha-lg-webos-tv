@@ -31,10 +31,15 @@ téléviseur les attribue tous à notre client). Ici :
 - une pause se lève aussi quand l'éclairage change nettement, et une
   correction gardée assez longtemps est enregistrée (corrections.py) : de
   quoi proposer des retouches de la courbe, que l'utilisateur applique ou
-  non (reprise.py).
+  non (reprise.py) ;
+- un décalage pilotable par les automatisations s'ajoute à la cible ; un
+  capteur de secours prend le relais d'un principal indisponible ou figé,
+  une fois leur facteur relatif appris (secours.py) ; le lux filtré et
+  l'ambiance de la pièce (ambiance.py) sont exposés en entités.
 """
 
 import logging
+import math
 from collections import deque
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
@@ -55,7 +60,9 @@ from homeassistant.helpers.event import (async_track_point_in_utc_time,
                                          async_track_time_interval)
 from homeassistant.util import dt as dt_util
 
-from .const import (CONF_ANCRAGES, CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
+from .const import (CONF_ANCRAGES, CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS,
+                    CONF_CONFIRMATION_SAUT, DECALAGE_MAX, DECALAGE_MIN,
+                    OPTIONS_AMBIANCE,
                     CONF_ECART_MINIMAL, CONF_EMPLACEMENT, CONF_GEL_ECRITURE,
                     CONF_HYSTERESIS_DESCENTE, CONF_HYSTERESIS_MONTEE,
                     CONF_LISSAGE_DESCENTE, CONF_LISSAGE_MONTEE,
@@ -63,17 +70,20 @@ from .const import (CONF_ANCRAGES, CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
                     CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
                     CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT, DOMAIN,
+                    CONF_AMBIANCE_CLAIRE, CONF_AMBIANCE_SOMBRE,
                     ECART_MINIMAL_DEFAUT, EMPLACEMENTS, MODES_HDR,
                     OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from . import courbe
-from .courbe import calculer_cible, valider_point_intermediaire
+from .ambiance import SuiviAmbiance, nommer, seuils, seuils_courbe
+from .courbe import LUX_PLAFOND, calculer_cible, valider_point_intermediaire
 from .entite import descriptions
 from .rampe import Rampe, parametres
 from .reprise import (Correction, SuiviCorrection, a_ecarter, bornes_reprise,
                       changement_net, ecart, plage, suggestions)
 from .sante import (CONSERVATION_JOURS, RAMPE_DELTA_MIN, Accumulateur,
-                    Contexte, Inversions, Retroaction, StatsJour, ambiance,
-                    evaluer, fenetre, resume, resume_jour)
+                    Contexte, Inversions, Retroaction, StatsJour, evaluer,
+                    fenetre, resume, resume_jour)
+from .secours import RapportCapteurs, choisir
 from .signal_lux import REEVALUATION_S, Cadence, SignalLux, constantes, profil
 
 log = logging.getLogger(__name__)
@@ -119,6 +129,8 @@ ENREGISTREMENT_STATS = timedelta(minutes=5)
 # fonction (docs/etude-luminosite-adaptative.md, arbitrage A6).
 PROBLEME_CONFLIT = "conflit_economie_energie"
 PROBLEME_FIGE = "capteur_fige"
+# Même problème, texte adapté quand le capteur de secours a pris le relais.
+TRADUCTION_FIGE_RELAIS = "capteur_fige_secours"
 
 # Bornes des options numériques, communes au formulaire des options et au
 # panneau. Le téléviseur n'accepte que des entiers pour la luminosité.
@@ -130,7 +142,8 @@ BORNES = {CONF_LUX_MIN: (1, 1000), CONF_LUX_MAX: (2, 100000),
           CONF_LISSAGE_MONTEE: (0, 120), CONF_LISSAGE_DESCENTE: (0, 300),
           CONF_HYSTERESIS_MONTEE: (0, 100), CONF_HYSTERESIS_DESCENTE: (0, 90),
           CONF_CONFIRMATION_SAUT: (0, 60), CONF_GEL_ECRITURE: (0, 120),
-          CONF_RAMPE_PAS: (1, 10), CONF_RAMPE_DEBIT: (1, 20)}
+          CONF_RAMPE_PAS: (1, 10), CONF_RAMPE_DEBIT: (1, 20),
+          **{cle: (1, LUX_PLAFOND) for cle in OPTIONS_AMBIANCE}}
 ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_PAUSE_MIN, *OPTIONS_AVANCEES)
 
 # Par ordre de priorité (voir LuminositeAdaptative.etat).
@@ -142,7 +155,10 @@ ETATS = ["desactivee", "televiseur_deconnecte", "consultation", "mise_en_route",
 # quand le capteur est effacé des options.
 ENTITES = (("switch", "luminosite_adaptative"),
            ("sensor", "luminosite_adaptative_etat"),
-           ("button", "luminosite_adaptative_reprendre"))
+           ("button", "luminosite_adaptative_reprendre"),
+           ("number", "luminosite_adaptative_decalage"),
+           ("sensor", "luminosite_adaptative_lux_filtre"),
+           ("sensor", "luminosite_adaptative_ambiance"))
 
 
 def modes_proposes() -> list[str]:
@@ -159,13 +175,14 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
     formulaire."""
     erreurs = {}
     # Vides : option avancée qui suit le profil, courbe sans point
-    # intermédiaire.
+    # intermédiaire, seuil d'ambiance qui suit la courbe, pas de secours.
+    facultatives = (*OPTIONS_AVANCEES, *OPTIONS_AMBIANCE, CONF_POINT_INTERMEDIAIRE,
+                    CONF_CAPTEUR_SECOURS)
     options = {cle: valeur for cle, valeur in options.items()
-               if not ((cle in OPTIONS_AVANCEES or cle == CONF_POINT_INTERMEDIAIRE)
-                       and valeur is None)}
+               if not (cle in facultatives and valeur in (None, ""))}
     for cle, (bas, haut) in BORNES.items():
         valeur = options.get(cle)
-        if cle in OPTIONS_AVANCEES and valeur is None:
+        if cle in facultatives and valeur is None:
             continue
         if (isinstance(valeur, bool) or not isinstance(valeur, int | float)
                 or not bas <= valeur <= haut):
@@ -175,6 +192,14 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
             erreurs[CONF_LUX_MAX] = "lux_max_trop_bas"
         if options[CONF_LUMINOSITE_MAX] < options[CONF_LUMINOSITE_MIN]:
             erreurs[CONF_LUMINOSITE_MAX] = "luminosite_max_trop_basse"
+    if not erreurs:
+        sombre, claire = seuils(options)
+        if sombre >= claire:
+            cle = CONF_AMBIANCE_CLAIRE if CONF_AMBIANCE_CLAIRE in options else CONF_AMBIANCE_SOMBRE
+            erreurs[cle] = "ambiance_seuils_croises"
+    secours = options.get(CONF_CAPTEUR_SECOURS)
+    if secours is not None and secours == options.get(CONF_CAPTEUR_LUX):
+        erreurs[CONF_CAPTEUR_SECOURS] = "secours_identique"
     if not erreurs and CONF_POINT_INTERMEDIAIRE in options:
         point, erreur = valider_point_intermediaire(options)
         if erreur is not None:
@@ -248,6 +273,14 @@ def _lire_lux(etat: State | None) -> float | None:
         return None
 
 
+def lux_affiche(lux: float | None) -> float | None:
+    """Lux de l'entité « Lux filtré » : au dixième sous 100 lx, à l'unité
+    au-delà, pour qu'elle ne change pas à chaque pas du filtre."""
+    if lux is None:
+        return None
+    return round(lux, 1) if lux < 100 else float(round(lux))
+
+
 def _horloge() -> float:
     """Instant en secondes pour le signal (signal_lux ignore Home Assistant)."""
     return dt_util.utcnow().timestamp()
@@ -284,10 +317,13 @@ class LuminositeAdaptative:
         self._ecritures = donnees.ecritures
         self.options = {**OPTIONS_LUMINOSITE_DEFAUT, **options}
         self.capteur: str = options[CONF_CAPTEUR_LUX]
+        self.capteur_secours: str | None = options.get(CONF_CAPTEUR_SECOURS) or None
         self._modes_menu = set(modes_proposes()) - {MODES_HDR}
 
-        # Restaurés par l'interrupteur (RestoreEntity) à son ajout.
+        # Restaurés par l'interrupteur (RestoreEntity) à son ajout ; le
+        # décalage, par son entité.
         self.active = False
+        self.decalage = 0
         self.fin_pause: datetime | None = None
         self.derniere_erreur: str | None = None
         # Origine et heure de la reprise en main qui a mis la fonction en
@@ -306,6 +342,7 @@ class LuminositeAdaptative:
         self._mises_en_route = 0
 
         # Signal du capteur : repart de zéro à chaque changement de capteur.
+        self.capteur_actif: str | None = "principal"
         self._plateforme: str | None = None
         self.profil = "inconnu"
         self._cadence = Cadence()
@@ -314,6 +351,23 @@ class LuminositeAdaptative:
         self._conflit_signale: str | None = None
         self._fige_signale = False
         self._cible_signalee: int | None = None
+        self._relais_signale = False
+
+        # Capteur de secours : cadence et profil propres, rapport appris avec
+        # le principal (relu en base pour la paire), capteur qui sert.
+        self._plateforme_secours: str | None = None
+        self.profil_secours = "inconnu"
+        self._cadence_secours = Cadence()
+        self._rapport = RapportCapteurs()
+        self._rapport_charge = False
+        self._rapport_modifie = False
+        self._ne_plus_suivre_secours: list[Callable[[], None]] = []
+        # Entités « Lux filtré » et « Ambiance », suivies tant que le filtre
+        # avance ou qu'une ambiance attend sa durée minimale.
+        self._ambiance = SuiviAmbiance()
+        self._ecouteurs_signal: list[Callable[[], None]] = []
+        self._annuler_signal: Callable[[], None] | None = None
+        self._echeance_signal: datetime | None = None
 
         # Santé de l'installation : agrégats du jour en cours, jours passés
         # relus en base pour ce capteur, rétroaction et allers-retours en
@@ -385,6 +439,7 @@ class LuminositeAdaptative:
         self._actualiser_profil()
         self._reinitialiser_sante()
         self._reinitialiser_corrections()
+        self.capteur_actif = "principal"
         etat = self.hass.states.get(self.capteur)
         if (lux := _lire_lux(etat)) is not None:
             self._cadence.noter(etat.last_reported_timestamp)
@@ -392,15 +447,48 @@ class LuminositeAdaptative:
             # Valeur maintenue, pas un nouveau rapport : la rétroaction
             # seulement.
             self._retroaction.rapport(_horloge(), lux)
+        self._suivre_secours()
+
+    def _suivre_secours(self) -> None:
+        """Démarrage, nouveau principal ou nouveau secours : cadence du
+        secours et rapport de la paire repartent de ce qui est en base."""
+        for ne_plus_suivre in self._ne_plus_suivre_secours:
+            ne_plus_suivre()
+        self._ne_plus_suivre_secours = []
+        self._plateforme_secours = None
+        self._cadence_secours = Cadence()
+        self.profil_secours = "inconnu"
+        self._rapport = RapportCapteurs()
+        self._rapport_charge = self._rapport_modifie = False
+        if self.capteur_secours is not None:
+            self._ne_plus_suivre_secours = [
+                async_track_state_change_event(self.hass, [self.capteur_secours],
+                                               self._sur_lux_secours),
+                async_track_state_report_event(self.hass, [self.capteur_secours],
+                                               self._sur_rapport_secours),
+            ]
+            entite = er.async_get(self.hass).async_get(self.capteur_secours)
+            self._plateforme_secours = entite.platform if entite is not None else None
+            etat = self.hass.states.get(self.capteur_secours)
+            if _lire_lux(etat) is not None:
+                self._cadence_secours.noter(etat.last_reported_timestamp)
+            self._actualiser_profil_secours()
+            self.hass.async_create_task(
+                self._charger_rapport(self.capteur, self.capteur_secours), f"{DOMAIN} rapport")
+        self._actualiser_capteur_actif()
 
     def arreter(self) -> None:
         for desabonner in self._desabonnements:
             desabonner()
         self._desabonnements.clear()
-        for ne_plus_suivre in self._ne_plus_suivre_capteur:
+        for ne_plus_suivre in [*self._ne_plus_suivre_capteur, *self._ne_plus_suivre_secours]:
             ne_plus_suivre()
         self._ne_plus_suivre_capteur = []
+        self._ne_plus_suivre_secours = []
         self._annuler_planification()
+        if self._annuler_signal is not None:
+            self._annuler_signal()
+            self._annuler_signal = None
         self._abandonner_correction()
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
@@ -439,6 +527,14 @@ class LuminositeAdaptative:
         for ecouteur in list(self._ecouteurs):
             ecouteur()
         self._prevenir_details()
+        self._suivre_signal()
+
+    def ecouter_signal(self, ecouteur: Callable[[], None]) -> Callable[[], None]:
+        """Abonne les entités « Lux filtré » et « Ambiance » : prévenues
+        aussi pendant que le filtre avance, quel que soit l'état de la
+        fonction."""
+        self._ecouteurs_signal.append(ecouteur)
+        return lambda: self._ecouteurs_signal.remove(ecouteur)
 
     def _prevenir_details(self) -> None:
         for ecouteur in list(self._ecouteurs_details):
@@ -462,16 +558,73 @@ class LuminositeAdaptative:
 
     # --------------------------------------------------------------- signal
     def _constantes(self):
+        """Constantes du capteur qui sert : celles du secours pendant le
+        relais (son emplacement n'est pas demandé)."""
+        if self.capteur_actif == "secours":
+            return constantes(self.options, self.profil_secours, None)
         return constantes(self.options, self.profil, self.options[CONF_EMPLACEMENT])
 
     def _actualiser_profil(self) -> None:
         self.profil = profil(self._plateforme, self._cadence.intervalle())
         self._signal.constantes = self._constantes()
 
+    def _actualiser_profil_secours(self) -> None:
+        self.profil_secours = profil(self._plateforme_secours, self._cadence_secours.intervalle())
+        self._signal.constantes = self._constantes()
+
+    @property
+    def lux_principal(self) -> float | None:
+        return _lire_lux(self.hass.states.get(self.capteur))
+
+    @property
+    def lux_secours(self) -> float | None:
+        if self.capteur_secours is None:
+            return None
+        return _lire_lux(self.hass.states.get(self.capteur_secours))
+
     @property
     def lux(self) -> float | None:
-        """Dernière mesure brute du capteur."""
-        return _lire_lux(self.hass.states.get(self.capteur))
+        """Dernière mesure brute du capteur qui sert, en lux du principal
+        (secours × facteur pendant le relais)."""
+        if self.capteur_actif == "secours":
+            facteur, lux = self._rapport.facteur, self.lux_secours
+            return None if facteur is None or lux is None else lux * facteur
+        return self.lux_principal
+
+    @property
+    def secours_fige(self) -> bool:
+        return self._cadence_secours.fige(_horloge())
+
+    def _actualiser_capteur_actif(self) -> bool:
+        """Capteur qui sert (secours.choisir) ; à la bascule, la mesure du
+        nouveau entre dans le même filtre, référence d'hystérésis gardée :
+        aucun saut si le facteur est juste. Renvoie vrai s'il a changé."""
+        principal_ok = self.lux_principal is not None and not self.fige
+        secours_ok = self.lux_secours is not None and not self.secours_fige
+        actif = choisir(principal_ok, secours_ok, self._rapport.utilisable)
+        if actif == self.capteur_actif:
+            return False
+        ancien, self.capteur_actif = self.capteur_actif, actif
+        if actif == "secours":
+            self._noter("bascule", raison="indisponible" if self.lux_principal is None else "fige",
+                        facteur=round(self._rapport.facteur, 3))
+            # Lux d'un autre capteur : la correction ne serait pas comparable.
+            self._abandonner_correction("secours")
+        elif ancien == "secours":
+            self._noter("retour" if actif == "principal" else "secours_perdu")
+        self._signal.constantes = self._constantes()
+        instant = _horloge()
+        if (lux := self.lux) is None:
+            self._signal.oublier()
+        else:
+            self._signal.mesurer(instant, lux)
+            if ancien is None:
+                # Après un capteur figé ou indisponible sans relais : la
+                # luminosité est recalculée sans condition d'hystérésis.
+                self._signal.oublier_reference()
+        if self._annuler_application is None:
+            self._planifier(DELAI_APPLICATION_S)
+        return True
 
     @property
     def lux_filtre(self) -> float | None:
@@ -485,10 +638,14 @@ class LuminositeAdaptative:
             return None
         return self._signal.lux_vise(_horloge())
 
+    def _cible_de(self, lux: float) -> int:
+        """Cible de la courbe plus le décalage pilotable."""
+        return calculer_cible(lux, self.options, self.decalage)
+
     @property
     def cible(self) -> int | None:
         lux = self.lux_filtre
-        return None if lux is None else calculer_cible(lux, self.options)
+        return None if lux is None else self._cible_de(lux)
 
     @property
     def rampe(self) -> Rampe | None:
@@ -500,7 +657,7 @@ class LuminositeAdaptative:
         if self.lux is None:
             return None
         lux = self._signal.lux_vise(_horloge())
-        return None if lux is None else calculer_cible(lux, self.options)
+        return None if lux is None else self._cible_de(lux)
 
     @property
     def ecart_minimal(self) -> int:
@@ -545,6 +702,7 @@ class LuminositeAdaptative:
 
     @property
     def fige(self) -> bool:
+        """Capteur principal figé (relais du secours ou non)."""
         return self._cadence.fige(_horloge())
 
     @property
@@ -565,7 +723,7 @@ class LuminositeAdaptative:
             return "conflit_economie_energie"
         if self.lux is None:
             return "capteur_indisponible"
-        if self.fige:
+        if self.fige and self.capteur_actif != "secours":
             return "capteur_fige"
         return "active"
 
@@ -589,18 +747,27 @@ class LuminositeAdaptative:
                                      else "conflit_mode_eco"))
             self._actualiser_sante()
         fige = connecte and self.fige
-        if fige != self._fige_signale:
-            self._fige_signale = fige
+        # Le secours a pris le relais : la panne reste à réparer (pile,
+        # réseau), sans quoi il servirait durablement sans qu'on le voie.
+        relais = fige and self.capteur_actif == "secours"
+        if (fige, relais) != (self._fige_signale, self._relais_signale):
+            if fige != self._fige_signale and fige:
+                self._noter("capteur_fige")
+            self._fige_signale, self._relais_signale = fige, relais
             if not fige:
                 ir.async_delete_issue(self.hass, DOMAIN, PROBLEME_FIGE)
             else:
-                self._noter("capteur_fige")
                 etat = self.hass.states.get(self.capteur)
+                secours = (self.hass.states.get(self.capteur_secours)
+                           if self.capteur_secours is not None else None)
                 ir.async_create_issue(
                     self.hass, DOMAIN, PROBLEME_FIGE, is_fixable=False,
-                    severity=ir.IssueSeverity.WARNING, translation_key=PROBLEME_FIGE,
+                    severity=ir.IssueSeverity.WARNING,
+                    translation_key=TRADUCTION_FIGE_RELAIS if relais else PROBLEME_FIGE,
                     translation_placeholders={
                         "capteur": etat.name if etat is not None else self.capteur,
+                        "secours": (secours.name if secours is not None
+                                    else self.capteur_secours or ""),
                         "depuis": dt_util.as_local(dt_util.utc_from_timestamp(
                             self._cadence.dernier)).strftime("%d/%m %H:%M"),
                     })
@@ -646,13 +813,24 @@ class LuminositeAdaptative:
         l'intégration (qui couperait la connexion au téléviseur). Une pause
         en cours est conservée."""
         self.options = {**OPTIONS_LUMINOSITE_DEFAUT, **options}
+        secours = options.get(CONF_CAPTEUR_SECOURS) or None
+        if options[CONF_CAPTEUR_LUX] != self.capteur or secours != self.capteur_secours:
+            # Le rapport de l'ancienne paire, avant de repartir de celui de
+            # la nouvelle.
+            if (rapport := self._rapport_a_ecrire()) is not None:
+                self.hass.async_create_task(self._statistiques.enregistrer_rapport(*rapport))
         if options[CONF_CAPTEUR_LUX] != self.capteur:
             # Les statistiques de l'ancien capteur, avant de repartir de
             # celles du nouveau.
             if (a_ecrire := self._a_ecrire()) is not None:
                 self.hass.async_create_task(self._statistiques.enregistrer(*a_ecrire))
             self.capteur = options[CONF_CAPTEUR_LUX]
+            self.capteur_secours = secours
             self._suivre_capteur()
+        elif secours != self.capteur_secours:
+            self.capteur_secours = secours
+            self._suivre_secours()
+            self._actualiser_profil()
         else:
             self._actualiser_profil()
         self._signal.oublier_reference()
@@ -660,6 +838,29 @@ class LuminositeAdaptative:
         self._prevenir()
         self._actualiser_sante()
         self._actualiser_suggestions()
+
+    def restaurer_decalage(self, valeur: float | None) -> None:
+        """Décalage d'avant le redémarrage, relu par son entité."""
+        if valeur is not None:
+            self.decalage = min(max(int(round(valeur)), DECALAGE_MIN), DECALAGE_MAX)
+
+    def regler_decalage(self, valeur: float, origine: str) -> None:
+        """Décalage pilotable (automatisations, panneau) : nouvelle cible,
+        appliquée en rampe sans condition d'hystérésis. Jamais de pause, et
+        une pause en cours n'est pas levée : le réglage manuel prime, le
+        décalage s'applique à la reprise."""
+        valeur = min(max(int(round(valeur)), DECALAGE_MIN), DECALAGE_MAX)
+        if valeur == self.decalage:
+            return
+        ancien, self.decalage = self.decalage, valeur
+        self._noter("decalage", ancien=ancien, nouveau=valeur, origine=origine)
+        # Correction mesurée par rapport au décalage d'avant : plus comparable.
+        self._abandonner_correction("decalage")
+        if self.rampe is None and self.etat == "active":
+            # Une rampe en cours suit d'elle-même la nouvelle cible.
+            self._signal.oublier_reference()
+            self._planifier(DELAI_APPLICATION_S)
+        self._prevenir()
 
     def commencer_mise_en_route(self) -> None:
         """Assistant de mise en route ouvert dans le panneau : la fonction
@@ -702,11 +903,16 @@ class LuminositeAdaptative:
         lux, valeur = self.lux_filtre, self._actuelle()
         if lux is None or valeur is None:
             raise AncrageImpossible("indisponible")
+        # La courbe plus le décalage du moment doit donner la valeur choisie :
+        # la courbe est calée sur la valeur moins le décalage.
+        valeur_courbe = min(max(round(valeur) - self.decalage, 0), 100)
         options, ancrages, compte_rendu = courbe.ancrer(
-            self.options, self.options.get(CONF_ANCRAGES), lux, round(valeur),
+            self.options, self.options.get(CONF_ANCRAGES), lux, valeur_courbe,
             dt_util.utcnow().isoformat())
+        compte_rendu["decalage"] = self.decalage
+        compte_rendu["cible"] = calculer_cible(lux, options, self.decalage)
         self._noter("ancrage", lux=round(lux, 1), luminosite=round(valeur),
-                    points=compte_rendu["points"])
+                    points=compte_rendu["points"], decalage=self.decalage)
         return {**options, CONF_ANCRAGES: ancrages}, compte_rendu
 
     async def desactiver_economie_energie(self, origine: str) -> dict:
@@ -719,29 +925,48 @@ class LuminositeAdaptative:
     @callback
     def _sur_lux(self, evenement: Event[EventStateChangedData]) -> None:
         etat = evenement.data["new_state"]
-        self._recevoir(_lire_lux(etat), etat.last_reported_timestamp if etat else None)
+        self._recevoir("principal", _lire_lux(etat),
+                       etat.last_reported_timestamp if etat else None)
 
     @callback
     def _sur_rapport(self, evenement: Event[EventStateReportedData]) -> None:
-        self._recevoir(_lire_lux(evenement.data["new_state"]),
+        self._recevoir("principal", _lire_lux(evenement.data["new_state"]),
                        evenement.data["last_reported"].timestamp())
 
-    def _recevoir(self, lux: float | None, instant: float | None) -> None:
-        if lux is None:
-            self._signal.oublier()
-        else:
-            fige = self._fige_signale
-            maintenant = _horloge()
+    @callback
+    def _sur_lux_secours(self, evenement: Event[EventStateChangedData]) -> None:
+        etat = evenement.data["new_state"]
+        self._recevoir("secours", _lire_lux(etat),
+                       etat.last_reported_timestamp if etat else None)
+
+    @callback
+    def _sur_rapport_secours(self, evenement: Event[EventStateReportedData]) -> None:
+        self._recevoir("secours", _lire_lux(evenement.data["new_state"]),
+                       evenement.data["last_reported"].timestamp())
+
+    def _recevoir(self, source: str, lux: float | None, instant: float | None) -> None:
+        """Mesure de l'un des deux capteurs. Statistiques, rétroaction et
+        profil du principal ne viennent que de ses rapports ; le filtre ne
+        reçoit que ceux du capteur qui sert."""
+        maintenant = _horloge()
+        if lux is not None and source == "principal":
             self._accumulateur.rapport(maintenant, lux, self._tv.etat_connexion == "connecte")
             self._retroaction.rapport(maintenant, lux)
             self._resoudre_retroaction(maintenant)
             self._cadence.noter(instant)
-            self._signal.mesurer(_horloge(), lux)
             self._actualiser_profil()
+        elif lux is not None:
+            self._cadence_secours.noter(instant)
+            self._actualiser_profil_secours()
+        if not self._actualiser_capteur_actif() and self.capteur_actif == source:
+            # Même capteur qu'avant : à la bascule, la mesure est déjà entrée.
+            if lux is None:
+                self._signal.oublier()
+            else:
+                self._signal.mesurer(maintenant, self.lux)
+        if self.lux is not None:
             for evenement in self._signal.evenements():
                 self._noter(evenement)
-            if fige:
-                self._signal.oublier_reference()
             if self._suivi is not None:
                 self._suivi.mesurer(maintenant, self.lux_filtre)
             self._verifier_reprise()
@@ -753,6 +978,11 @@ class LuminositeAdaptative:
 
     @callback
     def _verifier_capteur(self, _instant) -> None:
+        # Un capteur se fige sans rien publier : le choix se revoit à la
+        # minute.
+        if self._actualiser_capteur_actif():
+            self._prevenir()
+        self._echantillonner_rapport()
         self._echantillonner()
         # Le filtre avance entre deux mesures d'un capteur qui ne publie que
         # sur variation.
@@ -840,7 +1070,7 @@ class LuminositeAdaptative:
         cible, lux = self.cible, self.lux_filtre
         if cible is None or lux is None:
             return
-        nom = ambiance(lux, self.options[CONF_LUX_MIN], self.options[CONF_LUX_MAX])
+        nom = nommer(lux, seuils(self.options))
         self._accumulateur.reprise(nom, valeur - cible)
         self._reprise_en_cours = (jour, nom, valeur)
         self._actualiser_sante()
@@ -941,10 +1171,16 @@ class LuminositeAdaptative:
             return
         if origine not in ORIGINES_CORRECTION:
             return
+        if self.capteur_actif != "principal":
+            # Lux du secours, via un facteur approché : pas comparable aux
+            # corrections du principal.
+            self._noter("correction_ecartee", raison="secours", valeur=valeur)
+            return
         constantes = self._signal.constantes
         self._suivi = SuiviCorrection(
             _horloge(), valeur, mode, origine,
-            lissage_s=max(constantes.lissage_montee_s, constantes.lissage_descente_s))
+            lissage_s=max(constantes.lissage_montee_s, constantes.lissage_descente_s),
+            decalage=self.decalage)
         self._suivi.mesurer(_horloge(), self.lux_filtre)
         self._annuler_suivi = async_track_point_in_utc_time(
             self.hass, self._sur_fin_suivi, dt_util.utc_from_timestamp(self._suivi.echeance))
@@ -1027,6 +1263,7 @@ class LuminositeAdaptative:
                 "lux": c.lux, "valeur": c.valeur, "cible": c.cible,
                 "ecart": ecart(c, self.options), "mode_image": c.mode_image,
                 "origine": c.origine, "ecartee": c.ecartee, "plage": plage(c.lux),
+                "decalage": c.decalage,
             } for c in self._corrections],
             "suggestions": [asdict(s) for s in suggestions(self._corrections, self.options)],
         }
@@ -1151,7 +1388,7 @@ class LuminositeAdaptative:
 
     def _appliquer(self) -> None:
         lux = self._signal.lux_filtre(_horloge())
-        cible = calculer_cible(lux, self.options)
+        cible = self._cible_de(lux)
         actuelle = self._actuelle()
         if actuelle is not None and abs(cible - actuelle) < self.ecart_minimal:
             # Le téléviseur est déjà à la bonne valeur : ce lux devient la
@@ -1310,8 +1547,10 @@ class LuminositeAdaptative:
             delta = rampe.valeur - rampe.depart
             inversion, episode = self._inversions.transition(instant, 1 if delta > 0 else -1)
             lux_avant = self._signal.lux_vise(instant) if self.lux is not None else None
+            # Réponse du principal seulement : celle du secours ne dit rien
+            # de l'emplacement du principal.
             if (fin == "arrivee" and self.profil == "rapide" and abs(delta) >= RAMPE_DELTA_MIN
-                    and lux_avant is not None):
+                    and lux_avant is not None and self.capteur_actif == "principal"):
                 self._retroaction.rampe(instant, lux_avant, delta, self._signal.constantes.gel_s)
         self._accumulateur.transition(rampe.pas_confirmes, inversion, episode)
         if episode:
@@ -1373,6 +1612,8 @@ class LuminositeAdaptative:
         self._echantillonner()
         if (a_ecrire := self._a_ecrire()) is not None:
             await self._statistiques.enregistrer(*a_ecrire)
+        if (rapport := self._rapport_a_ecrire()) is not None:
+            await self._statistiques.enregistrer_rapport(*rapport)
 
     @callback
     def _enregistrer_periodiquement(self, _instant) -> None:
@@ -1385,9 +1626,11 @@ class LuminositeAdaptative:
     def _echantillonner(self) -> None:
         """Temps passé dans l'état d'avant (allumé, active, lux) ; au
         changement de jour, le jour fini est enregistré."""
+        # Lux filtré du capteur qui sert (en lux du principal) pour le temps
+        # actif ; lux brut du principal seul (plancher, plafond).
         termine = self._accumulateur.echantillon(
             _horloge(), _jour_local(), self._tv.etat_connexion == "connecte",
-            self.etat == "active", self.lux_filtre, self.lux)
+            self.etat == "active", self.lux_filtre, self.lux_principal)
         if termine is None:
             return
         self._jours[termine.jour] = termine
@@ -1396,6 +1639,120 @@ class LuminositeAdaptative:
         for jour in [jour for jour in self._jours if jour < limite]:
             del self._jours[jour]
         self.hass.async_create_task(self.enregistrer_statistiques(), f"{DOMAIN} statistiques")
+
+    # ------------------------------------------------------------ secours
+    def _rapport_a_ecrire(self) -> tuple[str, str, list] | None:
+        """(principal, secours, échantillons) à enregistrer, figés tout de
+        suite ; rien avant la relecture (on écraserait la paire en base)."""
+        if self.capteur_secours is None or not self._rapport_charge or not self._rapport_modifie:
+            return None
+        self._rapport_modifie = False
+        return self.capteur, self.capteur_secours, self._rapport.en_liste()
+
+    async def _charger_rapport(self, principal: str, secours: str) -> None:
+        try:
+            echantillons = await self._statistiques.charger_rapport(principal, secours)
+        except Exception:  # noqa: BLE001 — la fonction marche sans
+            log.exception("Luminosité adaptative : rapport des capteurs illisible")
+            echantillons = []
+        # Autre paire entre-temps, ou fonction arrêtée (rechargement) : rien à
+        # reprogrammer.
+        if (principal, secours) != (self.capteur, self.capteur_secours) or not self._desabonnements:
+            return
+        # Échantillons pris depuis le démarrage, après ceux de la base.
+        self._rapport = RapportCapteurs([*echantillons, *self._rapport.en_liste()])
+        self._rapport_charge = True
+        if self._actualiser_capteur_actif():
+            self._prevenir()
+        self._actualiser_sante()
+
+    def _echantillonner_rapport(self) -> None:
+        """Facteur relatif appris en continu, une fois par minute, quand les
+        deux capteurs publient et que la lumière est stable (filtre arrivé,
+        hors gel : l'écran ne change pas)."""
+        if self.capteur_secours is None or self.capteur_actif != "principal":
+            return
+        principal, secours = self.lux_principal, self.lux_secours
+        instant = _horloge()
+        if (principal is None or secours is None or self.fige or self.secours_fige
+                or self._signal.lux_filtre(instant) is None or self._signal.gele(instant)
+                or not self._signal.converge(instant)):
+            return
+        utilisable = self._rapport.utilisable
+        if self._rapport.noter(instant, principal, secours):
+            self._rapport_modifie = True
+            if self._rapport.utilisable != utilisable:
+                self._noter("rapport_secours", etat=self._rapport.etat,
+                            facteur=self._rapport.facteur and round(self._rapport.facteur, 3))
+
+    def _resume_secours(self) -> dict | None:
+        """Secours pour la page Santé et les diagnostics, sans identifiant."""
+        if self.capteur_secours is None:
+            return None
+        return {**self._rapport.resume(), "fige": self.secours_fige,
+                "disponible": self.lux_secours is not None,
+                "actif": self.capteur_actif == "secours"}
+
+    # ------------------------------------------------- lux filtré, ambiance
+    def restaurer_ambiance(self, valeur: str | None, depuis: datetime | None) -> None:
+        """Ambiance d'avant le redémarrage, relue par son entité : elle tient
+        jusqu'à ce que la mesure en justifie une autre."""
+        if valeur is not None:
+            self._ambiance.restaurer(valeur, depuis.timestamp() if depuis else None)
+            self._suivre_signal()
+
+    @property
+    def ambiance(self) -> str | None:
+        return self._ambiance.valeur if self.lux is not None else None
+
+    @property
+    def ambiance_depuis(self) -> datetime | None:
+        depuis = self._ambiance.depuis
+        return dt_util.utc_from_timestamp(depuis) if depuis is not None else None
+
+    def seuils_ambiance(self) -> dict[str, Any]:
+        sombre, claire = seuils(self.options)
+        courbe_sombre, courbe_claire = seuils_courbe(self.options)
+        return {"sombre": round(sombre, 1), "claire": round(claire, 1),
+                "courbe": [round(courbe_sombre, 1), round(courbe_claire, 1)],
+                "figes": [self.options.get(cle) is not None for cle in OPTIONS_AMBIANCE]}
+
+    def _suivre_signal(self) -> None:
+        """Lux filtré et ambiance à jour, prévenus, puis nouvelle vérification
+        tant que le filtre avance ou qu'une ambiance attend ses 10 minutes,
+        quel que soit l'état de la fonction (pause, téléviseur éteint)."""
+        instant = _horloge()
+        lux = self.lux_filtre
+        if lux is not None:
+            ancienne = self._ambiance.valeur
+            if self._ambiance.mesurer(instant, lux, seuils(self.options)) and ancienne is not None:
+                self._noter("ambiance", valeur=self._ambiance.valeur, ancienne=ancienne,
+                            lux=round(lux, 1))
+        for ecouteur in list(self._ecouteurs_signal):
+            ecouteur()
+        # Le filtre est tenu pour arrivé à 1 % près : l'entité suit encore
+        # jusqu'à afficher la mesure retenue.
+        echeances = [e for e in (
+            self._signal.prochaine_echeance(instant) if lux is not None else None,
+            self._ambiance.echeance if lux is not None else None,
+            instant + REEVALUATION_S if lux is not None and not self._signal.gele(instant)
+            and lux_affiche(lux) != lux_affiche(self._lux_retenu()) else None)
+            if e is not None and e != math.inf]
+        if not echeances:
+            return
+        echeance = dt_util.utc_from_timestamp(max(min(echeances), instant + 0.1))
+        if self._annuler_signal is not None:
+            if self._echeance_signal <= echeance:
+                return
+            self._annuler_signal()
+        self._echeance_signal = echeance
+        self._annuler_signal = async_track_point_in_utc_time(
+            self.hass, self._sur_echeance_signal, echeance)
+
+    @callback
+    def _sur_echeance_signal(self, _maintenant) -> None:
+        self._annuler_signal = None
+        self._suivre_signal()
 
     def _resoudre_retroaction(self, instant: float) -> None:
         resultats = self._retroaction.resoudre(instant)
@@ -1420,7 +1777,8 @@ class LuminositeAdaptative:
             options=self.options, constantes=self._signal.constantes, profil=self.profil,
             plateforme=self._plateforme, conflit=self._conflit_signale,
             fige=self._fige_signale, ecriture_possible=self._tv.ecriture_possible,
-            piece_capteur=piece_capteur, piece_televiseur=piece_televiseur)
+            piece_capteur=piece_capteur, piece_televiseur=piece_televiseur,
+            secours=self._resume_secours())
         jours = [*self._jours.values(), self._accumulateur.stats]
         aujourdhui = self._accumulateur.stats.jour
         return {
@@ -1462,6 +1820,9 @@ class LuminositeAdaptative:
             "conflit": self.conflit,
             "rampe": self._resume_rampe(),
             "reprise_lux": self._reprise_lux(),
+            "decalage": self.decalage,
+            "capteur_actif": self.capteur_actif,
+            "ambiance": self.ambiance,
         }
 
     def details(self) -> dict[str, Any]:
@@ -1472,6 +1833,17 @@ class LuminositeAdaptative:
         rampe = self._resume_rampe()
         if rampe is not None:
             rampe["pas"] = self.rampe.pas_confirmes
+        secours = None
+        if self.capteur_secours is not None:
+            dernier_secours = self._cadence_secours.dernier
+            secours = {
+                **self._resume_secours(), "lux": self.lux_secours,
+                "profil": {"nom": self.profil_secours, "plateforme": self._plateforme_secours,
+                           "intervalle_s": self._cadence_secours.intervalle()},
+                "derniere_mesure": (dt_util.utc_from_timestamp(dernier_secours).isoformat()
+                                    if dernier_secours is not None else None),
+            }
+        depuis = self.ambiance_depuis
         return {
             **self.resume(),
             "rampe": rampe,
@@ -1495,6 +1867,13 @@ class LuminositeAdaptative:
             "correction_en_cours": None if self._suivi is None else {
                 "valeur": self._suivi.valeur,
                 "fin": dt_util.utc_from_timestamp(self._suivi.echeance).isoformat()},
+            # Cible de la courbe seule, avant le décalage.
+            "cible_courbe": (None if lux_filtre is None
+                             else calculer_cible(lux_filtre, self.options)),
+            "lux_principal": self.lux_principal,
+            "secours": secours,
+            "ambiance_depuis": depuis.isoformat() if depuis is not None else None,
+            "seuils_ambiance": self.seuils_ambiance(),
         }
 
     def attributs(self) -> dict[str, Any]:
@@ -1511,4 +1890,6 @@ class LuminositeAdaptative:
             "profil": self.profil,
             "emplacement": self.options[CONF_EMPLACEMENT],
             "derniere_erreur": self.derniere_erreur,
+            "decalage": self.decalage,
+            "capteur_actif": self.capteur_actif,
         }

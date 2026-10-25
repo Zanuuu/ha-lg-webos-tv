@@ -8,7 +8,7 @@ import pytest
 from custom_components.lg_webos_tv.courbe import calculer_cible, valider_point_intermediaire
 from custom_components.lg_webos_tv.reprise import (CORRECTION_DUREE_S, Correction,
                                                    SuiviCorrection, a_ecarter,
-                                                   bornes_reprise, changement_net,
+                                                   bornes_reprise, changement_net, ecart,
                                                    plage, suggestions)
 
 DEFAUT = {"lux_min": 5, "lux_max": 300, "luminosite_min": 40, "luminosite_max": 100}
@@ -251,3 +251,31 @@ def test_ancrages_retires_de_la_courbe_proposee():
 def test_lux_au_dixieme_du_point_ajoute():
     [s] = suggestions(corrections([37.33, 37.4, 37.2], [-10, -10, -10]), DEFAUT)
     assert s.options["point_intermediaire"][0] == 37.3
+
+
+# ------------------------------------------------------------- décalage
+def test_ecart_mesure_a_la_courbe_plus_decalage():
+    """Avec un décalage de −10, la courbe donnait 50 à 20 lx ; l'utilisateur
+    a choisi 53 : la courbe seule est 3 points trop basse… pour ce
+    décalage, pas 7 points trop haute."""
+    c = Correction(horodatage=0, lux=20, valeur=53, cible=50, mode_image="vivid",
+                   origine="manuel", decalage=-10)
+    assert ecart(c, DEFAUT) == 3
+
+
+def test_suggestion_corrige_la_courbe_seule():
+    # Trois corrections à 2 lx, +8 au-dessus de la courbe décalée de −10.
+    cs = [Correction(horodatage=i, lux=2, valeur=calculer_cible(2, DEFAUT) - 10 + 8, cible=30,
+                     mode_image="vivid", origine="manuel", id=i, decalage=-10)
+          for i in range(3)]
+    [s] = suggestions(cs, DEFAUT)
+    assert s.ecart == 8
+    # La courbe monte de 8 : avec le même décalage, elle redonne la valeur.
+    assert calculer_cible(2, s.options, -10) == cs[0].valeur
+
+
+def test_correction_retenue_porte_le_decalage():
+    s = SuiviCorrection(0, valeur=45, mode_image="vivid", origine="manuel", decalage=-10)
+    s.mesurer(400, 20)
+    c = s.correction(600, DEFAUT)
+    assert (c.decalage, c.cible) == (-10, 50)

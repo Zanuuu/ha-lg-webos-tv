@@ -53,7 +53,8 @@
           "luminosite_max": "Maximum brightness",
           "pause": "Pause after a manual change",
           "reprise_sur_changement": "Resume when the lighting changes clearly",
-          "modes_exclus": "Picture modes left alone"
+          "modes_exclus": "Picture modes left alone",
+          "capteur_secours": "Backup sensor (optional)"
         },
         "data_description": {
           "capteur_lux": "Leave empty to turn the feature off and remove its entities.",
@@ -64,7 +65,8 @@
           "lux_max": "Above this, the maximum brightness applies.",
           "pause": "The pause also ends the next time the TV is turned on, or with the Resume button. A value kept for 10 minutes is recorded as a correction: the panel offers to adjust the curve when several point the same way.",
           "reprise_sur_changement": "Ends the pause when the room light doubles or halves since the change (lamp switched on or off, nightfall). No effect on a pause requested from the panel.",
-          "modes_exclus": "Modes where brightness is never changed (calibrated modes)."
+          "modes_exclus": "Modes where brightness is never changed (calibrated modes).",
+          "capteur_secours": "Takes over when the main sensor is unavailable or stuck, once the usual ratio between the two has been learned (half an hour of shared readings in steady light). A sensor whose ratio varies too much, outdoors or near a window, is not used."
         },
         "sections": {
           "avance": {
@@ -79,7 +81,9 @@
               "confirmation_saut_s": "Jump confirmation",
               "gel_ecriture_s": "Reading pause after a write",
               "rampe_pas": "Step size",
-              "rampe_debit": "Transition speed"
+              "rampe_debit": "Transition speed",
+              "ambiance_sombre": "Dark ambience below",
+              "ambiance_claire": "Bright ambience above"
             },
             "data_description": {
               "ecart_minimal": "Brightness changes smaller than this are ignored (default 2).",
@@ -90,7 +94,9 @@
               "confirmation_saut_s": "A reading more than 4 times higher or lower waits this long, or for a second reading, before being used (0: no wait).",
               "gel_ecriture_s": "During a transition and for this long afterwards, readings are set aside: the sensor may see the screen change.",
               "rampe_pas": "Brightness points per write during a transition (default 1).",
-              "rampe_debit": "Brightness points per second during a transition (default 4: from 40 to 100 in 15 s)."
+              "rampe_debit": "Brightness points per second during a transition (default 4: from 40 to 100 in 15 s).",
+              "ambiance_sombre": "Threshold of the “Ambience” entity. Empty: first third of the curve, following its changes.",
+              "ambiance_claire": "Threshold of the “Ambience” entity. Empty: last third of the curve, following its changes."
             }
           }
         }
@@ -103,7 +109,9 @@
       "mode_inconnu": "Unknown picture mode.",
       "emplacement_inconnu": "Unknown location.",
       "point_intermediaire_incomplet": "Enter both the lux and the brightness of the intermediate point, or neither.",
-      "point_intermediaire_hors_courbe": "Must lie between the dark room and the bright room, and between the minimum and maximum brightness."
+      "point_intermediaire_hors_courbe": "Must lie between the dark room and the bright room, and between the minimum and maximum brightness.",
+      "secours_identique": "Must differ from the main sensor.",
+      "ambiance_seuils_croises": "The bright threshold must be above the dark threshold."
     }
   },
   "entity": {
@@ -138,6 +146,28 @@
           "capteur_fige": "Sensor stuck",
           "active": "Active"
         }
+      },
+      "luminosite_adaptative_lux_filtre": {
+        "name": "Filtered illuminance"
+      },
+      "luminosite_adaptative_ambiance": {
+        "name": "Ambience",
+        "state": {
+          "sombre": "Dark",
+          "intermediaire": "Intermediate",
+          "claire": "Bright"
+        },
+        "state_attributes": {
+          "depuis": {
+            "name": "Since"
+          },
+          "seuil_sombre": {
+            "name": "Dark threshold"
+          },
+          "seuil_claire": {
+            "name": "Bright threshold"
+          }
+        }
       }
     },
     "event": {
@@ -164,6 +194,11 @@
     "switch": {
       "luminosite_adaptative": {
         "name": "Adaptive brightness"
+      }
+    },
+    "number": {
+      "luminosite_adaptative_decalage": {
+        "name": "Adaptive brightness offset"
       }
     }
   },
@@ -195,6 +230,10 @@
     "capteur_fige": {
       "title": "The light sensor no longer reports",
       "description": "{capteur} has sent no reading since {depuis}, much longer than usual, while the TV is on. Flat battery, or device unreachable (Zigbee network, Wi-Fi)? Adaptive brightness keeps the current brightness until the next reading."
+    },
+    "capteur_fige_secours": {
+      "title": "The light sensor no longer reports (the backup sensor took over)",
+      "description": "{capteur} has not sent any reading since {depuis}, far longer than usual, while the TV is on. The backup sensor {secours} took over: adaptive brightness keeps working, with a sensor that is often less well placed. Flat battery, or unreachable device (Zigbee network, Wi-Fi)?"
     }
   },
   "services": {

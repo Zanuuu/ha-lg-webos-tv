@@ -6,7 +6,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_CAPTEUR_LUX, CONF_CLE_CLIENT
+from .const import CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS, CONF_CLE_CLIENT
 from .entite import descriptions
 
 A_MASQUER = {CONF_HOST, CONF_CLE_CLIENT}
@@ -30,7 +30,15 @@ def _luminosite_adaptative(fonction) -> dict[str, Any] | None:
     return {
         "etat": details["etat"],
         "options": {cle: valeur for cle, valeur in fonction.options.items()
-                    if cle != CONF_CAPTEUR_LUX},
+                    if cle not in (CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS)},
+        "decalage": details["decalage"],
+        "capteur_actif": details["capteur_actif"],
+        "ambiance": details["ambiance"],
+        "seuils_ambiance": details["seuils_ambiance"],
+        # Rapport appris et état du secours, sans son identifiant.
+        "secours": (None if details["secours"] is None
+                    else {cle: valeur for cle, valeur in details["secours"].items()
+                          if cle not in ("lux", "derniere_mesure")}),
         "profil": details["profil"],
         "constantes": details["constantes"],
         "parametres_rampe": details["parametres_rampe"],

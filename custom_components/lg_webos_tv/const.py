@@ -27,6 +27,9 @@ APPAIRAGE_DELAI_S = 130
 # Luminosité adaptative : options de l'entrée et valeurs par défaut (celles
 # de l'ancien blueprint).
 CONF_CAPTEUR_LUX = "capteur_lux"
+# Capteur de secours facultatif : sert quand le principal est indisponible ou
+# figé, une fois leur facteur relatif appris (secours.py).
+CONF_CAPTEUR_SECOURS = "capteur_secours"
 CONF_LUX_MIN = "lux_min"
 CONF_LUX_MAX = "lux_max"
 CONF_LUMINOSITE_MIN = "luminosite_min"
@@ -71,6 +74,14 @@ OPTIONS_AVANCEES = (CONF_ECART_MINIMAL, CONF_LISSAGE_MONTEE, CONF_LISSAGE_DESCEN
 # minimal ne sert plus qu'à ignorer les dérives d'un point.
 ECART_MINIMAL_DEFAUT = 2
 ECART_MINIMAL_ANCIEN_DEFAUT = 3
+# Seuils de l'entité « Ambiance » (lx), facultatifs : absents, ce sont les
+# tiers de la courbe, qui suivent ses retouches (ambiance.py).
+CONF_AMBIANCE_SOMBRE = "ambiance_sombre"
+CONF_AMBIANCE_CLAIRE = "ambiance_claire"
+OPTIONS_AMBIANCE = (CONF_AMBIANCE_SOMBRE, CONF_AMBIANCE_CLAIRE)
+# Décalage pilotable de la luminosité adaptative (entité number), ajouté à la
+# cible de la courbe.
+DECALAGE_MIN, DECALAGE_MAX = -30, 30
 # Option groupée des modes HDR et Dolby Vision (hdr*, dolbyHdr*) : leurs
 # libellés français ne figurent pas dans l'arbre des menus.
 MODES_HDR = "hdr"

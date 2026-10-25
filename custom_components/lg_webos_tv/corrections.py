@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS corrections (
     cible INTEGER NOT NULL,
     mode_image TEXT,
     origine TEXT,
-    ecartee INTEGER NOT NULL DEFAULT 0
+    ecartee INTEGER NOT NULL DEFAULT 0,
+    decalage INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_corrections_capteur ON corrections(capteur, horodatage);
 """
@@ -40,6 +41,11 @@ class CorrectionsLuminosite:
         self.chemin.parent.mkdir(parents=True, exist_ok=True)
         with self._connexion() as co:
             co.executescript(_SCHEMA)
+            # Base de la 2.9.0 : le décalage pilotable n'existait pas (0).
+            colonnes = {ligne["name"] for ligne in co.execute("PRAGMA table_info(corrections)")}
+            if "decalage" not in colonnes:
+                co.execute("ALTER TABLE corrections"
+                           " ADD COLUMN decalage INTEGER NOT NULL DEFAULT 0")
 
     def _connexion(self) -> sqlite3.Connection:
         co = sqlite3.connect(self.chemin)
@@ -50,9 +56,9 @@ class CorrectionsLuminosite:
         with self._connexion() as co:
             return co.execute(
                 "INSERT INTO corrections (horodatage, capteur, lux, valeur, cible,"
-                " mode_image, origine, ecartee) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                " mode_image, origine, ecartee, decalage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (c.horodatage, capteur, c.lux, c.valeur, c.cible, c.mode_image, c.origine,
-                 int(c.ecartee))).lastrowid
+                 int(c.ecartee), c.decalage)).lastrowid
 
     async def ajouter(self, capteur: str, correction: Correction) -> int:
         return await asyncio.to_thread(self._ajouter_sync, capteur, correction)
@@ -65,7 +71,8 @@ class CorrectionsLuminosite:
         return [Correction(horodatage=ligne["horodatage"], lux=ligne["lux"],
                            valeur=ligne["valeur"], cible=ligne["cible"],
                            mode_image=ligne["mode_image"], origine=ligne["origine"],
-                           id=ligne["id"], ecartee=bool(ligne["ecartee"])) for ligne in lignes]
+                           id=ligne["id"], ecartee=bool(ligne["ecartee"]),
+                           decalage=ligne["decalage"]) for ligne in lignes]
 
     async def charger(self, capteur: str) -> list[Correction]:
         return await asyncio.to_thread(self._charger_sync, capteur)

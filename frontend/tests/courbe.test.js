@@ -9,7 +9,7 @@ const vecteurs = JSON.parse(readFileSync(new URL('../../tests/vecteurs_courbe.js
 
 for (const cas of vecteurs.cibles) {
   test(`cible : ${cas.nom}`, () => {
-    assert.equal(calculerCible(cas.lux, cas.options), cas.cible)
+    assert.equal(calculerCible(cas.lux, cas.options, cas.decalage ?? 0), cas.cible)
   })
 }
 

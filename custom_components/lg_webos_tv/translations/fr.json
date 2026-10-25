@@ -53,7 +53,8 @@
           "luminosite_max": "Luminosité maximale",
           "pause": "Pause après un réglage manuel",
           "reprise_sur_changement": "Reprendre quand l'éclairage change nettement",
-          "modes_exclus": "Modes d'image laissés de côté"
+          "modes_exclus": "Modes d'image laissés de côté",
+          "capteur_secours": "Capteur de secours (facultatif)"
         },
         "data_description": {
           "capteur_lux": "Laisser vide pour désactiver la fonction et retirer ses entités.",
@@ -64,7 +65,8 @@
           "lux_max": "Au-dessus, la luminosité maximale s'applique.",
           "pause": "La pause prend fin aussi au prochain allumage du téléviseur, ou avec le bouton « Reprendre ». Une valeur gardée 10 minutes est retenue comme correction : le panneau propose de retoucher la courbe quand plusieurs vont dans le même sens.",
           "reprise_sur_changement": "Fin de la pause quand la lumière de la pièce double ou diminue de moitié depuis le réglage (lampe allumée ou éteinte, tombée de la nuit). Sans effet sur une pause demandée depuis le panneau.",
-          "modes_exclus": "Modes où la luminosité n'est jamais modifiée (modes calibrés)."
+          "modes_exclus": "Modes où la luminosité n'est jamais modifiée (modes calibrés).",
+          "capteur_secours": "Prend le relais quand le capteur principal est indisponible ou figé, une fois appris le rapport habituel entre les deux (une demi-heure de mesures communes dans une lumière stable). Un capteur dont le rapport varie trop, à l'extérieur ou près d'une fenêtre, n'est pas utilisé."
         },
         "sections": {
           "avance": {
@@ -79,7 +81,9 @@
               "confirmation_saut_s": "Confirmation des sauts",
               "gel_ecriture_s": "Pause de mesure après écriture",
               "rampe_pas": "Taille des pas",
-              "rampe_debit": "Vitesse de la transition"
+              "rampe_debit": "Vitesse de la transition",
+              "ambiance_sombre": "Ambiance sombre en dessous de",
+              "ambiance_claire": "Ambiance claire au-delà de"
             },
             "data_description": {
               "ecart_minimal": "Changement de luminosité ignoré s'il est plus petit (2 par défaut).",
@@ -90,7 +94,9 @@
               "confirmation_saut_s": "Une mesure plus de 4 fois plus forte ou plus faible attend ce délai, ou une deuxième mesure, avant d'être prise en compte (0 : aucune attente).",
               "gel_ecriture_s": "Pendant une transition et ce délai après, les mesures sont mises de côté : le capteur peut voir l'écran changer.",
               "rampe_pas": "Points de luminosité par écriture pendant une transition (1 par défaut).",
-              "rampe_debit": "Points de luminosité par seconde pendant une transition (4 par défaut : de 40 à 100 en 15 s)."
+              "rampe_debit": "Points de luminosité par seconde pendant une transition (4 par défaut : de 40 à 100 en 15 s).",
+              "ambiance_sombre": "Seuil de l'entité « Ambiance ». Vide : premier tiers de la courbe, qui suit ses retouches.",
+              "ambiance_claire": "Seuil de l'entité « Ambiance ». Vide : dernier tiers de la courbe, qui suit ses retouches."
             }
           }
         }
@@ -103,7 +109,9 @@
       "mode_inconnu": "Mode d'image inconnu.",
       "emplacement_inconnu": "Emplacement inconnu.",
       "point_intermediaire_incomplet": "Indiquez le lux et la luminosité du point intermédiaire, ou aucun des deux.",
-      "point_intermediaire_hors_courbe": "Doit tomber entre la pièce sombre et la pièce lumineuse, et entre les luminosités minimale et maximale."
+      "point_intermediaire_hors_courbe": "Doit tomber entre la pièce sombre et la pièce lumineuse, et entre les luminosités minimale et maximale.",
+      "secours_identique": "Doit être différent du capteur principal.",
+      "ambiance_seuils_croises": "Le seuil de l'ambiance claire doit dépasser celui de l'ambiance sombre."
     }
   },
   "entity": {
@@ -138,6 +146,28 @@
           "capteur_fige": "Capteur figé",
           "active": "Active"
         }
+      },
+      "luminosite_adaptative_lux_filtre": {
+        "name": "Lux filtré"
+      },
+      "luminosite_adaptative_ambiance": {
+        "name": "Ambiance",
+        "state": {
+          "sombre": "Sombre",
+          "intermediaire": "Intermédiaire",
+          "claire": "Claire"
+        },
+        "state_attributes": {
+          "depuis": {
+            "name": "Depuis"
+          },
+          "seuil_sombre": {
+            "name": "Seuil sombre"
+          },
+          "seuil_claire": {
+            "name": "Seuil claire"
+          }
+        }
       }
     },
     "event": {
@@ -164,6 +194,11 @@
     "switch": {
       "luminosite_adaptative": {
         "name": "Luminosité adaptative"
+      }
+    },
+    "number": {
+      "luminosite_adaptative_decalage": {
+        "name": "Décalage de la luminosité adaptative"
       }
     }
   },
@@ -195,6 +230,10 @@
     "capteur_fige": {
       "title": "Le capteur de luminosité ne donne plus de mesure",
       "description": "{capteur} n'a envoyé aucune mesure depuis le {depuis}, bien plus longtemps que d'habitude, alors que le téléviseur est allumé. Pile vide, ou appareil injoignable (réseau Zigbee, Wi-Fi) ? La luminosité adaptative garde la luminosité actuelle jusqu'à la prochaine mesure."
+    },
+    "capteur_fige_secours": {
+      "title": "Le capteur de luminosité ne donne plus de mesure (le secours a pris le relais)",
+      "description": "{capteur} n'a envoyé aucune mesure depuis le {depuis}, bien plus longtemps que d'habitude, alors que le téléviseur est allumé. Le capteur de secours {secours} a pris le relais : la luminosité adaptative continue, avec un capteur souvent moins bien placé. Pile vide, ou appareil injoignable (réseau Zigbee, Wi-Fi) ?"
     }
   },
   "services": {

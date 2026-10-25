@@ -95,7 +95,7 @@ Méthode »).
 | Interrupteur (`switch`) | Protection des yeux, Compatibilité eARC, SIMPLINK | |
 | Capteur (`sensor`) | Son — Mode Sélection, Pays | réglages en lecture seule |
 | Bouton (`button`) | Appliquer le preset Soirée | un par preset |
-| Luminosité adaptative | Luminosité adaptative (`switch`), État de la luminosité adaptative (`sensor`), Reprendre la luminosité adaptative (`button`) | si un capteur de lux est configuré |
+| Luminosité adaptative | Luminosité adaptative (`switch`), État de la luminosité adaptative (`sensor`), Reprendre la luminosité adaptative (`button`), Décalage de la luminosité adaptative (`number`, configuration), Lux filtré et Ambiance (`sensor`) | si un capteur de lux est configuré |
 | Événement (`event`) | Réglage modifié sur le téléviseur | `manuel` ou `autre_application` |
 | Diagnostic | Connexion, Écriture des réglages impossible, Voie d'écriture | |
 
@@ -152,7 +152,7 @@ changement de mode ne le déclenchent pas.
 
 Depuis la page **Luminosité adaptative** du panneau, ou Paramètres →
 Appareils et services → LG webOS TV → **Configurer** : choisir un capteur
-de luminosité ambiante (lux) active la fonction et crée ses trois entités ;
+de luminosité ambiante (lux) active la fonction et crée ses six entités ;
 effacer le capteur la retire (l'intégration est alors rechargée).
 
 ### Mise en route guidée
@@ -260,12 +260,116 @@ depuis le démarrage de Home Assistant.
   fonction (`active`, `pause`, `mise_en_route`, `mode_exclu`,
   `conflit_economie_energie`,
   `capteur_indisponible`, `capteur_fige`…), avec les attributs `lux`,
-  `lux_filtre`, `cible`, `fin_pause`, `cause_pause` (origine du réglage qui
-  l'a mise en pause), `conflit`, `rampe` (départ de la transition en
-  cours), `profil`, `emplacement` et `derniere_erreur`. Chaque transition
+  `lux_filtre`, `cible` (décalage compris), `fin_pause`, `cause_pause`
+  (origine du réglage qui l'a mise en pause), `conflit`, `rampe` (départ
+  de la transition en cours), `profil`, `emplacement`, `derniere_erreur`,
+  `decalage` et `capteur_actif` (`principal` ou `secours`). Chaque transition
   apparaît **une seule fois** dans l'historique du panneau (origine
   « Luminosité adaptative », de la valeur de départ à celle d'arrivée), et
   son retour arrière restaure la valeur de départ.
+
+### Décalage pilotable
+
+L'entité **Décalage de la luminosité adaptative** (`number`, de −30 à +30,
+dans la catégorie configuration) s'ajoute à la luminosité de la courbe ; le
+résultat est borné à 0–100 et peut dépasser les luminosités minimale et
+maximale de la courbe. Vos automatisations la règlent selon l'heure, la
+présence ou l'application, sans que la fonction ait à connaître ces
+contextes ; le curseur « Décalage » de la page fait de même. Un changement
+est appliqué aussitôt, en douceur, et noté au journal ; il ne met jamais la
+fonction en pause, et pendant une pause il s'appliquera à la reprise. La
+valeur est conservée au redémarrage.
+
+```yaml
+# Un peu moins lumineux le soir.
+triggers:
+  - trigger: time
+    at: "21:30:00"
+actions:
+  - action: number.set_value
+    target:
+      entity_id: number.lg_webos_tv_decalage_de_la_luminosite_adaptative
+    data:
+      value: -10
+```
+
+Les corrections et le point d'ancrage tiennent compte du décalage du
+moment : avec −10, un réglage à 53 là où la fonction donnait 50 compte
+pour +3 sur la courbe, pas pour −7.
+
+### Capteur de secours
+
+Un **capteur de secours** facultatif (Configurer, page du panneau ou mise
+en route) prend le relais quand le capteur principal est indisponible ou
+figé. Les deux capteurs ne mesurent pas le même lux : la fonction apprend
+leur **rapport habituel** quand les deux publient (une mesure commune par
+minute, lumière stable, au moins 2 lx de chaque côté, médiane des 1 000
+dernières) et convertit les mesures du secours pendant le relais, sans
+saut de luminosité. Le secours ne sert qu'une fois ce rapport appris
+(30 mesures communes, une demi-heure environ) et s'il est **stable** : un
+capteur extérieur ou près d'une fenêtre, dont le rapport à la pièce change
+avec l'heure, n'est pas utilisé. Tant qu'il ne peut pas servir, la
+fonction garde la luminosité, comme sans secours. La page affiche le
+rapport habituel (« le secours mesure 1,7 fois moins que le principal ») ;
+la section Santé signale un apprentissage en cours, un rapport instable,
+un capteur à 0 lx quand l'autre dépasse 20 lx, ou un secours lui-même
+figé. La bascule et le retour sont notés au journal ; un principal figé
+garde son alerte dans Réparations, avec la mention du relais.
+
+Pendant le relais, les statistiques, la mesure de l'effet de l'écran et
+les corrections restent celles du capteur principal : aucune correction
+n'est retenue, et seul le temps de fonctionnement continue d'être compté.
+
+### Lux filtré et ambiance
+
+Deux capteurs servent vos propres automatisations, disponibles téléviseur
+éteint, fonction en pause ou désactivée :
+
+- **Lux filtré** (`lx`) : la mesure lissée et confirmée que suit la
+  fonction (capteur de secours compris, converti) ;
+- **Ambiance** : `sombre`, `intermediaire` ou `claire`. Les seuils sont les
+  tiers de la courbe, sur l'échelle logarithmique (5–300 lx : 19,6 et
+  76,6 lx), et suivent ses retouches ; vous pouvez les figer dans les
+  réglages avancés. Une ambiance ne change qu'au-delà d'une marge de 25 %
+  autour du seuil, et une fois la nouvelle tenue **10 minutes**. Les
+  attributs `depuis`, `seuil_sombre` et `seuil_claire` la précisent ;
+  l'ambiance est conservée au redémarrage.
+
+Avec l'action `lg_webos_tv.regler` et sa garde de mode, une automatisation
+change un autre réglage selon l'ambiance (identifiants d'entité à adapter
+à votre installation) :
+
+```yaml
+# Luminosité maximale activée en pièce claire, en mode Standard seulement.
+triggers:
+  - trigger: state
+    entity_id: sensor.lg_webos_tv_ambiance
+    not_from: [unavailable, unknown]
+actions:
+  - action: lg_webos_tv.regler
+    data:
+      entity_id: select.lg_webos_tv_luminosite_maximale
+      valeur: "{{ 'Activé' if trigger.to_state.state == 'claire' else 'Désactivé' }}"
+      mode_image: normal
+```
+
+```yaml
+# Contraste dynamique automatique au plus bas en plein jour, en mode Vif.
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.lg_webos_tv_lux_filtre
+    above: 1000
+    for: "00:10:00"
+actions:
+  - action: lg_webos_tv.regler
+    data:
+      entity_id: select.lg_webos_tv_contraste_dynamique_automatique
+      valeur: low
+      mode_image: vivid
+```
+
+Pas d'exemple pour le gamma : la correspondance entre les valeurs de l'API
+et les libellés du menu n'est pas encore établie.
 
 ### Corrections et suggestions
 
@@ -315,6 +419,7 @@ certains contrôles restent « en observation » quelques jours.
 | Corrections fréquentes | au moins 7 reprises en main en 7 jours | information (ambiance et correction moyenne) |
 | Écritures refusées | au moins 3 non confirmées, 10 % des transitions | information |
 | Pièces différentes | capteur et téléviseur rangés dans deux pièces de Home Assistant | information |
+| Capteur de secours | apprentissage du rapport, rapport instable ou incohérent, secours figé ou indisponible, relais en cours | information |
 
 Seuls le conflit avec l'économie d'énergie et le capteur figé ouvrent une
 alerte dans Réparations. Les statistiques, conservées 30 jours, se

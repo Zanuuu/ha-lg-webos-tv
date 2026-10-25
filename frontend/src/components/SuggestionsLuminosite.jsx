@@ -33,7 +33,7 @@ function dateCourte(iso) {
 
 // Suggestions de courbe tirées des corrections retenues, et ces corrections
 // (étude, § 3.8 et 4.7) : jamais appliquées sans l'accord de l'utilisateur.
-// `apercu` : plage dont la courbe proposée est tracée en pointillé.
+// `apercu` : plage dont la courbe proposée est tracée en tirets.
 export default function SuggestionsLuminosite({
   index, donnees, options, ancrages, apercu, bloque, lectureSeule, onApercu, onAppliquee,
 }) {

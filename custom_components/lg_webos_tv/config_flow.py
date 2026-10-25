@@ -15,6 +15,7 @@ from homeassistant.config_entries import (SOURCE_REAUTH, ConfigEntry,
 from homeassistant.const import CONF_HOST
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.selector import (BooleanSelector, EntitySelector,
                                             EntitySelectorConfig,
                                             NumberSelector,
@@ -25,7 +26,9 @@ from homeassistant.helpers.selector import (BooleanSelector, EntitySelector,
 from homeassistant.helpers.service_info.ssdp import (ATTR_UPNP_FRIENDLY_NAME,
                                                      SsdpServiceInfo)
 
-from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_CONFIRMATION_SAUT,
+from .const import (CONF_AMBIANCE_CLAIRE, CONF_AMBIANCE_SOMBRE,
+                    CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS, CONF_CLE_CLIENT,
+                    CONF_CONFIRMATION_SAUT,
                     CONF_ECART_MINIMAL, CONF_EMPLACEMENT, CONF_GEL_ECRITURE,
                     CONF_HYSTERESIS_DESCENTE, CONF_HYSTERESIS_MONTEE,
                     CONF_LISSAGE_DESCENTE, CONF_LISSAGE_MONTEE,
@@ -33,7 +36,7 @@ from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_CONFIRMATION_SAUT,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
                     CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
                     CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT, DOMAIN,
-                    EMPLACEMENTS, OPTIONS_AVANCEES,
+                    EMPLACEMENTS, OPTIONS_AMBIANCE, OPTIONS_AVANCEES,
                     OPTIONS_LUMINOSITE_DEFAUT)
 from .courbe import conserver_ancrages
 from .luminosite_adaptative import BORNES, modes_proposes, valider_options
@@ -41,7 +44,8 @@ from .televiseur import AppairageEchoue, appairer
 
 TITRE_DEFAUT = "LG webOS TV"
 # Section repliée du formulaire : écart minimal, constantes du signal (qui
-# suivent sinon le profil du capteur et son emplacement) et rampe.
+# suivent sinon le profil du capteur et son emplacement), rampe et seuils de
+# l'ambiance (sinon les tiers de la courbe).
 SECTION_AVANCEE = "avance"
 # Point intermédiaire de la courbe : deux champs du formulaire, une seule
 # option `point_intermediaire` ([lux, luminosité]) ; vides tous deux, pas de
@@ -225,10 +229,17 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
             vol.Optional(CONF_GEL_ECRITURE): _nombre(CONF_GEL_ECRITURE, "s"),
             vol.Optional(CONF_RAMPE_PAS): _nombre(CONF_RAMPE_PAS),
             vol.Optional(CONF_RAMPE_DEBIT): _nombre(CONF_RAMPE_DEBIT, "points/s"),
+            vol.Optional(CONF_AMBIANCE_SOMBRE): _nombre(CONF_AMBIANCE_SOMBRE, "lx", pas=0.1),
+            vol.Optional(CONF_AMBIANCE_CLAIRE): _nombre(CONF_AMBIANCE_CLAIRE, "lx", pas=0.1),
         })
+        # « Lux filtré » de la fonction elle-même : pas un capteur à choisir.
+        propres = [entite.entity_id for entite in er.async_entries_for_config_entry(
+            er.async_get(self.hass), self.config_entry.entry_id) if entite.domain == "sensor"]
+        capteurs = EntitySelectorConfig(domain="sensor", device_class="illuminance",
+                                        exclude_entities=propres)
         schema = vol.Schema({
-            vol.Optional(CONF_CAPTEUR_LUX): EntitySelector(EntitySelectorConfig(
-                domain="sensor", device_class="illuminance")),
+            vol.Optional(CONF_CAPTEUR_LUX): EntitySelector(capteurs),
+            vol.Optional(CONF_CAPTEUR_SECOURS): EntitySelector(capteurs),
             vol.Required(CONF_EMPLACEMENT): SelectSelector(SelectSelectorConfig(
                 options=EMPLACEMENTS, mode=SelectSelectorMode.DROPDOWN,
                 translation_key=CONF_EMPLACEMENT)),
@@ -252,8 +263,8 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
             vol.Required(SECTION_AVANCEE): section(avance, {"collapsed": True}),
         })
         valeurs = {**OPTIONS_LUMINOSITE_DEFAUT, **self.config_entry.options, **(saisie or {})}
-        valeurs[SECTION_AVANCEE] = {cle: valeurs.pop(cle) for cle in OPTIONS_AVANCEES
-                                    if cle in valeurs}
+        valeurs[SECTION_AVANCEE] = {cle: valeurs.pop(cle) for cle in
+                                    (*OPTIONS_AVANCEES, *OPTIONS_AMBIANCE) if cle in valeurs}
         if (point := valeurs.pop(CONF_POINT_INTERMEDIAIRE, None)) is not None:
             valeurs[LUX_INTERMEDIAIRE], valeurs[LUMINOSITE_INTERMEDIAIRE] = point
         if champs_point is not None:

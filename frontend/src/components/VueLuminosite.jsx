@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as api from '../api.js'
 import { useLuminositeAdaptative } from '../hooks/useLuminositeAdaptative.js'
 import {
-  BORNES, EMPLACEMENTS, FINS_RAMPE, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT,
-  LIBELLES_PROFIL, MODE_HDR, NOMS_PLATEFORME, OPTIONS_AVANCEES, RAISONS_CORRECTION_ECARTEE,
+  BORNES, DECALAGE, EMPLACEMENTS, FINS_RAMPE, heure, LIBELLE_HDR, LIBELLES_AMBIANCE,
+  LIBELLES_CAUSE, LIBELLES_ETAT, LIBELLES_PROFIL, MODE_HDR, NOMS_PLATEFORME, OPTIONS_AMBIANCE,
+  OPTIONS_AVANCEES, RAISONS_CORRECTION_ECARTEE, seuilsCourbe, texteRapportSecours,
   validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
@@ -26,6 +27,8 @@ const RAISONS_REPRISE = {
 }
 
 const formaterLux = (lux) => `${lux.toLocaleString('fr-FR')} lx`
+const signe = (v) => (v > 0 ? `+${v}` : `${v}`)
+const RAISONS_BASCULE = { indisponible: 'capteur principal indisponible', fige: 'capteur principal figé' }
 
 function texteProfil(profil) {
   if (!profil) return null
@@ -38,13 +41,14 @@ function texteProfil(profil) {
   return texte
 }
 
-// Les options avancées vides (null) suivent le profil, un point
-// intermédiaire vide est absent : sans effet sur la comparaison avec les
-// options enregistrées, où ils n'apparaissent pas.
+// Les options avancées et les seuils d'ambiance vides (null) suivent le
+// profil ou la courbe, un point intermédiaire ou un secours vide est absent :
+// sans effet sur la comparaison avec les options enregistrées, où ils
+// n'apparaissent pas.
 function normaliser(options, cles = null) {
   return JSON.stringify(Object.fromEntries(Object.entries(options)
-    .filter(([cle, valeur]) => !((cle in OPTIONS_AVANCEES || cle === 'point_intermediaire')
-      && valeur == null))
+    .filter(([cle, valeur]) => !((cle in OPTIONS_AVANCEES || OPTIONS_AMBIANCE.includes(cle)
+      || cle === 'point_intermediaire' || cle === 'capteur_secours') && valeur == null))
     .filter(([cle]) => cles === null || cles.includes(cle))
     .sort(([a], [b]) => a.localeCompare(b))))
 }
@@ -249,22 +253,56 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
         </div>
         <div>
           <dt>Luminosité calculée</dt>
-          <dd>{etat.cible ?? '—'}</dd>
+          <dd>
+            {etat.cible ?? '—'}
+            {etat.decalage ? (
+              <span className="texte-attenue detail-cible">
+                {' '}courbe {etat.cible_courbe ?? '—'}, décalage {signe(etat.decalage)}
+              </span>
+            ) : null}
+          </dd>
         </div>
         <div>
           <dt>Luminosité du téléviseur</dt>
           <dd>{etat.actuelle ?? '—'}</dd>
         </div>
+        <div>
+          <dt>Ambiance de la pièce</dt>
+          <dd>
+            {etat.ambiance ? LIBELLES_AMBIANCE[etat.ambiance] : '—'}
+            {etat.ambiance && etat.ambiance_depuis && (
+              <span className="texte-attenue detail-cible"> depuis {heure(etat.ambiance_depuis)}</span>
+            )}
+          </dd>
+        </div>
       </dl>
+
+      <DecalageLuminosite decalage={etat.decalage ?? 0} desactive={lectureSeule} />
 
       {etat.rampe && <TransitionLuminosite rampe={etat.rampe} cible={etat.cible}
         actuelle={etat.actuelle} />}
 
-      {etat.lux != null && (
+      {etat.capteur_actif === 'secours' && (
+        <p className="ligne-carte message message-conflit">
+          Le capteur de secours a pris le relais : capteur principal{' '}
+          {etat.lux_principal == null ? 'indisponible' : 'figé'}. Ses mesures sont converties avec
+          leur rapport habituel ; le principal reprendra la main dès sa prochaine mesure.
+        </p>
+      )}
+      {(etat.lux_principal ?? etat.lux) != null && (
         <p className="ligne-carte texte-attenue">
-          Dernière mesure du capteur : {formaterLux(etat.lux)}
+          Dernière mesure du capteur{etat.secours ? ' principal' : ''} :{' '}
+          {formaterLux(etat.lux_principal ?? etat.lux)}
           {etat.derniere_mesure && ` à ${heure(etat.derniere_mesure)}`}.
           {' '}{texteProfil(etat.profil)}
+        </p>
+      )}
+      {etat.secours && (
+        <p className="ligne-carte texte-attenue">
+          Capteur de secours :{' '}
+          {etat.secours.lux != null ? formaterLux(etat.secours.lux) : 'indisponible'}
+          {etat.secours.derniere_mesure && ` à ${heure(etat.secours.derniere_mesure)}`}.
+          {' '}{texteRapportSecours(etat.secours)}
         </p>
       )}
       {etat.mode_image && (
@@ -321,6 +359,87 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
   )
 }
 
+// Au clavier, le décalage part une fois les flèches relâchées un instant :
+// chaque position traversée relancerait une transition et noterait une ligne
+// au journal.
+const ATTENTE_CLAVIER_MS = 700
+
+// Décalage pilotable (R11) : ajouté à la cible de la courbe. Envoyé au
+// relâchement du curseur, pas à chaque position traversée.
+function DecalageLuminosite({ decalage, desactive }) {
+  const [valeur, setValeur] = useState(decalage)
+  const [envoi, setEnvoi] = useState(false)
+  const [erreur, setErreur] = useState(null)
+  const minuterie = useRef(null)
+  useEffect(() => {
+    if (!envoi && minuterie.current === null) setValeur(decalage)
+  }, [decalage, envoi])
+  useEffect(() => () => clearTimeout(minuterie.current), [])
+
+  function differer(nouvelle) {
+    clearTimeout(minuterie.current)
+    minuterie.current = setTimeout(() => {
+      minuterie.current = null
+      regler(nouvelle)
+    }, ATTENTE_CLAVIER_MS)
+  }
+
+  async function regler(nouvelle) {
+    clearTimeout(minuterie.current)
+    minuterie.current = null
+    if (nouvelle === decalage) return
+    setErreur(null)
+    setEnvoi(true)
+    try {
+      await api.reglerDecalage(nouvelle)
+    } catch (err) {
+      setErreur(err.message)
+      setValeur(decalage)
+    } finally {
+      setEnvoi(false)
+    }
+  }
+
+  const [bas, haut] = DECALAGE
+  return (
+    <div className="ligne-carte decalage-luminosite">
+      <label className="champ-decalage">
+        <span>Décalage</span>
+        <span className="controle-curseur">
+          <input
+            type="range"
+            min={bas}
+            max={haut}
+            step="1"
+            value={valeur}
+            disabled={desactive}
+            aria-valuetext={signe(valeur)}
+            onChange={(e) => setValeur(e.target.valueAsNumber)}
+            onPointerUp={(e) => regler(e.currentTarget.valueAsNumber)}
+            onKeyUp={(e) => differer(e.currentTarget.valueAsNumber)}
+            onBlur={(e) => regler(e.currentTarget.valueAsNumber)}
+          />
+          <output className="valeur-curseur valeur-decalage">{signe(valeur)}</output>
+        </span>
+      </label>
+      <button type="button" className="bouton-secondaire" disabled={desactive || envoi
+        || decalage === 0} onClick={() => {
+        setValeur(0)
+        regler(0)
+      }}>
+        Remettre à 0
+      </button>
+      <p className="texte-attenue">
+        Ajouté à la luminosité calculée (de {bas} à +{haut}, résultat borné à 0–100). Vos
+        automatisations peuvent régler l'entité « Décalage de la luminosité adaptative » selon
+        l'heure, la présence ou l'application ; le changer ne met jamais la fonction en pause, et
+        pendant une pause il s'appliquera à la reprise.
+      </p>
+      {erreur && <p className="erreur-reglage" role="alert">{erreur}</p>}
+    </div>
+  )
+}
+
 // Limites d'éclairage qui lèveront la pause (reprise.bornes_reprise) ; l'une
 // manque quand la courbe est plate de ce côté.
 function texteRepriseLux(limites) {
@@ -358,7 +477,7 @@ function ReglagesLuminosite({
 }) {
   const { options, capteurs, modes_proposes: modes } = configuration
   const [brouillon, setBrouillon] = useState(options)
-  // Plage de la suggestion dont la courbe est tracée en pointillé.
+  // Plage de la suggestion dont la courbe est tracée en tirets.
   const [apercu, setApercu] = useState(null)
   const [envoi, setEnvoi] = useState(false)
   const [message, setMessage] = useState(null)
@@ -461,6 +580,33 @@ function ReglagesLuminosite({
     )
   }
 
+  // Seuil de l'ambiance : vide, il suit la courbe (affiché en indication).
+  function champSeuil(cle, libelle, indice) {
+    const [bas, haut] = BORNES[cle]
+    const valeur = brouillon[cle]
+    const courbe = seuilsCourbe(brouillon)[indice]
+    return (
+      <label key={cle} className="champ-luminosite">
+        <span>{libelle}</span>
+        <span className="saisie-unite">
+          <input
+            type="number"
+            min={bas}
+            max={haut}
+            step="0.1"
+            value={valeur == null || Number.isNaN(valeur) ? '' : valeur}
+            placeholder={courbe != null && Number.isFinite(courbe)
+              ? `courbe : ${(Math.round(courbe * 10) / 10).toLocaleString('fr-FR')}` : 'courbe'}
+            aria-invalid={erreurs[cle] ? true : undefined}
+            onChange={(e) => changer({ [cle]: e.target.value === '' ? null : e.target.valueAsNumber })}
+          />
+          <span className="texte-attenue">lx</span>
+        </span>
+        {erreurs[cle] && <span className="erreur-reglage">{erreurs[cle]}</span>}
+      </label>
+    )
+  }
+
   function champAvance(cle) {
     const { libelle, unite, auto: valeurAuto } = OPTIONS_AVANCEES[cle]
     const [bas, haut] = BORNES[cle]
@@ -489,7 +635,11 @@ function ReglagesLuminosite({
 
   const emplacement = EMPLACEMENTS[brouillon.emplacement_capteur] || EMPLACEMENTS.inconnu
   const capteurConnu = capteurs.some((c) => c.entity_id === brouillon.capteur_lux)
+  const secoursConnu = capteurs.some((c) => c.entity_id === brouillon.capteur_secours)
   const retrait = !brouillon.capteur_lux
+  // Rapport appris : seulement pour la paire enregistrée.
+  const rapport = details?.secours && brouillon.capteur_secours === options.capteur_secours
+    && brouillon.capteur_lux === options.capteur_lux ? texteRapportSecours(details.secours) : null
 
   return (
     <form className="carte-luminosite" onSubmit={enregistrer} aria-labelledby="titre-courbe">
@@ -500,6 +650,8 @@ function ReglagesLuminosite({
         ancrages={courbeModifiee ? [] : ancrages}
         corrections={suggestions?.corrections ?? []}
         apercu={suggestionApercue?.options ?? null}
+        decalage={details?.decalage ?? 0}
+        seuils={seuilsAmbiance(valide ? brouillon : options)}
         desactive={envoi}
         onChanger={changer}
       />
@@ -551,6 +703,25 @@ function ReglagesLuminosite({
           </select>
         </label>
         <label className="champ-luminosite champ-large">
+          <span>Capteur de secours (facultatif)</span>
+          <select
+            value={brouillon.capteur_secours ?? ''}
+            aria-invalid={erreurs.capteur_secours ? true : undefined}
+            onChange={(e) => changer({ capteur_secours: e.target.value || null })}
+          >
+            <option value="">Aucun</option>
+            {capteurs.filter((c) => c.entity_id !== brouillon.capteur_lux).map((c) => (
+              <option key={c.entity_id} value={c.entity_id}>{libelleCapteur(c)}</option>
+            ))}
+            {!secoursConnu && brouillon.capteur_secours && (
+              <option value={brouillon.capteur_secours}>{brouillon.capteur_secours} (introuvable)</option>
+            )}
+          </select>
+          {erreurs.capteur_secours && (
+            <span className="erreur-reglage">{erreurs.capteur_secours}</span>
+          )}
+        </label>
+        <label className="champ-luminosite champ-large">
           <span>Emplacement du capteur</span>
           <select
             value={brouillon.emplacement_capteur}
@@ -563,6 +734,14 @@ function ReglagesLuminosite({
           </select>
         </label>
       </div>
+      {brouillon.capteur_secours && (
+        <p className="texte-attenue">
+          Le secours prend le relais quand le capteur principal est indisponible ou figé, une
+          fois appris leur rapport habituel (une demi-heure de mesures communes dans une lumière
+          stable). Un secours dont le rapport varie trop (extérieur, près d'une fenêtre) n'est
+          pas utilisé.{rapport && ` ${rapport}`}
+        </p>
+      )}
       <div className="emplacement-capteur" id="emplacement-capteur">
         <SchemaEmplacement
           choisi={brouillon.emplacement_capteur}
@@ -604,6 +783,15 @@ function ReglagesLuminosite({
         </p>
         <div className="grille-champs">
           {Object.keys(OPTIONS_AVANCEES).map(champAvance)}
+        </div>
+        <p className="texte-attenue">
+          Entité « Ambiance » (pour vos automatisations) : sombre, intermédiaire ou claire, avec
+          une marge de 25 % autour de chaque seuil et 10 minutes avant tout changement. Vides, les
+          seuils sont les tiers de la courbe et suivent ses retouches ; remplis, ils restent fixes.
+        </p>
+        <div className="grille-champs">
+          {champSeuil('ambiance_sombre', 'Ambiance sombre en dessous de', 0)}
+          {champSeuil('ambiance_claire', 'Ambiance claire au-delà de', 1)}
         </div>
       </details>
 
@@ -648,6 +836,12 @@ function ReglagesLuminosite({
       </div>
     </form>
   )
+}
+
+// Seuils de l'ambiance (ambiance.seuils) : figés, sinon tiers de la courbe.
+function seuilsAmbiance(options) {
+  const [sombre, claire] = seuilsCourbe(options)
+  return [options.ambiance_sombre ?? sombre, options.ambiance_claire ?? claire]
 }
 
 const CAUSES_CONFLIT = {
@@ -697,7 +891,26 @@ function texteEvenement(evenement) {
     case 'ancrage':
       return `Point d'ancrage : luminosité ${evenement.luminosite} à `
         + `${formaterLux(evenement.lux)} (courbe calée sur ${evenement.points} point`
-        + `${evenement.points > 1 ? 's' : ''})`
+        + `${evenement.points > 1 ? 's' : ''}`
+        + `${evenement.decalage ? `, décalage ${signe(evenement.decalage)} déduit` : ''})`
+    case 'decalage':
+      return `Décalage ${signe(evenement.ancien)} → ${signe(evenement.nouveau)} `
+        + `(${LIBELLES_CAUSE[evenement.origine]?.replace('réglage ', '') || evenement.origine})`
+    case 'bascule':
+      return `Capteur de secours en relais : ${RAISONS_BASCULE[evenement.raison] || evenement.raison}`
+        + ` (mesures × ${evenement.facteur.toLocaleString('fr-FR')})`
+    case 'retour':
+      return 'Retour au capteur principal'
+    case 'secours_perdu':
+      return 'Capteur de secours perdu à son tour : luminosité gardée'
+    case 'rapport_secours':
+      return evenement.etat === 'stable'
+        ? `Rapport des capteurs appris : le secours peut prendre le relais (× `
+          + `${evenement.facteur.toLocaleString('fr-FR')})`
+        : 'Rapport des capteurs devenu instable : le secours ne prendra plus le relais'
+    case 'ambiance':
+      return `Ambiance ${LIBELLES_AMBIANCE[evenement.valeur]} (${formaterLux(evenement.lux)}), `
+        + `après ${LIBELLES_AMBIANCE[evenement.ancienne]}`
     case 'activation':
       return 'Fonction activée'
     case 'desactivation':

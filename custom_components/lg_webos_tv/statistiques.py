@@ -7,6 +7,11 @@ sont en JSON (sante.StatsJour) : un champ ajouté plus tard ne demande pas de
 migration. Même fichier que l'historique des écritures, donc dans les
 sauvegardes de Home Assistant ; calculées par la fonction elle-même, sans
 dépendre du recorder, que l'utilisateur peut avoir restreint.
+
+Même base, le rapport appris entre le capteur principal et son secours
+(secours.RapportCapteurs, lot 6) : une ligne par paire, pour qu'un
+redémarrage ne fasse pas tout réapprendre, ni le retour à une paire déjà
+vue.
 """
 
 import asyncio
@@ -22,6 +27,13 @@ CREATE TABLE IF NOT EXISTS stats_luminosite (
     donnees TEXT NOT NULL,
     maj REAL NOT NULL,
     PRIMARY KEY (jour, capteur)
+);
+CREATE TABLE IF NOT EXISTS rapport_capteurs (
+    principal TEXT NOT NULL,
+    secours TEXT NOT NULL,
+    echantillons TEXT NOT NULL,
+    maj REAL NOT NULL,
+    PRIMARY KEY (principal, secours)
 );
 """
 
@@ -68,3 +80,30 @@ class StatsLuminosite:
         """Retire les jours antérieurs à `avant`, tous capteurs confondus ;
         renvoie le nombre de lignes retirées."""
         return await asyncio.to_thread(self._purger_sync, avant)
+
+    def _enregistrer_rapport_sync(self, principal: str, secours: str,
+                                  echantillons: list) -> None:
+        with self._connexion() as co:
+            co.execute(
+                "INSERT INTO rapport_capteurs (principal, secours, echantillons, maj)"
+                " VALUES (?, ?, ?, ?)"
+                " ON CONFLICT (principal, secours) DO UPDATE SET"
+                " echantillons = excluded.echantillons, maj = excluded.maj",
+                (principal, secours, json.dumps(echantillons), time.time()))
+
+    async def enregistrer_rapport(self, principal: str, secours: str,
+                                  echantillons: list) -> None:
+        """Échantillons du rapport entre les deux capteurs
+        (secours.RapportCapteurs.en_liste)."""
+        await asyncio.to_thread(self._enregistrer_rapport_sync, principal, secours,
+                                echantillons)
+
+    def _charger_rapport_sync(self, principal: str, secours: str) -> list:
+        with self._connexion() as co:
+            ligne = co.execute(
+                "SELECT echantillons FROM rapport_capteurs WHERE principal = ? AND secours = ?",
+                (principal, secours)).fetchone()
+        return json.loads(ligne[0]) if ligne else []
+
+    async def charger_rapport(self, principal: str, secours: str) -> list:
+        return await asyncio.to_thread(self._charger_rapport_sync, principal, secours)
