@@ -159,11 +159,23 @@ async def _abonner(hass, connection, msg, donnees) -> None:
     async def relayer(evenement: dict) -> None:
         connection.send_message(websocket_api.event_message(msg["id"], evenement))
 
+    @callback
+    def signaler(type_: str) -> None:
+        # Simple signal : le panneau relit la liste par sa commande, avec
+        # les libellés et le tri qu'elle applique déjà.
+        connection.send_message(websocket_api.event_message(msg["id"], {"type": type_}))
+
     tv.abonner(relayer)
+    ne_plus_ecouter = (
+        donnees.historique.ecouter(lambda _ecriture: signaler("historique")),
+        donnees.presets.ecouter(lambda: signaler("presets")),
+    )
 
     @callback
     def desabonner() -> None:
         tv.desabonner(relayer)
+        for retirer in ne_plus_ecouter:
+            retirer()
 
     connection.subscriptions[msg["id"]] = desabonner
     connection.send_result(msg["id"])

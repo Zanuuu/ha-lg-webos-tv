@@ -88,6 +88,31 @@ select {
   flex-shrink: 0;
 }
 
+.entete-titre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bouton-menu-ha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -0.6rem;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--blanc-ecran);
+  cursor: pointer;
+  transition: background var(--duree);
+}
+
+.bouton-menu-ha:hover {
+  background: var(--graphite);
+}
+
 .entete h1 {
   font-size: 1.25rem;
   font-weight: 600;
@@ -125,28 +150,12 @@ select {
   background: var(--etat-ok);
 }
 
-.indicateur-deconnecte .puce {
+.indicateur-deconnecte .puce,
+.indicateur-appairage_requis .puce {
   background: var(--etat-erreur);
 }
 
-.bouton-vue-service {
-  background: var(--graphite);
-  border: none;
-  color: var(--blanc-ecran);
-  border-radius: var(--rayon-allume);
-  padding: 0.5rem 0.95rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background var(--duree), color var(--duree);
-}
-
-.bouton-vue-service:hover,
-.bouton-vue-service:focus-visible {
-  background: var(--allume);
-  color: var(--sur-allume);
-}
-
-/* Mode consultation (aucune voie d'écriture accordée) : bandeau sous l'en-tête. */
+/* TV injoignable, appairage refusé ou mode consultation : bandeau sous l'en-tête. */
 .bandeau-consultation {
   margin: 0 1.5rem 0.75rem;
   padding: 0.65rem 1rem;
@@ -154,6 +163,58 @@ select {
   background: var(--graphite);
   font-size: 0.9rem;
   max-width: 70ch;
+}
+
+/* Chargement ou échec du menu, à la place du corps. */
+.etat-panneau {
+  padding: 2rem 1.5rem;
+  max-width: 60ch;
+}
+
+.etat-panneau p {
+  margin: 0 0 1rem;
+}
+
+/* ---------- Boutons d'action ---------- */
+
+.bouton-principal,
+.bouton-secondaire,
+.bouton-danger-plein {
+  border: none;
+  border-radius: var(--rayon-allume);
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--duree), color var(--duree), box-shadow var(--duree);
+}
+
+.bouton-principal {
+  background: var(--allume);
+  color: var(--sur-allume);
+  font-weight: 600;
+}
+
+.bouton-secondaire {
+  background: none;
+  color: var(--blanc-ecran);
+  box-shadow: inset 0 0 0 1px var(--trait);
+}
+
+.bouton-secondaire:hover {
+  background: var(--graphite-survol);
+}
+
+.bouton-danger-plein {
+  background: var(--etat-erreur);
+  color: var(--noir);
+  font-weight: 600;
+}
+
+.bouton-principal:disabled,
+.bouton-secondaire:disabled,
+.bouton-danger-plein:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 /* ---------- Corps : barre latérale + panneau ---------- */
@@ -202,6 +263,13 @@ select {
   outline-offset: -2px;
 }
 
+/* Sépare les sections du menu TV des vues propres à l'intégration. */
+.separateur-nav {
+  border: none;
+  border-top: 1px solid var(--trait);
+  margin: 0.6rem 1rem;
+}
+
 .panneau-menu {
   flex: 1;
   overflow-y: auto;
@@ -243,12 +311,48 @@ select {
   margin: 0 0.45rem;
 }
 
+.entete-noeud {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0 1rem;
+}
+
+.entete-noeud .titre-noeud {
+  margin: 0;
+}
+
+.bouton-retour {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-left: -0.5rem;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--blanc-ecran);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--duree);
+}
+
+.bouton-retour:hover {
+  background: var(--graphite-survol);
+}
+
 .titre-noeud {
   font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: -0.015em;
   line-height: 1.2;
   margin: 0.35rem 0 1rem;
+}
+
+/* Focus donné par programme après une navigation : utile au lecteur
+   d'écran, sans cadre visible au clic. */
+.titre-noeud:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* ---------- Lignes de réglage ---------- */
@@ -322,6 +426,24 @@ select {
 
 .libelle {
   font-size: 1rem;
+}
+
+/* N'apparaît que si la confirmation tarde (pont par alerte) : une
+   confirmation rapide (≈ 0,15 s) ne fait pas clignoter la ligne. */
+.etat-envoi {
+  margin-left: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--gris-texte);
+  animation: apparition-differee 0s 400ms both;
+}
+
+@keyframes apparition-differee {
+  from {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
 }
 
 .description {
@@ -526,35 +648,6 @@ input[type='text']:hover {
   max-width: 60rem;
 }
 
-.onglets-service {
-  display: flex;
-  gap: 0.35rem;
-  margin: 0.25rem 0 1.5rem;
-}
-
-.onglets-service button {
-  background: none;
-  border: none;
-  border-radius: var(--rayon-allume);
-  color: var(--gris-texte);
-  padding: 0.6rem 1.1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background var(--duree), color var(--duree);
-}
-
-.onglets-service button:hover {
-  background: var(--graphite-survol);
-  color: var(--blanc-ecran);
-}
-
-.onglets-service .onglet-actif,
-.onglets-service .onglet-actif:hover {
-  background: var(--allume);
-  color: var(--sur-allume);
-  font-weight: 600;
-}
-
 .texte-attenue {
   color: var(--gris-texte);
   font-size: 0.9rem;
@@ -695,6 +788,84 @@ table.table-historique {
   color: var(--gris-texte);
 }
 
+.visuellement-masque {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Dialogue de confirmation ---------- */
+
+.confirmation {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--trait);
+  border-radius: 16px;
+  background: var(--graphite);
+  color: var(--blanc-ecran);
+}
+
+.confirmation[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.confirmation::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.confirmation h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Un long aperçu de preset défile ; les boutons restent visibles. */
+.confirmation-corps {
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+.confirmation-corps p {
+  margin: 0 0 0.75rem;
+}
+
+.confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.liste-apercu {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.liste-apercu li {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--trait);
+}
+
+.apercu-valeurs {
+  color: var(--gris-texte);
+  font-variant-numeric: tabular-nums;
+}
+
+.apercu-valeurs strong {
+  color: var(--blanc-ecran);
+  font-weight: 600;
+}
+
 /* Fenêtres étroites : panneau Ingress mobile, colonne HA réduite. */
 @media (max-width: 720px) {
   /* En-tête resserré : la hauteur d'écran est précieuse dans le panneau Ingress mobile. */
@@ -705,11 +876,6 @@ table.table-historique {
 
   .indicateurs {
     gap: 0.35rem 1rem;
-    font-size: 0.8rem;
-  }
-
-  .bouton-vue-service {
-    padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
 
@@ -777,10 +943,65 @@ table.table-historique {
     font-size: 1.6rem;
   }
 
-  table.table-presets,
-  table.table-historique {
+  /* Tableaux en cartes : une ligne par écriture ou preset, chaque valeur
+     précédée de son en-tête de colonne (data-libelle). */
+  .table-presets thead,
+  .table-historique thead {
+    display: none;
+  }
+
+  .table-presets tr,
+  .table-historique tr {
     display: block;
-    overflow-x: auto;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--trait);
+  }
+
+  .table-presets td,
+  .table-historique td {
+    display: block;
+    padding: 0.1rem 0;
+    border: none;
+  }
+
+  .table-presets td[data-libelle]::before,
+  .table-historique td[data-libelle]::before {
+    content: attr(data-libelle) ' : ';
+    color: var(--gris-texte);
+  }
+
+  .table-presets .cellule-titre,
+  .table-historique .cellule-titre {
+    font-weight: 600;
+  }
+
+  .table-presets td.cellule-titre::before,
+  .table-historique td.cellule-titre::before {
+    content: none;
+  }
+
+  .actions-preset,
+  .actions-historique {
+    text-align: left;
+    white-space: normal;
+    padding-top: 0.5rem;
+  }
+
+  .actions-preset button,
+  .actions-historique button {
+    min-height: 44px;
+    margin-bottom: 0.35rem;
+  }
+
+  /* La barre latérale en onglets : séparateur vertical. */
+  .separateur-nav {
+    border-top: none;
+    border-left: 1px solid var(--trait);
+    margin: 0.3rem 0.25rem;
+  }
+
+  .confirmation-actions button {
+    min-height: 44px;
   }
 }
 

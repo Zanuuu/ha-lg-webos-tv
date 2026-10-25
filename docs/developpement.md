@@ -110,7 +110,11 @@ Précédent : 43.21.77 / webOS 11.2 (`docs/incidents-ecriture.md` § 5 à 7,
   Assistant charge `panneau.js` dans une iframe, y crée
   `<lg-webos-tv-panel>` et lui transmet `hass`. Le frontend appelle les
   commandes websocket `lg_webos_tv/…` (réservées aux administrateurs) par
-  `hass.callWS`. Pour le tester hors de Home Assistant : page qui importe
+  `hass.callWS`. Le flux `lg_webos_tv/abonner` envoie l'instantané, les
+  événements du téléviseur, et les signaux `historique` / `presets`
+  (sans contenu : le panneau relit la liste). `narrow` sert au bouton qui
+  ouvre le menu de HA (événement `hass-toggle-menu`, relayé hors de
+  l'iframe par HA). Pour le tester hors de Home Assistant : page qui importe
   `panneau.js`, crée l'élément et lui donne un `hass` simulé (`callWS`,
   `connection.subscribeMessage`, `themes.darkMode`).
 - **Tests et frontend de Home Assistant** : `frontend` et `panel_custom`

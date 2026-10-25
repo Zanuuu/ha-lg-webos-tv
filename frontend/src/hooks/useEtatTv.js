@@ -8,22 +8,34 @@ const INTERVALLE_RAFRAICHISSEMENT_MS = 30000
 
 export function useEtatTv() {
   const [arbre, setArbre] = useState(null)
+  const [erreurArbre, setErreurArbre] = useState(null)
+  const [tentativeArbre, setTentativeArbre] = useState(0)
   const [reglages, setReglages] = useState({})
-  const [connexion, setConnexion] = useState('connexion')
+  // null tant que l'instantané n'est pas arrivé : rien à signaler encore.
+  const [connexion, setConnexion] = useState(null)
   const [modeImage, setModeImage] = useState(null)
   // null tant que le service ne l'a pas vérifié ; false si le téléviseur
   // n'accorde ni l'écriture directe ni le pont par alerte.
   const [ecriturePossible, setEcriturePossible] = useState(null)
+  // Incrémentées quand l'intégration signale un changement de l'historique
+  // ou des presets : les vues concernées relisent leur liste.
+  const [revisions, setRevisions] = useState({ historique: 0, presets: 0 })
 
   useEffect(() => {
     let annule = false
-    recupererArbre().then((a) => {
-      if (!annule) setArbre(a)
-    })
+    setErreurArbre(null)
+    recupererArbre().then(
+      (a) => {
+        if (!annule) setArbre(a)
+      },
+      (err) => {
+        if (!annule) setErreurArbre(err.message)
+      },
+    )
     return () => {
       annule = true
     }
-  }, [])
+  }, [tentativeArbre])
 
   useEffect(() => {
     const fermerCanal = ouvrirCanal({
@@ -45,6 +57,8 @@ export function useEtatTv() {
           if (msg.categorie === 'picture' && 'pictureMode' in msg.reglages) {
             setModeImage(msg.reglages.pictureMode)
           }
+        } else if (msg.type === 'historique' || msg.type === 'presets') {
+          setRevisions((prev) => ({ ...prev, [msg.type]: prev[msg.type] + 1 }))
         }
       },
     })
@@ -74,5 +88,10 @@ export function useEtatTv() {
     return resultat
   }, [])
 
-  return { arbre, reglages, connexion, modeImage, ecriturePossible, ecrire }
+  const rechargerArbre = useCallback(() => setTentativeArbre((n) => n + 1), [])
+
+  return {
+    arbre, erreurArbre, rechargerArbre, reglages, connexion, modeImage, ecriturePossible,
+    revisions, ecrire,
+  }
 }

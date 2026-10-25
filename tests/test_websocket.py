@@ -116,6 +116,34 @@ async def test_abonnement_temps_reel(ws, faux_client, installe):
     assert len(abonnes) == avant
 
 
+async def test_abonnement_signale_historique_et_presets(ws, faux_client, installe):
+    donnees = installe.runtime_data
+    avant = (len(donnees.historique._ecouteurs), len(donnees.presets._ecouteurs))
+    rep = await ws("abonner")
+    await ws.client.receive_json()  # instantané
+
+    await ws.client.send_json({"id": next(ws.compteur), "type": "lg_webos_tv/presets/creer",
+                               "nom": "Soirée", "entrees": [ID_NETTETE]})
+    recus = [await ws.client.receive_json() for _ in range(2)]
+    assert {"type": "presets"} in [r.get("event") for r in recus]
+
+    await ws.client.send_json({"id": next(ws.compteur), "type": "lg_webos_tv/ecrire",
+                               "entree_id": ID_NETTETE, "valeur": 25})
+    evenements = []
+    while True:
+        message = await ws.client.receive_json()
+        if message.get("type") == "result":
+            break
+        evenements.append(message["event"])
+    assert {"type": "historique"} in evenements
+
+    await ws.client.send_json({"id": next(ws.compteur), "type": "unsubscribe_events",
+                               "subscription": rep["id"]})
+    while (await ws.client.receive_json()).get("type") != "result":
+        pass
+    assert (len(donnees.historique._ecouteurs), len(donnees.presets._ecouteurs)) == avant
+
+
 async def test_reserve_aux_administrateurs(hass: HomeAssistant, installe, hass_ws_client,
                                            hass_read_only_access_token):
     client = await hass_ws_client(hass, hass_read_only_access_token)

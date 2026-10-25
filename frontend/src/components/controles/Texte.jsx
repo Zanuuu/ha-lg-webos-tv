@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Texte({ valeur, ecriture, onEcrire }) {
   const [local, setLocal] = useState(valeur ?? '')
+
+  // Une valeur changée sur la TV (ou ailleurs dans HA) remplace la saisie affichée.
+  useEffect(() => {
+    setLocal(valeur ?? '')
+  }, [valeur])
 
   if (valeur === undefined) return <span className="valeur-en-attente">…</span>
 

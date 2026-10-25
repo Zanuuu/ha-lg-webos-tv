@@ -1,13 +1,31 @@
 import LigneReglage from './LigneReglage.jsx'
 
-export default function PanneauMenu({ chemin, reglages, lectureSeule, onEcrire, onEntrer, onRevenir }) {
+export default function PanneauMenu({
+  chemin, reglages, lectureSeule, horsLigne, titreRef, onEcrire, onEntrer, onRevenir,
+}) {
   const noeud = chemin[chemin.length - 1]
+  const parent = chemin.length > 1 ? chemin[chemin.length - 2] : null
 
   return (
-    <section className="panneau-menu">
+    <section className="panneau-menu" aria-labelledby="titre-noeud">
       {/* À la racine d'une section, le fil ne ferait que répéter le titre. */}
-      {chemin.length > 1 && <FilAriane chemin={chemin} onRevenir={onRevenir} />}
-      <h2 className="titre-noeud">{noeud.libelle}</h2>
+      {parent && <FilAriane chemin={chemin} onRevenir={onRevenir} />}
+      <div className="entete-noeud">
+        {parent && (
+          <button
+            type="button"
+            className="bouton-retour"
+            aria-label={`Revenir à ${parent.libelle}`}
+            title="Revenir (Échap)"
+            onClick={() => onRevenir(chemin.length - 2)}
+          >
+            ‹
+          </button>
+        )}
+        <h2 id="titre-noeud" className="titre-noeud" ref={titreRef} tabIndex={-1}>
+          {noeud.libelle}
+        </h2>
+      </div>
       <div className="liste-reglages">
         {(noeud.enfants || []).map((enfant) => (
           <LigneReglage
@@ -15,6 +33,7 @@ export default function PanneauMenu({ chemin, reglages, lectureSeule, onEcrire, 
             entree={enfant}
             reglages={reglages}
             lectureSeule={lectureSeule}
+            horsLigne={horsLigne}
             onEcrire={onEcrire}
             onEntrer={onEntrer}
           />
@@ -26,12 +45,12 @@ export default function PanneauMenu({ chemin, reglages, lectureSeule, onEcrire, 
 
 function FilAriane({ chemin, onRevenir }) {
   return (
-    <div className="fil-ariane">
+    <nav className="fil-ariane" aria-label="Fil d'Ariane">
       {chemin.map((noeud, i) => (
         <span key={noeud.id}>
-          {i > 0 && <span className="separateur-ariane">›</span>}
+          {i > 0 && <span className="separateur-ariane" aria-hidden="true">›</span>}
           {i === chemin.length - 1 ? (
-            <span className="miette-courante">{noeud.libelle}</span>
+            <span className="miette-courante" aria-current="location">{noeud.libelle}</span>
           ) : (
             <button type="button" className="miette" onClick={() => onRevenir(i)}>
               {noeud.libelle}
@@ -39,6 +58,6 @@ function FilAriane({ chemin, onRevenir }) {
           )}
         </span>
       ))}
-    </div>
+    </nav>
   )
 }

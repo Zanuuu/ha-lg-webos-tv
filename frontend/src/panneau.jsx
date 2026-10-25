@@ -2,13 +2,14 @@
 // embed_iframe : HA charge ce module dans une iframe, y crée l'élément
 // <lg-webos-tv-panel> et lui transmet `hass` (puis à chaque changement d'état
 // dans HA), `narrow` et `panel`. L'app est rendue une seule fois : seules les
-// propriétés utiles (connexion websocket, thème) sont relayées ensuite.
+// propriétés utiles (connexion websocket, thème, `narrow`) sont relayées
+// ensuite.
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import cssPolices from '@fontsource-variable/atkinson-hyperlegible-next/index.css?inline'
 import cssApp from './App.css?inline'
 import App from './App.jsx'
-import { definirHass } from './hass.js'
+import { definirEtroit, definirHass } from './hass.js'
 
 function injecterStyles() {
   // Dans l'iframe, le document est le nôtre : feuilles globales, @font-face
@@ -28,6 +29,10 @@ class PanneauLgWebosTv extends HTMLElement {
     if (document.documentElement.dataset.theme !== theme) {
       document.documentElement.dataset.theme = theme
     }
+  }
+
+  set narrow(narrow) {
+    definirEtroit(Boolean(narrow))
   }
 
   connectedCallback() {

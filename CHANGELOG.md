@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.2.0 — 2026-10-25
+
+Panneau :
+
+- **Téléviseur éteint ou injoignable** : bandeau explicite, dernières
+  valeurs connues affichées, contrôles désactivés (ils restaient actifs et
+  chaque écriture échouait).
+- **Écritures** : « Envoi… » quand la confirmation du téléviseur tarde ; en
+  cas d'échec, l'erreur est annoncée et le contrôle revient à la valeur du
+  téléviseur au lieu de garder celle qui a été refusée.
+- **Presets** : aperçu avant application (réglages modifiés avec leur
+  valeur actuelle et la nouvelle, réglages déjà à la bonne valeur,
+  réglages d'un autre mode d'image qui ne seront pas appliqués) ;
+  confirmation avant suppression.
+- **Historique** : valeurs et mode d'image affichés avec les libellés du
+  menu ; liste mise à jour en direct ; « Revenir à cet instant » demande
+  confirmation et indique le nombre de modifications annulées.
+- **Navigation** : Presets et Historique dans la barre latérale du
+  panneau ; bouton retour et touche Échap pour remonter d'un niveau ; sur
+  mobile, bouton pour ouvrir le menu de Home Assistant ; tableaux en
+  cartes sur petit écran.
+- Chargement et échec du chargement du menu affichés (la page restait
+  blanche), accessibilité (navigation, erreurs et envois annoncés).
+
+Intégration : le flux temps réel du panneau signale les changements de
+l'historique et des presets.
+
 ## 2.1.0 — 2026-10-25
 
 - **Luminosité adaptative** intégrée (options de l'intégration) : remplace

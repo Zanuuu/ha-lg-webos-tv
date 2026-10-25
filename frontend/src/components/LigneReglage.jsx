@@ -6,16 +6,24 @@ import Liste from './controles/Liste.jsx'
 import NonPilotable from './controles/NonPilotable.jsx'
 import Texte from './controles/Texte.jsx'
 
-export default function LigneReglage({ entree, reglages, lectureSeule, onEcrire, onEntrer }) {
+export default function LigneReglage({ entree, reglages, lectureSeule, horsLigne, onEcrire, onEntrer }) {
   const [erreur, setErreur] = useState(null)
+  const [envoi, setEnvoi] = useState(false)
+  // Change à chaque échec : le contrôle est recréé et repart de la valeur du
+  // téléviseur au lieu de garder celle qui a été refusée.
+  const [generation, setGeneration] = useState(0)
   const api = entree.api
 
   async function ecrire(valeur) {
     setErreur(null)
+    setEnvoi(true)
     try {
       await onEcrire(entree.id, valeur)
     } catch (e) {
       setErreur(e.message)
+      setGeneration((n) => n + 1)
+    } finally {
+      setEnvoi(false)
     }
   }
 
@@ -23,7 +31,7 @@ export default function LigneReglage({ entree, reglages, lectureSeule, onEcrire,
     return (
       <button type="button" className="ligne-reglage ligne-navigable" onClick={() => onEntrer(entree)}>
         <Libelle entree={entree} />
-        <span className="fleche">›</span>
+        <span className="fleche" aria-hidden="true">›</span>
       </button>
     )
   }
@@ -31,39 +39,47 @@ export default function LigneReglage({ entree, reglages, lectureSeule, onEcrire,
   const valeur = valeurDe(reglages, api)
   const pilotable = estPilotable(api)
   const lisible = estLisible(api)
-  const ecriture = pilotable && !lectureSeule
+  // Le curseur reste manipulable pendant un envoi (l'utilisateur continue de
+  // glisser) ; une liste ou un interrupteur renverrait une valeur périmée.
+  const ecriture = pilotable && !lectureSeule && (!envoi || entree.controle === 'curseur')
+
+  function controle() {
+    if (!lisible) return <NonPilotable />
+    if (valeur === undefined && horsLigne) return <span className="valeur-lecture-seule">—</span>
+    const proprietes = { entree, valeur, ecriture, onEcrire: ecrire }
+    switch (entree.controle) {
+      case 'curseur':
+        return <Curseur key={generation} {...proprietes} />
+      case 'liste':
+        return <Liste key={generation} {...proprietes} />
+      case 'interrupteur':
+        return pilotable
+          ? <Interrupteur key={generation} {...proprietes} />
+          : <span className="valeur-lecture-seule">{String(valeur)}</span>
+      case 'texte':
+        return <Texte key={generation} {...proprietes} />
+      default:
+        return <NonPilotable />
+    }
+  }
 
   return (
     <div className="ligne-reglage">
-      <Libelle entree={entree} />
-      <div className="controle">
-        {(() => {
-          if (!lisible) return <NonPilotable />
-          switch (entree.controle) {
-            case 'curseur':
-              return <Curseur entree={entree} valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
-            case 'liste':
-              return <Liste entree={entree} valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
-            case 'interrupteur':
-              return pilotable
-                ? <Interrupteur valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
-                : <span className="valeur-lecture-seule">{String(valeur)}</span>
-            case 'texte':
-              return <Texte valeur={valeur} ecriture={ecriture} onEcrire={ecrire} />
-            default:
-              return <NonPilotable />
-          }
-        })()}
-      </div>
-      {erreur && <p className="erreur-reglage">{erreur}</p>}
+      <Libelle entree={entree}>
+        {/* Toujours présent : une zone live n'est annoncée que si elle existait déjà. */}
+        <span className="etat-envoi" aria-live="polite">{envoi ? 'Envoi…' : ''}</span>
+      </Libelle>
+      <div className="controle">{controle()}</div>
+      {erreur && <p className="erreur-reglage" role="alert">{erreur}</p>}
     </div>
   )
 }
 
-function Libelle({ entree }) {
+function Libelle({ entree, children }) {
   return (
     <div className="libelle-reglage">
       <span className="libelle">{entree.libelle}</span>
+      {children}
       {entree.description && <p className="description">{entree.description}</p>}
     </div>
   )

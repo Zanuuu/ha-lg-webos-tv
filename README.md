@@ -40,8 +40,9 @@ dans la barre latérale.
   de lumière ambiante, et cède la main à tout réglage manuel.
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
-  régler sur la TV »), presets exportables en JSON, historique avec retour
-  arrière.
+  régler sur la TV »), presets exportables en JSON et appliqués après
+  aperçu des changements, historique avec retour arrière ; reste
+  consultable quand le téléviseur est éteint (dernières valeurs connues).
 
 ## Téléviseurs pris en charge
 
@@ -120,7 +121,7 @@ nombre, un libellé du menu (`Cinéma`) ou une valeur API (`cinema`), on/off.
 
 ### Appliquer un preset
 
-Créer le preset dans le panneau (« Presets & historique »), puis :
+Créer le preset dans le panneau (entrée « Presets » de sa barre latérale), puis :
 
 ```yaml
 action: lg_webos_tv.appliquer_preset
