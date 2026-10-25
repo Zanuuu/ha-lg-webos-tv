@@ -43,7 +43,7 @@ dans la barre latérale.
   régler sur la TV »), recherche d'un réglage (sans tenir compte des
   accents, réglable directement depuis les résultats), état de la
   luminosité adaptative sur la ligne des pixels OLED (avec « Reprendre »
-  pendant une pause), presets exportables en JSON et appliqués après
+  pendant une pause) et page dédiée à la fonction, presets exportables en JSON et appliqués après
   aperçu des changements, historique avec retour arrière ; reste
   consultable quand le téléviseur est éteint (dernières valeurs connues).
 
@@ -147,9 +147,19 @@ changement de mode ne le déclenchent pas.
 
 ## Luminosité adaptative
 
-Paramètres → Appareils et services → LG webOS TV → **Configurer** : choisir
-un capteur de luminosité ambiante (lux) active la fonction et crée ses
-trois entités ; effacer le capteur la retire.
+Depuis la page **Luminosité adaptative** du panneau, ou Paramètres →
+Appareils et services → LG webOS TV → **Configurer** : choisir un capteur
+de luminosité ambiante (lux) active la fonction et crée ses trois entités ;
+effacer le capteur la retire (l'intégration est alors rechargée).
+
+La page du panneau montre l'état en direct (lux mesuré, luminosité
+calculée, luminosité du téléviseur, mode d'image), la **cause d'une pause**
+et son heure de fin, avec « Reprendre » ou « Pause 1 h » ; la **courbe**
+lux → luminosité, dont on déplace les deux points à la souris, au doigt ou
+au clavier ; les autres réglages (capteur, durée de pause, écart minimal,
+modes laissés de côté), appliqués sans recharger l'intégration ; et un
+**journal** des 50 derniers événements (applications, pauses, reprises,
+erreurs), tenu en mémoire depuis le démarrage de Home Assistant.
 
 - Échelle logarithmique, proche de la perception de l'œil, entre une pièce
   sombre (luminosité minimale) et une pièce lumineuse (luminosité
@@ -168,7 +178,8 @@ trois entités ; effacer le capteur la retire.
   côté.
 - L'entité « État de la luminosité adaptative » dit ce que fait la
   fonction (`active`, `pause`, `mode_exclu`, `capteur_indisponible`…), avec
-  les attributs `lux`, `cible`, `fin_pause` et `derniere_erreur`. Ses
+  les attributs `lux`, `cible`, `fin_pause`, `cause_pause` (origine du
+  réglage qui l'a mise en pause) et `derniere_erreur`. Ses
   écritures apparaissent dans l'historique du panneau (origine
   « Luminosité adaptative »), et peuvent y être annulées.
 

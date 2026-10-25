@@ -195,6 +195,7 @@ async def test_pause_conservee_au_redemarrage(hass: HomeAssistant, fonction, fau
     assert await hass.config_entries.async_reload(fonction.entry_id)
     await passer_le_temps(hass)
     assert etat(hass).state == "pause"
+    assert etat(hass).attributes["cause_pause"] == "manuel"
     assert luminosite(faux_client) == 55
 
 
@@ -261,7 +262,8 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     assert abonnement["success"]
     instantane = (await ws.client.receive_json())["event"]
     assert instantane["luminosite_adaptative"] == {
-        "etat": "active", "entree_id": ID_OLED, "cible": 60, "fin_pause": None}
+        "etat": "active", "entree_id": ID_OLED, "cible": 60, "fin_pause": None,
+        "cause_pause": None}
 
     await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
     await hass.async_block_till_done()
@@ -269,6 +271,7 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     assert etats_luminosite(evenements) == ["pause"]
     pause = next(e for e in evenements if e["type"] == "luminosite_adaptative")
     assert pause["fin_pause"] is not None
+    assert pause["cause_pause"]["origine"] == "manuel"
 
     # Nouvelle mesure, même cible : rien à relayer au panneau.
     await regler_lux(hass, 19.5)
@@ -288,6 +291,79 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     assert len(ecouteurs) == avant - 1
 
 
+# ------------------------------------------------------- cause et journal
+
+def types_journal(fonction_entree) -> list[str]:
+    return [e["type"] for e in fonction_entree.runtime_data.luminosite_adaptative.journal]
+
+
+async def test_cause_de_pause_et_journal(hass: HomeAssistant, fonction, faux_client):
+    la = fonction.runtime_data.luminosite_adaptative
+    assert la.journal[-1] | {"horodatage": None} == {
+        "horodatage": None, "type": "application", "lux": 20.0, "cible": 60,
+        "ancienne": 80.0}
+
+    await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    assert la.cause_pause["origine"] == "manuel"
+    assert la.journal[-1]["type"] == "pause" and la.journal[-1]["origine"] == "manuel"
+
+    la.reprendre()
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert la.cause_pause is None
+    assert types_journal(fonction)[-2:] == ["reprise", "application"]
+    assert la.journal[-2]["raison"] == "bouton"
+
+
+async def test_cause_reglage_depuis_home_assistant(hass: HomeAssistant, fonction):
+    await hass.services.async_call("number", "set_value", {
+        "entity_id": entite(hass, "number", ID_OLED), "value": 30}, blocking=True)
+    await hass.async_block_till_done()
+    assert etat(hass).attributes["cause_pause"] == "home_assistant"
+
+
+async def test_pause_manuelle(hass: HomeAssistant, fonction, faux_client):
+    la = fonction.runtime_data.luminosite_adaptative
+    la.mettre_en_pause(60)
+    await regler_lux(hass, 300)
+    assert luminosite(faux_client) == 60
+    assert etat(hass).state == "pause"
+    assert la.cause_pause["origine"] == "pause_manuelle"
+    await passer_le_temps(hass, 61 * 60)
+    assert luminosite(faux_client) == 100
+    assert la.journal[-2]["raison"] == "delai"
+
+
+async def test_desactivation_notee_sans_reprise(hass: HomeAssistant, fonction, faux_client):
+    await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    fonction.runtime_data.luminosite_adaptative.activer(False)
+    assert types_journal(fonction)[-2:] == ["pause", "desactivation"]
+
+
+async def test_journal_plafonne(hass: HomeAssistant, fonction):
+    la = fonction.runtime_data.luminosite_adaptative
+    for _ in range(60):
+        la.mettre_en_pause(10)
+    assert len(la.journal) == 50
+
+
+async def test_reconfiguration_a_chaud(hass: HomeAssistant, fonction, faux_client):
+    la = fonction.runtime_data.luminosite_adaptative
+    la.reconfigurer({**la.options, "luminosite_max": 80})
+    await passer_le_temps(hass)
+    # ln(20/5) / ln(300/5) = 0,339 → 40 + 0,339 × 40 = 53,5
+    assert luminosite(faux_client) == 54
+
+    hass.states.async_set("sensor.bureau_lux", "300", {"device_class": "illuminance"})
+    la.reconfigurer({**la.options, CONF_CAPTEUR_LUX: "sensor.bureau_lux"})
+    await passer_le_temps(hass)
+    assert luminosite(faux_client) == 80
+    # L'ancien capteur n'est plus suivi.
+    await regler_lux(hass, 5)
+    assert luminosite(faux_client) == 80
+
+
 async def test_consultation(hass: HomeAssistant, fonction):
     await fonction.runtime_data.televiseur._changer_ecriture(None)
     await hass.async_block_till_done()
@@ -298,6 +374,100 @@ async def test_capteur_indisponible(hass: HomeAssistant, fonction, faux_client):
     await regler_lux(hass, "unavailable")
     assert etat(hass).state == "capteur_indisponible"
     assert luminosite(faux_client) == 60
+
+
+# ------------------------------------------------------ page du panneau
+
+async def test_page_configuration(hass: HomeAssistant, fonction, ws):
+    hass.states.async_set("sensor.temperature", "21", {"device_class": "temperature"})
+    reponse = await ws("luminosite_adaptative/configuration")
+    resultat = reponse["result"]
+    assert resultat["options"] == {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: LUX}
+    assert resultat["modes_proposes"] == modes_proposes()
+    assert [c["entity_id"] for c in resultat["capteurs"]] == [LUX]
+    assert resultat["capteurs"][0]["valeur"] == "20"
+
+
+async def test_page_configurer_sans_rechargement(hass: HomeAssistant, fonction, faux_client,
+                                                 ws):
+    la = fonction.runtime_data.luminosite_adaptative
+    reponse = await ws("luminosite_adaptative/configurer",
+                       options={"lux_min": 400, "inconnue": 1})
+    assert reponse["error"]["code"] == "invalide"
+    assert "lux_max" in reponse["error"]["message"]
+
+    reponse = await ws("luminosite_adaptative/configurer",
+                       options={"luminosite_max": 80.0, "modes_exclus": []})
+    assert reponse["result"] == {"recharge": False}
+    await passer_le_temps(hass)
+    assert fonction.runtime_data.luminosite_adaptative is la
+    assert fonction.options["luminosite_max"] == 80
+    assert isinstance(fonction.options["luminosite_max"], int)
+    assert "inconnue" not in fonction.options
+    assert luminosite(faux_client) == 54
+
+    reponse = await ws("luminosite_adaptative/configurer",
+                       options={CONF_CAPTEUR_LUX: "sensor.absent"})
+    assert reponse["error"]["code"] == "invalide"
+
+
+async def test_page_retirer_puis_creer_la_fonction(hass: HomeAssistant, fonction, ws):
+    reponse = await ws("luminosite_adaptative/configurer", options={CONF_CAPTEUR_LUX: None})
+    assert reponse["result"] == {"recharge": True}
+    assert fonction.runtime_data.luminosite_adaptative is None
+    assert CONF_CAPTEUR_LUX not in fonction.options
+    assert entite(hass, "switch", "luminosite_adaptative") is None
+    reponse = await ws("luminosite_adaptative/configuration")
+    assert reponse["result"]["options"][CONF_CAPTEUR_LUX] is None
+
+    reponse = await ws("luminosite_adaptative/configurer", options={CONF_CAPTEUR_LUX: LUX})
+    assert reponse["result"] == {"recharge": True}
+    assert fonction.runtime_data.luminosite_adaptative is not None
+    assert entite(hass, "switch", "luminosite_adaptative") is not None
+
+
+async def test_page_activer_et_pause(hass: HomeAssistant, fonction, faux_client, ws):
+    reponse = await ws("luminosite_adaptative/pause", minutes=60)
+    assert reponse["result"]["etat"] == "pause"
+    assert reponse["result"]["cause_pause"]["origine"] == "pause_manuelle"
+    reponse = await ws("luminosite_adaptative/activer", active=False)
+    assert reponse["result"]["etat"] == "desactivee"
+    reponse = await ws("luminosite_adaptative/activer", active=True)
+    assert reponse["result"]["etat"] == "active"
+
+
+async def test_page_suivi(hass: HomeAssistant, fonction, faux_client, ws):
+    abonnement = await ws("luminosite_adaptative/suivre")
+    assert abonnement["success"]
+    instantane = (await ws.client.receive_json())["event"]
+    assert instantane["type"] == "instantane"
+    assert instantane["details"]["lux"] == 20.0
+    assert instantane["details"]["actuelle"] == 60.0
+    assert instantane["details"]["mode_image"] == "vivid"
+    assert [e["type"] for e in instantane["journal"]][-1] == "application"
+
+    # Le lux est suivi même quand la cible ne change pas.
+    await regler_lux(hass, 19.5)
+    evenements, _ = await commande(ws, "lg_webos_tv/reglages")
+    assert [e["details"]["lux"] for e in evenements if e["type"] == "details"] == [19.5]
+
+    await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
+    await hass.async_block_till_done()
+    evenements, _ = await commande(ws, "lg_webos_tv/reglages")
+    assert [e["evenement"]["type"] for e in evenements if e["type"] == "journal"] == ["pause"]
+
+    la = fonction.runtime_data.luminosite_adaptative
+    avant = len(la._ecouteurs), len(la._ecouteurs_journal)
+    await commande(ws, "unsubscribe_events", subscription=abonnement["id"])
+    assert (len(la._ecouteurs), len(la._ecouteurs_journal)) == (avant[0] - 1, avant[1] - 1)
+
+
+@pytest.mark.parametrize("options_entree", [{}])
+async def test_page_sans_fonction(hass: HomeAssistant, installe, ws):
+    reponse = await ws("luminosite_adaptative/configuration")
+    assert reponse["result"]["options"][CONF_CAPTEUR_LUX] is None
+    reponse = await ws("luminosite_adaptative/suivre")
+    assert reponse["error"]["code"] == "non_configuree"
 
 
 # ----------------------------------------------------------------- options

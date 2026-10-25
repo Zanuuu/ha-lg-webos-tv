@@ -20,6 +20,7 @@ téléviseur les attribue tous à notre client). Ici :
 
 import logging
 import math
+from collections import deque
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
@@ -56,6 +57,19 @@ ORIGINES_LOT = ("preset", "annulation")
 DELAI_APPLICATION_S = 1.0
 DELAI_APRES_LOT_S = 3.0
 
+# Journal de la fonction pour le panneau : en mémoire, perdu au redémarrage
+# (diagnostic ; l'historique SQLite garde les écritures).
+TAILLE_JOURNAL = 50
+# Pause demandée depuis le panneau, sans réglage de la luminosité.
+PAUSE_MANUELLE = "pause_manuelle"
+
+# Bornes des options numériques, communes au formulaire des options et au
+# panneau. Le téléviseur n'accepte que des entiers pour la luminosité.
+BORNES = {CONF_LUX_MIN: (1, 1000), CONF_LUX_MAX: (2, 100000),
+          CONF_LUMINOSITE_MIN: (0, 100), CONF_LUMINOSITE_MAX: (0, 100),
+          CONF_ECART_MINIMAL: (1, 20), CONF_PAUSE_MIN: (5, 720)}
+ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_ECART_MINIMAL, CONF_PAUSE_MIN)
+
 # Par ordre de priorité (voir LuminositeAdaptative.etat).
 ETATS = ["desactivee", "televiseur_deconnecte", "consultation", "pause",
          "mode_exclu", "capteur_indisponible", "active"]
@@ -73,6 +87,29 @@ def modes_proposes() -> list[str]:
     d'événements au premier appel."""
     mode = next(d for d in descriptions() if d.entree_id == ID_MODE)
     return [*mode.choix.values(), MODES_HDR]
+
+
+def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, str]]:
+    """Options normalisées (entiers là où le téléviseur les attend) et
+    erreurs par option, en clés de traduction du formulaire."""
+    erreurs = {}
+    for cle, (bas, haut) in BORNES.items():
+        valeur = options.get(cle)
+        if (isinstance(valeur, bool) or not isinstance(valeur, int | float)
+                or not bas <= valeur <= haut):
+            erreurs[cle] = "hors_bornes"
+    if not erreurs:
+        if options[CONF_LUX_MAX] <= options[CONF_LUX_MIN]:
+            erreurs[CONF_LUX_MAX] = "lux_max_trop_bas"
+        if options[CONF_LUMINOSITE_MAX] < options[CONF_LUMINOSITE_MIN]:
+            erreurs[CONF_LUMINOSITE_MAX] = "luminosite_max_trop_basse"
+    exclus = options.get(CONF_MODES_EXCLUS)
+    if not isinstance(exclus, list) or not set(exclus) <= set(modes):
+        erreurs[CONF_MODES_EXCLUS] = "mode_inconnu"
+    if erreurs:
+        return options, erreurs
+    # Les sélecteurs numériques rendent des flottants.
+    return {**options, **{cle: int(options[cle]) for cle in ENTIERS}}, {}
 
 
 def calculer_cible(lux: float, options: dict) -> int:
@@ -108,6 +145,11 @@ class LuminositeAdaptative:
         self.active = False
         self.fin_pause: datetime | None = None
         self.derniere_erreur: str | None = None
+        # Origine et heure de la reprise en main qui a mis la fonction en
+        # pause : la question qu'on se pose devant une pause.
+        self.cause_pause: dict[str, str] | None = None
+        self.journal: deque[dict] = deque(maxlen=TAILLE_JOURNAL)
+        self._ecouteurs_journal: list[Callable[[dict], None]] = []
         # Le téléviseur a été vu injoignable pendant la pause : sa prochaine
         # connexion est un rallumage, qui lève la pause. Un simple
         # redémarrage de Home Assistant (connexion sans déconnexion vue) la
@@ -119,6 +161,7 @@ class LuminositeAdaptative:
         self._annuler_application: Callable[[], None] | None = None
         self._echeance: datetime | None = None
         self._annuler_fin_pause: Callable[[], None] | None = None
+        self._ne_plus_suivre_capteur: Callable[[], None] | None = None
         self._tache = None
 
     # ---------------------------------------------------------------- cycle
@@ -127,13 +170,22 @@ class LuminositeAdaptative:
         self._desabonnements += [
             lambda: self._tv.desabonner(self._sur_evenement),
             self._historique.ecouter(self._sur_ecriture),
-            async_track_state_change_event(self.hass, [self.capteur], self._sur_lux),
         ]
+        self._suivre_capteur()
+
+    def _suivre_capteur(self) -> None:
+        if self._ne_plus_suivre_capteur is not None:
+            self._ne_plus_suivre_capteur()
+        self._ne_plus_suivre_capteur = async_track_state_change_event(
+            self.hass, [self.capteur], self._sur_lux)
 
     def arreter(self) -> None:
         for desabonner in self._desabonnements:
             desabonner()
         self._desabonnements.clear()
+        if self._ne_plus_suivre_capteur is not None:
+            self._ne_plus_suivre_capteur()
+            self._ne_plus_suivre_capteur = None
         self._annuler_planification()
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
@@ -149,6 +201,17 @@ class LuminositeAdaptative:
     def _prevenir(self) -> None:
         for ecouteur in list(self._ecouteurs):
             ecouteur()
+
+    def ecouter_journal(self, ecouteur: Callable[[dict], None]) -> Callable[[], None]:
+        """Abonne le panneau aux nouveaux événements du journal."""
+        self._ecouteurs_journal.append(ecouteur)
+        return lambda: self._ecouteurs_journal.remove(ecouteur)
+
+    def _noter(self, type_: str, **details) -> None:
+        evenement = {"horodatage": dt_util.utcnow().isoformat(), "type": type_, **details}
+        self.journal.append(evenement)
+        for ecouteur in list(self._ecouteurs_journal):
+            ecouteur(evenement)
 
     # ----------------------------------------------------------------- état
     @property
@@ -191,13 +254,16 @@ class LuminositeAdaptative:
         return "active"
 
     # ------------------------------------------------------------ commandes
-    def restaurer(self, active: bool, fin_pause: datetime | None) -> None:
+    def restaurer(self, active: bool, fin_pause: datetime | None,
+                  cause_pause: dict | None = None) -> None:
         self.active = active
         if active and fin_pause is not None and fin_pause > dt_util.utcnow():
-            self._mettre_en_pause_jusqua(fin_pause)
+            self._mettre_en_pause_jusqua(fin_pause, cause_pause)
         self._prevenir()
 
     def activer(self, active: bool) -> None:
+        if active != self.active:
+            self._noter("activation" if active else "desactivation")
         self.active = active
         self._lever_pause()
         if active:
@@ -206,9 +272,26 @@ class LuminositeAdaptative:
             self._annuler_planification()
         self._prevenir()
 
-    def reprendre(self) -> None:
-        self._lever_pause()
+    def reprendre(self, raison: str = "bouton") -> None:
+        self._lever_pause(raison)
         self._lancer()
+        self._prevenir()
+
+    def mettre_en_pause(self, minutes: int) -> None:
+        """Pause demandée depuis le panneau (le temps d'un film), sans
+        toucher à la luminosité."""
+        self._pause(dt_util.utcnow() + timedelta(minutes=minutes), PAUSE_MANUELLE)
+        self._prevenir()
+
+    def reconfigurer(self, options: dict) -> None:
+        """Options modifiées depuis le panneau, appliquées sans recharger
+        l'intégration (qui couperait la connexion au téléviseur). Une pause
+        en cours est conservée."""
+        self.options = {**OPTIONS_LUMINOSITE_DEFAUT, **options}
+        if options[CONF_CAPTEUR_LUX] != self.capteur:
+            self.capteur = options[CONF_CAPTEUR_LUX]
+            self._suivre_capteur()
+        self._planifier(DELAI_APPLICATION_S)
         self._prevenir()
 
     # ---------------------------------------------------------- déclencheurs
@@ -221,7 +304,7 @@ class LuminositeAdaptative:
         if evenement["type"] == "connexion":
             if evenement["etat"] == "connecte":
                 if self._eteint_pendant_pause:
-                    self._lever_pause()
+                    self._lever_pause("rallumage")
                 self._planifier(DELAI_APPLICATION_S)
             elif evenement["etat"] == "deconnecte" and self.fin_pause is not None:
                 self._eteint_pendant_pause = True
@@ -233,7 +316,7 @@ class LuminositeAdaptative:
         elif evenement["type"] == "changement" and evenement["categorie"] == CATEGORIE:
             reglages, origine = evenement["reglages"], evenement["origine"]
             if CLE in reglages and origine in ORIGINES_EXTERIEURES:
-                self._reprise_en_main(self._tv.mode_image)
+                self._reprise_en_main(self._tv.mode_image, origine)
             elif origine != "application" and (CLE in reglages or "pictureMode" in reglages):
                 self._planifier(DELAI_APPLICATION_S)
             if "pictureMode" in reglages:
@@ -244,25 +327,30 @@ class LuminositeAdaptative:
         if ecriture["origine"] == ORIGINE:
             return
         if (ecriture["categorie"], ecriture["cle"]) == (CATEGORIE, CLE):
-            self._reprise_en_main(ecriture["mode_image"])
+            self._reprise_en_main(ecriture["mode_image"], ecriture["origine"])
         elif ecriture["origine"] in ORIGINES_LOT:
             self._planifier(DELAI_APRES_LOT_S)
 
     # ----------------------------------------------------------------- pause
-    def _reprise_en_main(self, mode: str | None) -> None:
+    def _reprise_en_main(self, mode: str | None, origine: str) -> None:
         # La luminosité d'un mode laissé de côté ne dit rien de celle des
         # autres modes.
         if not self.active or self.mode_exclu(mode):
             return
-        fin = dt_util.utcnow() + timedelta(minutes=self.options[CONF_PAUSE_MIN])
-        self._mettre_en_pause_jusqua(fin)
+        self._pause(dt_util.utcnow() + timedelta(minutes=self.options[CONF_PAUSE_MIN]), origine)
         self._prevenir()
 
-    def _mettre_en_pause_jusqua(self, fin: datetime) -> None:
+    def _pause(self, fin: datetime, origine: str) -> None:
+        cause = {"origine": origine, "horodatage": dt_util.utcnow().isoformat()}
+        self._mettre_en_pause_jusqua(fin, cause)
+        self._noter("pause", origine=origine, fin=fin.isoformat())
+
+    def _mettre_en_pause_jusqua(self, fin: datetime, cause: dict | None) -> None:
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
         self._annuler_planification()
         self.fin_pause = fin
+        self.cause_pause = cause
         self._eteint_pendant_pause = False
         self._annuler_fin_pause = async_track_point_in_utc_time(
             self.hass, self._sur_fin_de_pause, fin)
@@ -270,13 +358,18 @@ class LuminositeAdaptative:
     @callback
     def _sur_fin_de_pause(self, _maintenant) -> None:
         self._annuler_fin_pause = None
-        self.reprendre()
+        self.reprendre("delai")
 
-    def _lever_pause(self) -> None:
+    def _lever_pause(self, raison: str | None = None) -> None:
+        """`raison` : délai, bouton ou rallumage, notée au journal ; aucune
+        quand l'interrupteur change (son changement est déjà noté)."""
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
             self._annuler_fin_pause = None
+        if self.fin_pause is not None and raison is not None:
+            self._noter("reprise", raison=raison)
         self.fin_pause = None
+        self.cause_pause = None
         self._eteint_pendant_pause = False
 
     # ----------------------------------------------------------- application
@@ -309,7 +402,8 @@ class LuminositeAdaptative:
     async def _appliquer(self) -> None:
         if self.etat != "active":
             return
-        cible = self.cible
+        lux = self.lux
+        cible = calculer_cible(lux, self.options)
         try:
             actuelle = float(self._tv.etat.get(CATEGORIE, {}).get(CLE))
         except (TypeError, ValueError):
@@ -329,6 +423,9 @@ class LuminositeAdaptative:
         if self.derniere_erreur:
             log.info("Luminosité adaptative : écriture de %s impossible : %s",
                      cible, self.derniere_erreur)
+            self._noter("erreur", cible=cible, raison=self.derniere_erreur)
+        else:
+            self._noter("application", lux=lux, cible=cible, ancienne=actuelle)
         self._prevenir()
 
     def resume(self) -> dict[str, Any]:
@@ -339,6 +436,23 @@ class LuminositeAdaptative:
             "entree_id": ID_OLED,
             "cible": self.cible,
             "fin_pause": self.fin_pause.isoformat() if self.fin_pause else None,
+            "cause_pause": self.cause_pause,
+        }
+
+    def details(self) -> dict[str, Any]:
+        """État complet pour la page du panneau, suivi seulement pendant
+        qu'elle est ouverte."""
+        try:
+            actuelle = float(self._tv.etat.get(CATEGORIE, {}).get(CLE))
+        except (TypeError, ValueError):
+            actuelle = None
+        return {
+            **self.resume(),
+            "lux": self.lux,
+            "actuelle": actuelle,
+            "mode_image": self._tv.mode_image,
+            "mode_exclu": self.mode_exclu(self._tv.mode_image),
+            "derniere_erreur": self.derniere_erreur,
         }
 
     def attributs(self) -> dict[str, Any]:
@@ -346,6 +460,7 @@ class LuminositeAdaptative:
             "lux": self.lux,
             "cible": self.cible,
             "fin_pause": self.fin_pause.isoformat() if self.fin_pause else None,
+            "cause_pause": self.cause_pause["origine"] if self.cause_pause else None,
             "mode_image": self._tv.mode_image,
             "derniere_erreur": self.derniere_erreur,
         }

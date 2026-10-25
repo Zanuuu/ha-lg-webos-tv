@@ -5,20 +5,36 @@ import Entete from './components/Entete.jsx'
 import PanneauMenu from './components/PanneauMenu.jsx'
 import Recherche from './components/Recherche.jsx'
 import VueHistorique from './components/VueHistorique.jsx'
+import VueLuminosite from './components/VueLuminosite.jsx'
 import VuePresets from './components/VuePresets.jsx'
 import VueRecherche from './components/VueRecherche.jsx'
 import { abonnerEtroit, estEtroit } from './hass.js'
 import { useEtatTv } from './hooks/useEtatTv.js'
 import { aplatir } from './recherche.js'
 
+const VUES = ['menu', 'presets', 'historique', 'luminosite']
+const CLE_VUE = 'lg_webos_tv.vue'
+
+// Vue retrouvée si Home Assistant recrée le panneau (rechargement de
+// l'intégration depuis la page Luminosité adaptative, actualisation).
+function vueMemorisee() {
+  try {
+    const vue = sessionStorage.getItem(CLE_VUE)
+    return VUES.includes(vue) ? vue : 'menu'
+  } catch {
+    return 'menu'
+  }
+}
+
 export default function App() {
   const {
     arbre, erreurArbre, rechargerArbre, reglages, connexion, modeImage, ecriturePossible,
-    revisions, ecrire, luminosite, reprendre,
+    revisions, ecrire, luminosite, reprendre, rouvrirCanal,
   } = useEtatTv()
   const etroit = useSyncExternalStore(abonnerEtroit, estEtroit)
-  // Vue de la barre latérale : 'menu' (arbre des réglages), 'presets' ou 'historique'.
-  const [vue, setVue] = useState('menu')
+  // Vue de la barre latérale : 'menu' (arbre des réglages), 'presets',
+  // 'historique' ou 'luminosite'.
+  const [vue, setVue] = useState(vueMemorisee)
   const [chemin, setChemin] = useState([])
   // Non vide : la vue de recherche remplace la vue choisie, retrouvée quand
   // le champ est vidé.
@@ -60,6 +76,14 @@ export default function App() {
     document.addEventListener('keydown', surTouche)
     return () => document.removeEventListener('keydown', surTouche)
   }, [vue, chemin.length, enRecherche])
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CLE_VUE, vue)
+    } catch {
+      // Stockage indisponible (navigation privée) : la vue n'est pas retenue.
+    }
+  }, [vue])
 
   useEffect(() => {
     if (focaliserTitre.current) {
@@ -156,6 +180,7 @@ export default function App() {
             luminosite={luminosite}
             onEcrire={ecrire}
             onReprendre={reprendre}
+            onDetailsLuminosite={() => choisirVue('luminosite')}
             onOuvrir={ouvrirDepuisRecherche}
           />
         )}
@@ -170,6 +195,7 @@ export default function App() {
             titreRef={titreRef}
             onEcrire={ecrire}
             onReprendre={reprendre}
+            onDetailsLuminosite={() => choisirVue('luminosite')}
             onEntrer={entrer}
             onRevenir={revenir}
           />
@@ -193,6 +219,18 @@ export default function App() {
               index={index}
               lectureSeule={lectureSeule}
               revision={revisions.historique}
+            />
+          </section>
+        )}
+        {!enRecherche && vue === 'luminosite' && (
+          <section className="panneau-service" aria-labelledby="titre-luminosite">
+            <h2 id="titre-luminosite" className="titre-noeud">Luminosité adaptative</h2>
+            <VueLuminosite
+              index={index}
+              luminosite={connexion === null ? undefined : luminosite}
+              lectureSeule={lectureSeule}
+              onReprendre={reprendre}
+              onRecharge={rouvrirCanal}
             />
           </section>
         )}

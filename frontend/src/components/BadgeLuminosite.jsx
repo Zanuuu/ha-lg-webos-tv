@@ -1,25 +1,18 @@
 import { useState } from 'react'
+import { heure, LIBELLES_ETAT } from '../luminosite.js'
 
-// Libellés des états du capteur (translations/fr.json). Désactivée et
-// téléviseur déconnecté ne sont pas signalés : rien n'agit sur la ligne, et
-// le bandeau dit déjà que la TV est injoignable.
-const LIBELLES = {
-  active: 'Luminosité adaptative : active',
-  pause: 'Luminosité adaptative : en pause',
-  mode_exclu: 'Luminosité adaptative : mode d\'image laissé de côté',
-  capteur_indisponible: 'Luminosité adaptative : capteur indisponible',
-  consultation: 'Luminosité adaptative : écriture impossible',
-}
+// États signalés sur la ligne. Désactivée et téléviseur déconnecté ne le
+// sont pas : rien n'agit sur la ligne, et le bandeau dit déjà que la TV est
+// injoignable.
+const ETATS_SIGNALES = ['active', 'pause', 'mode_exclu', 'capteur_indisponible', 'consultation']
 
-function heure(iso) {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
-
-export default function BadgeLuminosite({ luminosite, lectureSeule, onReprendre }) {
+export default function BadgeLuminosite({ luminosite, lectureSeule, onReprendre, onDetails }) {
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState(null)
   const { etat, cible, fin_pause: finPause } = luminosite
-  let texte = LIBELLES[etat]
+  let texte = ETATS_SIGNALES.includes(etat)
+    ? `Luminosité adaptative : ${LIBELLES_ETAT[etat].toLowerCase()}`
+    : null
   if (etat === 'active' && cible !== null) texte += ` (cible ${cible})`
   if (etat === 'pause' && finPause) texte += ` jusqu'à ${heure(finPause)}`
 
@@ -54,6 +47,11 @@ export default function BadgeLuminosite({ luminosite, lectureSeule, onReprendre 
               onClick={reprendre}
             >
               Reprendre
+            </button>
+          )}
+          {onDetails && (
+            <button type="button" className="lien-details" onClick={onDetails}>
+              Détails
             </button>
           )}
         </p>

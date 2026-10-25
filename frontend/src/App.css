@@ -661,6 +661,279 @@ select {
   cursor: default;
 }
 
+.lien-details {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--gris-texte);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lien-details:hover {
+  color: var(--blanc-ecran);
+}
+
+/* Page dédiée : cartes noires sur le fond graphite des vues de service. */
+.intro-luminosite {
+  max-width: 70ch;
+  margin: 0 0 1.25rem;
+}
+
+.carte-luminosite {
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem 1.25rem;
+  border-radius: var(--rayon-allume);
+  background: var(--noir);
+}
+
+.carte-luminosite h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.carte-luminosite h3 + .texte-attenue,
+.carte-luminosite .texte-attenue {
+  margin-top: 0;
+}
+
+.entete-carte {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.entete-carte h3 {
+  margin: 0;
+}
+
+.etat-luminosite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.etat-luminosite-active .puce {
+  background: var(--etat-ok);
+}
+
+.etat-luminosite-desactivee .puce,
+.etat-luminosite-televiseur_deconnecte .puce,
+.etat-luminosite-mode_exclu .puce,
+.etat-luminosite-capteur_indisponible .puce,
+.etat-luminosite-consultation .puce {
+  background: var(--gris-texte);
+}
+
+.bascule-luminosite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.mesures-luminosite {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.mesures-luminosite dt {
+  color: var(--gris-texte);
+  font-size: 0.8rem;
+}
+
+.mesures-luminosite dd {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ligne-carte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* Plus large, la courbe prendrait toute la hauteur de l'écran. */
+.courbe-luminosite {
+  max-width: 44rem;
+  margin: 0 0 1rem;
+}
+
+.courbe-luminosite svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.courbe-luminosite figcaption {
+  margin-top: 0.4rem;
+}
+
+.grille-courbe {
+  stroke: var(--trait);
+  stroke-width: 1;
+}
+
+.graduation-courbe {
+  fill: var(--gris-texte);
+  font-size: 12px;
+}
+
+.trace-courbe {
+  fill: none;
+  stroke: var(--blanc-ecran);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.point-maintenant line {
+  stroke: var(--etat-ok);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.point-maintenant circle {
+  fill: var(--etat-ok);
+}
+
+.poignee-courbe {
+  cursor: grab;
+  /* Le glisser au doigt ne fait pas défiler la page. */
+  touch-action: none;
+}
+
+.poignee-courbe:focus {
+  outline: none;
+}
+
+.zone-poignee {
+  fill: transparent;
+}
+
+.disque-poignee {
+  fill: var(--allume);
+  stroke: var(--noir);
+  stroke-width: 2;
+  transition: r var(--duree);
+}
+
+.poignee-courbe:hover .disque-poignee,
+.poignee-courbe:focus-visible .disque-poignee {
+  r: 10;
+}
+
+.poignee-courbe:focus-visible .disque-poignee {
+  stroke: var(--etat-attente);
+  stroke-width: 3;
+}
+
+.poignee-courbe[aria-disabled='true'] {
+  cursor: default;
+}
+
+.grille-champs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.champ-luminosite {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.champ-large {
+  grid-column: 1 / -1;
+}
+
+.champ-large select {
+  max-width: 100%;
+}
+
+.saisie-unite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.saisie-unite input {
+  width: 7.5rem;
+}
+
+.modes-exclus {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: none;
+}
+
+.modes-exclus legend {
+  padding: 0;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+
+.case-mode {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.case-mode input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--allume);
+}
+
+.actions-reglages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.actions-reglages .erreur-reglage {
+  flex-basis: auto;
+}
+
+.journal-luminosite {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.journal-luminosite li {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--trait);
+}
+
+.journal-luminosite time {
+  color: var(--gris-texte);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Recherche ---------- */
 
 .resultats-recherche {
@@ -703,7 +976,8 @@ select {
 
 select,
 input[type='text'],
-input[type='search'] {
+input[type='search'],
+input[type='number'] {
   background: var(--noir);
   color: var(--blanc-ecran);
   border: 1px solid var(--trait);
@@ -719,8 +993,13 @@ select {
 
 select:hover,
 input[type='text']:hover,
-input[type='search']:hover {
+input[type='search']:hover,
+input[type='number']:hover {
   border-color: var(--gris-texte);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--etat-erreur);
 }
 
 .interrupteur {
@@ -1139,6 +1418,62 @@ table.table-historique {
 
   .confirmation-actions button {
     min-height: 44px;
+  }
+
+  .carte-luminosite {
+    padding: 0.9rem 0.9rem 1rem;
+  }
+
+  .mesures-luminosite {
+    gap: 0.5rem;
+  }
+
+  .mesures-luminosite dd {
+    font-size: 1.3rem;
+  }
+
+  .actions-reglages button,
+  .ligne-carte .bouton-secondaire {
+    min-height: 44px;
+  }
+
+  .case-mode {
+    min-height: 44px;
+  }
+
+  .journal-luminosite li {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+
+  /* Le graphique est réduit à la moitié de sa taille : graduations, tracé et
+     poignées grossis en unités du viewBox pour rester lisibles et saisissables
+     au doigt. */
+  .graduation-courbe {
+    font-size: 24px;
+  }
+
+  .trace-courbe {
+    stroke-width: 5;
+  }
+
+  .point-maintenant line {
+    stroke-width: 3;
+    stroke-dasharray: 8 8;
+  }
+
+  .point-maintenant circle {
+    r: 11;
+  }
+
+  .disque-poignee,
+  .poignee-courbe:hover .disque-poignee,
+  .poignee-courbe:focus-visible .disque-poignee {
+    r: 15;
+  }
+
+  .zone-poignee {
+    r: 48;
   }
 }
 

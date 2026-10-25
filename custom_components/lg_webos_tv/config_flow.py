@@ -27,7 +27,7 @@ from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_ECART_MINIMAL,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN, DOMAIN,
                     OPTIONS_LUMINOSITE_DEFAUT)
-from .luminosite_adaptative import modes_proposes
+from .luminosite_adaptative import BORNES, modes_proposes, valider_options
 from .televiseur import AppairageEchoue, appairer
 
 TITRE_DEFAUT = "LG webOS TV"
@@ -153,7 +153,8 @@ class LgWebosTvConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-def _nombre(minimum: float, maximum: float, unite: str | None = None) -> NumberSelector:
+def _nombre(cle: str, unite: str | None = None) -> NumberSelector:
+    minimum, maximum = BORNES[cle]
     config = NumberSelectorConfig(min=minimum, max=maximum, step=1,
                                   mode=NumberSelectorMode.BOX)
     if unite is not None:
@@ -163,36 +164,29 @@ def _nombre(minimum: float, maximum: float, unite: str | None = None) -> NumberS
 
 class OptionsLgWebosTv(OptionsFlowWithReload):
     """Luminosité adaptative. L'entrée est rechargée à l'enregistrement : la
-    fonction et ses entités n'existent que si un capteur est choisi."""
+    fonction et ses entités n'existent que si un capteur est choisi. Le
+    panneau modifie les mêmes options, sans rechargement quand il le peut."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         erreurs = {}
-        if user_input is not None:
-            if user_input[CONF_LUX_MAX] <= user_input[CONF_LUX_MIN]:
-                erreurs[CONF_LUX_MAX] = "lux_max_trop_bas"
-            if user_input[CONF_LUMINOSITE_MAX] < user_input[CONF_LUMINOSITE_MIN]:
-                erreurs[CONF_LUMINOSITE_MAX] = "luminosite_max_trop_basse"
-            if not erreurs:
-                # Les sélecteurs numériques rendent des flottants ; le
-                # téléviseur n'accepte que des entiers.
-                for cle in (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX,
-                            CONF_ECART_MINIMAL, CONF_PAUSE_MIN):
-                    user_input[cle] = int(user_input[cle])
-                return self.async_create_entry(data=user_input)
-
         # Lecture de l'arbre (en cache une fois l'entrée chargée).
         modes = await self.hass.async_add_executor_job(modes_proposes)
+        if user_input is not None:
+            options, erreurs = valider_options(user_input, modes)
+            if not erreurs:
+                return self.async_create_entry(data=options)
+
         schema = vol.Schema({
             vol.Optional(CONF_CAPTEUR_LUX): EntitySelector(EntitySelectorConfig(
                 domain="sensor", device_class="illuminance")),
-            vol.Required(CONF_LUX_MIN): _nombre(1, 1000, "lx"),
-            vol.Required(CONF_LUX_MAX): _nombre(2, 100000, "lx"),
-            vol.Required(CONF_LUMINOSITE_MIN): _nombre(0, 100),
-            vol.Required(CONF_LUMINOSITE_MAX): _nombre(0, 100),
-            vol.Required(CONF_ECART_MINIMAL): _nombre(1, 20),
-            vol.Required(CONF_PAUSE_MIN): _nombre(5, 720, "min"),
+            vol.Required(CONF_LUX_MIN): _nombre(CONF_LUX_MIN, "lx"),
+            vol.Required(CONF_LUX_MAX): _nombre(CONF_LUX_MAX, "lx"),
+            vol.Required(CONF_LUMINOSITE_MIN): _nombre(CONF_LUMINOSITE_MIN),
+            vol.Required(CONF_LUMINOSITE_MAX): _nombre(CONF_LUMINOSITE_MAX),
+            vol.Required(CONF_ECART_MINIMAL): _nombre(CONF_ECART_MINIMAL),
+            vol.Required(CONF_PAUSE_MIN): _nombre(CONF_PAUSE_MIN, "min"),
             vol.Required(CONF_MODES_EXCLUS): SelectSelector(SelectSelectorConfig(
                 options=modes, multiple=True, translation_key=CONF_MODES_EXCLUS)),
         })

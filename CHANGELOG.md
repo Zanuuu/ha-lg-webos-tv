@@ -1,5 +1,37 @@
 # Changelog
 
+## 2.4.0 — 2026-10-25
+
+Panneau : page **Luminosité adaptative** dans la barre latérale (lien
+« Détails » depuis la ligne des pixels OLED).
+
+- **État en direct** : lux mesuré, luminosité calculée et luminosité du
+  téléviseur, mode d'image (et s'il est laissé de côté), interrupteur,
+  dernière erreur d'écriture. En pause : sa **cause** (réglage sur le
+  téléviseur, depuis Home Assistant, ce panneau, un preset, un retour
+  arrière) et son heure de fin, bouton Reprendre ; sinon bouton
+  **Pause 1 h**, qui ne touche pas à la luminosité.
+- **Courbe** lux → luminosité sur échelle logarithmique, point « maintenant »
+  en direct ; ses deux points se déplacent à la souris, au doigt ou au
+  clavier, ou par leurs champs.
+- **Réglages** de la fonction (capteur, durée de pause, écart minimal,
+  modes laissés de côté) en brouillon, avec Enregistrer / Annuler.
+  Appliqués sans recharger l'intégration, sauf pour créer la fonction
+  (mise en route depuis la page) ou la retirer.
+- **Journal** des 50 derniers événements de la fonction (en mémoire).
+- La vue ouverte est retenue si la page est actualisée.
+
+Intégration :
+
+- Cause de la pause retenue (conservée au redémarrage, attribut
+  `cause_pause` de l'état), pause manuelle, reconfiguration à chaud
+  (changement de capteur compris), journal en mémoire.
+- Commandes websocket `lg_webos_tv/luminosite_adaptative/` : `activer`,
+  `pause`, `configuration`, `configurer`, `suivre` (abonnement : état
+  complet avec le lux, et journal, seulement pendant que la page est
+  ouverte).
+- Validation des options partagée entre le formulaire et le panneau.
+
 ## 2.3.0 — 2026-10-25
 
 Panneau :

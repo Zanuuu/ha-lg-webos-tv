@@ -8,7 +8,8 @@ import NonPilotable from './controles/NonPilotable.jsx'
 import Texte from './controles/Texte.jsx'
 
 export default function LigneReglage({
-  entree, reglages, lectureSeule, horsLigne, luminosite, revelee, onEcrire, onReprendre, onEntrer,
+  entree, reglages, lectureSeule, horsLigne, luminosite, revelee, onEcrire, onReprendre,
+  onDetailsLuminosite, onEntrer,
 }) {
   const [erreur, setErreur] = useState(null)
   const [envoi, setEnvoi] = useState(false)
@@ -90,7 +91,12 @@ export default function LigneReglage({
         {/* Toujours présent : une zone live n'est annoncée que si elle existait déjà. */}
         <span className="etat-envoi" aria-live="polite">{envoi ? 'Envoi…' : ''}</span>
         {luminosite && entree.id === luminosite.entree_id && (
-          <BadgeLuminosite luminosite={luminosite} lectureSeule={lectureSeule} onReprendre={onReprendre} />
+          <BadgeLuminosite
+            luminosite={luminosite}
+            lectureSeule={lectureSeule}
+            onReprendre={onReprendre}
+            onDetails={onDetailsLuminosite}
+          />
         )}
       </Libelle>
       <div className="controle">{controle()}</div>

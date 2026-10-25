@@ -64,7 +64,9 @@
     },
     "error": {
       "lux_max_trop_bas": "Must be above the dark room value.",
-      "luminosite_max_trop_basse": "Must be at least the minimum brightness."
+      "luminosite_max_trop_basse": "Must be at least the minimum brightness.",
+      "hors_bornes": "Value outside the allowed range.",
+      "mode_inconnu": "Unknown picture mode."
     }
   },
   "entity": {

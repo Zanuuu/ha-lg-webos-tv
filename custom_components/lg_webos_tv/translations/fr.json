@@ -64,7 +64,9 @@
     },
     "error": {
       "lux_max_trop_bas": "Doit dépasser la valeur « Pièce sombre ».",
-      "luminosite_max_trop_basse": "Doit être au moins égale à la luminosité minimale."
+      "luminosite_max_trop_basse": "Doit être au moins égale à la luminosité minimale.",
+      "hors_bornes": "Valeur hors des limites autorisées.",
+      "mode_inconnu": "Mode d'image inconnu."
     }
   },
   "entity": {

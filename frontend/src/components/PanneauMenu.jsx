@@ -2,7 +2,7 @@ import LigneReglage from './LigneReglage.jsx'
 
 export default function PanneauMenu({
   chemin, reglages, lectureSeule, horsLigne, luminosite, entreeRevelee, titreRef, onEcrire,
-  onReprendre, onEntrer, onRevenir,
+  onReprendre, onDetailsLuminosite, onEntrer, onRevenir,
 }) {
   const noeud = chemin[chemin.length - 1]
   const parent = chemin.length > 1 ? chemin[chemin.length - 2] : null
@@ -39,6 +39,7 @@ export default function PanneauMenu({
             revelee={enfant.id === entreeRevelee}
             onEcrire={onEcrire}
             onReprendre={onReprendre}
+            onDetailsLuminosite={onDetailsLuminosite}
             onEntrer={onEntrer}
           />
         ))}

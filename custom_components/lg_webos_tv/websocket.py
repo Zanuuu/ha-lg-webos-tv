@@ -12,8 +12,18 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
 from . import arbre, restauration
-from .const import DOMAIN
+from .const import CONF_CAPTEUR_LUX, DOMAIN, OPTIONS_LUMINOSITE_DEFAUT
+from .luminosite_adaptative import modes_proposes, valider_options
 from .presets import PresetExistant, PresetInconnu, capturer_snapshot
+
+# Textes des erreurs de validation des options (mêmes clés que le formulaire).
+ERREURS_OPTIONS = {
+    "hors_bornes": "valeur hors des limites autorisées",
+    "lux_max_trop_bas": "doit dépasser la valeur « Pièce sombre »",
+    "luminosite_max_trop_basse": "doit être au moins égale à la luminosité minimale",
+    "mode_inconnu": "mode d'image inconnu",
+    "capteur_inconnu": "capteur introuvable",
+}
 
 
 def _donnees(hass: HomeAssistant, connection, msg) -> Any | None:
@@ -162,13 +172,111 @@ async def _appliquer_preset(hass, connection, msg, donnees) -> None:
         connection.send_error(msg["id"], "introuvable", f"Preset inconnu : {msg['nom']}")
 
 
-async def _reprendre_luminosite(hass, connection, msg, donnees) -> None:
+def _fonction(connection, msg, donnees):
     if donnees.luminosite_adaptative is None:
         connection.send_error(msg["id"], "non_configuree",
                               "La luminosité adaptative n'est pas configurée")
+    return donnees.luminosite_adaptative
+
+
+async def _reprendre_luminosite(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is not None:
+        fonction.reprendre()
+        connection.send_result(msg["id"], _luminosite(donnees))
+
+
+async def _activer_luminosite(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is not None:
+        fonction.activer(msg["active"])
+        connection.send_result(msg["id"], _luminosite(donnees))
+
+
+async def _pause_luminosite(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is not None:
+        fonction.mettre_en_pause(msg["minutes"])
+        connection.send_result(msg["id"], _luminosite(donnees))
+
+
+def _capteurs_lux(hass: HomeAssistant) -> list[dict]:
+    """Capteurs proposés au choix, comme le sélecteur du formulaire des
+    options (capteurs de luminosité ambiante)."""
+    capteurs = [{"entity_id": etat.entity_id, "nom": etat.name, "valeur": etat.state,
+                 "unite": etat.attributes.get("unit_of_measurement")}
+                for etat in hass.states.async_all("sensor")
+                if etat.attributes.get("device_class") == "illuminance"]
+    return sorted(capteurs, key=lambda capteur: capteur["nom"].casefold())
+
+
+async def _configuration_luminosite(hass, connection, msg, donnees) -> None:
+    entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
+    connection.send_result(msg["id"], {
+        "options": {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: None, **entree.options},
+        "modes_proposes": await hass.async_add_executor_job(modes_proposes),
+        "capteurs": _capteurs_lux(hass),
+    })
+
+
+async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
+    """Mêmes options que le formulaire. Sans rechargement de l'intégration
+    (qui couperait la connexion au téléviseur), sauf pour créer ou retirer
+    la fonction : ses entités n'existent que si un capteur est choisi."""
+    entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
+    connues = {*OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX}
+    saisie = {**OPTIONS_LUMINOSITE_DEFAUT, **entree.options,
+              **{cle: valeur for cle, valeur in msg["options"].items() if cle in connues}}
+    capteur = saisie.pop(CONF_CAPTEUR_LUX, None) or None
+    options, erreurs = valider_options(
+        saisie, await hass.async_add_executor_job(modes_proposes))
+    if capteur is not None and hass.states.get(capteur) is None:
+        erreurs[CONF_CAPTEUR_LUX] = "capteur_inconnu"
+    if erreurs:
+        connection.send_error(msg["id"], "invalide", "Options invalides : " + " ; ".join(
+            f"{cle} : {ERREURS_OPTIONS[code]}" for cle, code in erreurs.items()))
         return
-    donnees.luminosite_adaptative.reprendre()
-    connection.send_result(msg["id"], _luminosite(donnees))
+    if capteur is not None:
+        options[CONF_CAPTEUR_LUX] = capteur
+    hass.config_entries.async_update_entry(entree, options=options)
+
+    recharge = (capteur is None) != (donnees.luminosite_adaptative is None)
+    if recharge:
+        await hass.config_entries.async_reload(entree.entry_id)
+    elif donnees.luminosite_adaptative is not None:
+        donnees.luminosite_adaptative.reconfigurer(options)
+    connection.send_result(msg["id"], {"recharge": recharge})
+
+
+async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
+    """Flux de la page Luminosité adaptative : état complet, lux compris, et
+    événements du journal, seulement pendant qu'elle est ouverte."""
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    dernier = fonction.details()
+
+    @callback
+    def signaler() -> None:
+        nonlocal dernier
+        details = fonction.details()
+        if details != dernier:
+            dernier = details
+            connection.send_message(websocket_api.event_message(
+                msg["id"], {"type": "details", "details": details}))
+
+    @callback
+    def noter(evenement: dict) -> None:
+        connection.send_message(websocket_api.event_message(
+            msg["id"], {"type": "journal", "evenement": evenement}))
+
+    ne_plus_ecouter = [fonction.ecouter(signaler), fonction.ecouter_journal(noter)]
+
+    @callback
+    def desabonner() -> None:
+        for retirer in ne_plus_ecouter:
+            retirer()
+
+    connection.subscriptions[msg["id"]] = desabonner
+    connection.send_result(msg["id"])
+    connection.send_message(websocket_api.event_message(msg["id"], {
+        "type": "instantane", "details": dernier, "journal": list(fonction.journal)}))
 
 
 async def _abonner(hass, connection, msg, donnees) -> None:
@@ -240,6 +348,15 @@ COMMANDES = [
     _commande({**_type("presets/supprimer"), vol.Required("nom"): str}, _supprimer_preset),
     _commande({**_type("presets/appliquer"), vol.Required("nom"): str}, _appliquer_preset),
     _commande(_type("luminosite_adaptative/reprendre"), _reprendre_luminosite),
+    _commande({**_type("luminosite_adaptative/activer"), vol.Required("active"): bool},
+              _activer_luminosite),
+    _commande({**_type("luminosite_adaptative/pause"),
+               vol.Required("minutes"): vol.All(int, vol.Range(min=1, max=720))},
+              _pause_luminosite),
+    _commande(_type("luminosite_adaptative/configuration"), _configuration_luminosite),
+    _commande({**_type("luminosite_adaptative/configurer"), vol.Required("options"): dict},
+              _configurer_luminosite),
+    _commande(_type("luminosite_adaptative/suivre"), _suivre_luminosite),
     _commande(_type("abonner"), _abonner),
 ]
 

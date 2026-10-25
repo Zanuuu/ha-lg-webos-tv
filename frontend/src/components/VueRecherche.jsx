@@ -4,7 +4,7 @@ import LigneReglage from './LigneReglage.jsx'
 
 export default function VueRecherche({
   entrees, requete, reglages, lectureSeule, horsLigne, luminosite, onEcrire, onReprendre,
-  onOuvrir,
+  onDetailsLuminosite, onOuvrir,
 }) {
   const resultats = useMemo(() => rechercher(entrees, requete), [entrees, requete])
   const suffisante = requeteSuffisante(requete)
@@ -39,6 +39,7 @@ export default function VueRecherche({
               luminosite={luminosite}
               onEcrire={onEcrire}
               onReprendre={onReprendre}
+              onDetailsLuminosite={onDetailsLuminosite}
               onEntrer={(sousMenu) => onOuvrir([...chemin, sousMenu])}
             />
           </div>

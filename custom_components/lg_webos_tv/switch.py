@@ -40,9 +40,9 @@ class ReglageInterrupteur(EntiteReglage, SwitchEntity):
 
 
 class LuminositeAdaptativeActive(EntiteTeleviseur, SwitchEntity, RestoreEntity):
-    """Active la luminosité adaptative. Conserve aussi la fin d'une pause en
-    cours : un redémarrage de Home Assistant n'écrase pas un réglage
-    manuel."""
+    """Active la luminosité adaptative. Conserve aussi la fin et la cause
+    d'une pause en cours : un redémarrage de Home Assistant n'écrase pas un
+    réglage manuel."""
 
     _attr_translation_key = "luminosite_adaptative"
 
@@ -55,10 +55,12 @@ class LuminositeAdaptativeActive(EntiteTeleviseur, SwitchEntity, RestoreEntity):
         await super().async_added_to_hass()
         derniere = await self.async_get_last_state()
         extra = await self.async_get_last_extra_data()
-        fin_pause = extra.as_dict().get("fin_pause") if extra else None
+        extra = extra.as_dict() if extra else {}
+        fin_pause = extra.get("fin_pause")
         self._fonction.restaurer(
             derniere is None or derniere.state != "off",
-            dt_util.parse_datetime(fin_pause) if fin_pause else None)
+            dt_util.parse_datetime(fin_pause) if fin_pause else None,
+            extra.get("cause_pause"))
         self.async_on_remove(self._fonction.ecouter(self.async_write_ha_state))
 
     @property
@@ -69,7 +71,8 @@ class LuminositeAdaptativeActive(EntiteTeleviseur, SwitchEntity, RestoreEntity):
     def extra_restore_state_data(self) -> ExtraStoredData:
         fin_pause = self._fonction.fin_pause
         return RestoredExtraData(
-            {"fin_pause": fin_pause.isoformat() if fin_pause else None})
+            {"fin_pause": fin_pause.isoformat() if fin_pause else None,
+             "cause_pause": self._fonction.cause_pause})
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         self._fonction.activer(True)

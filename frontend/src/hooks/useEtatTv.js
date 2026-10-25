@@ -24,6 +24,10 @@ export function useEtatTv() {
   const [revisions, setRevisions] = useState({ historique: 0, presets: 0 })
   // Résumé de la luminosité adaptative ; null si elle n'est pas configurée.
   const [luminosite, setLuminosite] = useState(null)
+  // Incrémentée pour rouvrir le canal après un rechargement de l'intégration
+  // (création ou retrait de la luminosité adaptative depuis le panneau) :
+  // l'ancien abonnement reste attaché aux objets de l'entrée déchargée.
+  const [generationCanal, setGenerationCanal] = useState(0)
 
   useEffect(() => {
     let annule = false
@@ -86,7 +90,7 @@ export function useEtatTv() {
       fermerCanal()
       clearInterval(minuteurRafraichissement)
     }
-  }, [])
+  }, [generationCanal])
 
   const ecrire = useCallback(async (entreeId, valeur) => {
     const resultat = await ecrireReglage(entreeId, valeur)
@@ -100,9 +104,10 @@ export function useEtatTv() {
   const reprendre = useCallback(async () => setLuminosite(await reprendreLuminosite()), [])
 
   const rechargerArbre = useCallback(() => setTentativeArbre((n) => n + 1), [])
+  const rouvrirCanal = useCallback(() => setGenerationCanal((n) => n + 1), [])
 
   return {
     arbre, erreurArbre, rechargerArbre, reglages, connexion, modeImage, ecriturePossible,
-    revisions, ecrire, luminosite, reprendre,
+    revisions, ecrire, luminosite, reprendre, rouvrirCanal,
   }
 }

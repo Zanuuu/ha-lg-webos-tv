@@ -27,6 +27,11 @@ export const supprimerPreset = (nom) => commande('presets/supprimer', { nom })
 export const appliquerPreset = (nom) => commande('presets/appliquer', { nom })
 
 export const reprendreLuminosite = () => commande('luminosite_adaptative/reprendre')
+export const activerLuminosite = (active) => commande('luminosite_adaptative/activer', { active })
+export const pauseLuminosite = (minutes) => commande('luminosite_adaptative/pause', { minutes })
+export const recupererConfigLuminosite = () => commande('luminosite_adaptative/configuration')
+export const configurerLuminosite = (options) =>
+  commande('luminosite_adaptative/configurer', { options })
 
 export const recupererHistorique = (limite = 100) => commande('historique', { limite })
 export const annulerEcriture = (id) => commande('historique/annuler', { ecriture_id: id })
@@ -35,19 +40,27 @@ export const revenirA = (horodatage) => commande('historique/revenir', { horodat
 // Flux temps réel. La connexion de HA se rétablit seule et renouvelle
 // l'abonnement, qui renvoie alors un instantané : pas de reconnexion à gérer.
 // Renvoie une fonction de désabonnement.
-export function ouvrirCanal(gestionnaires) {
+function abonner(type, onMessage, onErreur) {
   let desabonner = null
   let ferme = false
   obtenirHass()
-    .then((hass) =>
-      hass.connection.subscribeMessage(gestionnaires.onMessage, { type: 'lg_webos_tv/abonner' }),
+    .then((hass) => hass.connection.subscribeMessage(onMessage, { type: `lg_webos_tv/${type}` }))
+    .then(
+      (fn) => {
+        if (ferme) fn()
+        else desabonner = fn
+      },
+      (err) => onErreur?.(new Error(err?.message || `Échec (${err?.code ?? 'inconnu'})`)),
     )
-    .then((fn) => {
-      if (ferme) fn()
-      else desabonner = fn
-    })
   return () => {
     ferme = true
     desabonner?.()
   }
 }
+
+export const ouvrirCanal = (gestionnaires) => abonner('abonner', gestionnaires.onMessage)
+
+// Page Luminosité adaptative : lux et journal, seulement pendant qu'elle est
+// ouverte.
+export const suivreLuminosite = (onMessage, onErreur) =>
+  abonner('luminosite_adaptative/suivre', onMessage, onErreur)

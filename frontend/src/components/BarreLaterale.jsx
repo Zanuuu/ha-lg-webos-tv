@@ -1,6 +1,7 @@
 const VUES_SERVICE = [
   { id: 'presets', libelle: 'Presets' },
   { id: 'historique', libelle: 'Historique' },
+  { id: 'luminosite', libelle: 'Luminosité adaptative' },
 ]
 
 export default function BarreLaterale({ sections, vue, sectionActiveId, onChoisirSection, onChoisirVue }) {
