@@ -451,6 +451,36 @@
    "erreurs": [
     "lux_max"
    ]
+  },
+  {
+   "nom": "reprise sur changement désactivée",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "reprise_sur_changement": false
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "reprise sur changement non booléenne",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "reprise_sur_changement": 1
+   },
+   "erreurs": [
+    "reprise_sur_changement"
+   ]
   }
  ]
 }

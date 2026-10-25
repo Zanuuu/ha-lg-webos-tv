@@ -35,6 +35,14 @@ export const configurerLuminosite = (options) =>
 export const ancrerLuminosite = () => commande('luminosite_adaptative/ancrer')
 export const desactiverEconomieEnergie = () =>
   commande('luminosite_adaptative/desactiver_economie_energie')
+// Corrections retenues et suggestions de courbe : calculées par
+// l'intégration, qui recalcule aussi la suggestion appliquée.
+export const appliquerSuggestion = (plage) =>
+  commande('luminosite_adaptative/appliquer_suggestion', { plage })
+export const ignorerSuggestion = (plage) =>
+  commande('luminosite_adaptative/ignorer_suggestion', { plage })
+export const oublierCorrection = (id) =>
+  commande('luminosite_adaptative/oublier_correction', { correction_id: id })
 
 export const recupererHistorique = (limite = 100) => commande('historique', { limite })
 export const annulerEcriture = (id) => commande('historique/annuler', { ecriture_id: id })

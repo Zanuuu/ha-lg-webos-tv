@@ -26,9 +26,20 @@ function domaineLux(options, lux) {
   return 10 ** Math.max(3, Math.ceil(Math.log10(plusGrand)))
 }
 
-// `ancrages` : points d'ancrage de la mise en route, affichés en losanges.
-// Sans `onChanger`, la courbe est un aperçu, sans poignées.
-export default function CourbeLuminosite({ options, lux, ancrages = [], desactive, onChanger }) {
+function libelleCorrection(c) {
+  const date = new Date(c.horodatage).toLocaleString('fr-FR', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const ecart = c.ecart > 0 ? `+${c.ecart}` : `${c.ecart}`
+  return `Correction du ${date} : luminosité ${c.valeur} à ${formaterLux(c.lux)} `
+    + `(courbe ${ecart})${c.ecartee ? ', écartée des suggestions' : ''}`
+}
+
+// `ancrages` : points d'ancrage de la mise en route, affichés en losanges ;
+// `corrections` : réglages manuels retenus, en points ; `apercu` : options
+// d'une courbe suggérée, tracée en pointillé. Sans `onChanger`, la courbe est
+// un aperçu, sans poignées.
+export default function CourbeLuminosite({ options, lux, ancrages = [], corrections = [],
+  apercu = null, desactive, onChanger }) {
   const svgRef = useRef(null)
   const luxFin = domaineLux(options, lux)
   const xDeLux = (l) => X0 + (Math.log10(borner(l, 1, luxFin)) / Math.log10(luxFin)) * (X1 - X0)
@@ -39,11 +50,16 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], desactiv
   const decades = []
   for (let l = 1; l <= luxFin; l *= 10) decades.push(l)
 
+  // Plate au-delà des extrémités, jusqu'aux bords du graphique.
+  function tracer(opts) {
+    const pts = pointsCourbe(opts).map(([l, v]) => ({ x: xDeLux(l), y: yDeLum(v) }))
+    return `M ${X0} ${pts[0].y} ${pts.map((p) => `L ${p.x} ${p.y}`).join(' ')} `
+      + `L ${X1} ${pts[pts.length - 1].y}`
+  }
   const points = pointsCourbe(options).map(([l, v]) => ({ x: xDeLux(l), y: yDeLum(v) }))
   const premier = points[0]
   const dernier = points[points.length - 1]
-  const trace = `M ${X0} ${premier.y} ${points.map((p) => `L ${p.x} ${p.y}`).join(' ')} `
-    + `L ${X1} ${dernier.y}`
+  const trace = tracer(options)
 
   const cible = lux !== null && lux !== undefined ? calculerCible(lux, options) : null
   const maintenant = cible !== null ? { x: xDeLux(Math.max(lux, 1)), y: yDeLum(cible) } : null
@@ -181,6 +197,13 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], desactiv
           </g>
         ))}
         <path d={trace} className="trace-courbe" />
+        {apercu && <path d={tracer(apercu)} className="trace-apercu" />}
+        {corrections.map((c) => (
+          <circle key={c.id} cx={xDeLux(Math.max(c.lux, 1))} cy={yDeLum(c.valeur)} r="5"
+            className={`correction-courbe${c.ecartee ? ' correction-ecartee' : ''}`}>
+            <title>{libelleCorrection(c)}</title>
+          </circle>
+        ))}
         {ancrages.map((a) => (
           <rect key={a.horodatage} className="ancre-courbe" x={xDeLux(a.lux) - 6}
             y={yDeLum(a.luminosite) - 6} width="12" height="12"
@@ -213,6 +236,8 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], desactiv
             + 'du clavier.'
           : '.'}
         {ancrages.length > 0 && ' Losanges : vos points d\'ancrage.'}
+        {corrections.length > 0 && ' Points : vos corrections retenues.'}
+        {apercu && ' Pointillé : la courbe suggérée.'}
       </figcaption>
       {onChanger && (
         <div className="actions-courbe">

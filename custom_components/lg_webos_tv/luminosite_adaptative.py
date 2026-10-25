@@ -27,7 +27,11 @@ téléviseur les attribue tous à notre client). Ici :
 - la santé de l'installation (sante.py) se mesure au fil de l'eau :
   agrégats journaliers enregistrés en SQLite (statistiques.py), réponse du
   capteur à l'allumage, à l'extinction et aux rampes, diagnostics pour le
-  panneau.
+  panneau ;
+- une pause se lève aussi quand l'éclairage change nettement, et une
+  correction gardée assez longtemps est enregistrée (corrections.py) : de
+  quoi proposer des retouches de la courbe, que l'utilisateur applique ou
+  non (reprise.py).
 """
 
 import logging
@@ -58,13 +62,15 @@ from .const import (CONF_ANCRAGES, CONF_CAPTEUR_LUX, CONF_CONFIRMATION_SAUT,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
                     CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
-                    CONF_RAMPE_PAS, DOMAIN,
+                    CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT, DOMAIN,
                     ECART_MINIMAL_DEFAUT, EMPLACEMENTS, MODES_HDR,
                     OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from . import courbe
 from .courbe import calculer_cible, valider_point_intermediaire
 from .entite import descriptions
 from .rampe import Rampe, parametres
+from .reprise import (Correction, SuiviCorrection, a_ecarter, bornes_reprise,
+                      changement_net, ecart, plage, suggestions)
 from .sante import (CONSERVATION_JOURS, RAMPE_DELTA_MIN, Accumulateur,
                     Contexte, Inversions, Retroaction, StatsJour, ambiance,
                     evaluer, fenetre, resume, resume_jour)
@@ -86,6 +92,10 @@ ORIGINE = "luminosite_adaptative"
 
 # Notifications du téléviseur qui valent reprise en main.
 ORIGINES_EXTERIEURES = ("manuel", "autre_application")
+# Reprises en main qui deviennent des corrections, matière des suggestions :
+# les réglages isolés. Ni preset ni retour arrière (une valeur posée en lot
+# n'a pas été choisie pour l'éclairage du moment).
+ORIGINES_CORRECTION = (*ORIGINES_EXTERIEURES, "home_assistant", "panneau")
 # Écritures en lot : la fonction attend qu'elles retombent, sinon elle
 # pourrait s'intercaler entre deux écritures d'un preset et écraser la
 # luminosité qu'il vient de poser.
@@ -178,6 +188,8 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
         erreurs[CONF_MODES_EXCLUS] = "mode_inconnu"
     if options.get(CONF_EMPLACEMENT, "inconnu") not in EMPLACEMENTS:
         erreurs[CONF_EMPLACEMENT] = "emplacement_inconnu"
+    if not isinstance(options.get(CONF_REPRISE_SUR_CHANGEMENT, True), bool):
+        erreurs[CONF_REPRISE_SUR_CHANGEMENT] = "hors_bornes"
     if erreurs:
         return options, erreurs
     # Les sélecteurs numériques rendent des flottants.
@@ -210,6 +222,15 @@ def nom_zone(hass: HomeAssistant, zone_id: str | None) -> str | None:
 
 class AncrageImpossible(Exception):
     """Point d'ancrage refusé ; le message est un code pour le panneau."""
+
+
+class SuggestionInconnue(Exception):
+    """Plage sans suggestion (déjà appliquée, ou corrections oubliées entre-
+    temps)."""
+
+
+class CorrectionInconnue(Exception):
+    pass
 
 
 @callback
@@ -313,6 +334,16 @@ class LuminositeAdaptative:
         self._ecouteurs_sante: list[Callable[[], None]] = []
         self._tache_stats = None
 
+        # Corrections du capteur (relues en base) et suggestions qu'elles
+        # appellent ; reprise en main en observation pendant 10 minutes.
+        self._base_corrections = donnees.corrections
+        self._corrections: list[Correction] = []
+        self._corrections_chargees = False
+        self._suivi: SuiviCorrection | None = None
+        self._annuler_suivi: Callable[[], None] | None = None
+        self._suggestions: dict | None = None
+        self._ecouteurs_suggestions: list[Callable[[], None]] = []
+
         self._ecouteurs: list[Callable[[], None]] = []
         # Seulement le détail (page du panneau) : prévenus à chaque pas d'une
         # rampe, sans réécrire l'état des entités.
@@ -353,6 +384,7 @@ class LuminositeAdaptative:
         self._signal = SignalLux(self._constantes())
         self._actualiser_profil()
         self._reinitialiser_sante()
+        self._reinitialiser_corrections()
         etat = self.hass.states.get(self.capteur)
         if (lux := _lire_lux(etat)) is not None:
             self._cadence.noter(etat.last_reported_timestamp)
@@ -369,6 +401,7 @@ class LuminositeAdaptative:
             ne_plus_suivre()
         self._ne_plus_suivre_capteur = []
         self._annuler_planification()
+        self._abandonner_correction()
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
             self._annuler_fin_pause = None
@@ -411,6 +444,11 @@ class LuminositeAdaptative:
         for ecouteur in list(self._ecouteurs_details):
             ecouteur()
 
+    def ecouter_suggestions(self, ecouteur: Callable[[], None]) -> Callable[[], None]:
+        """Abonne la page du panneau aux corrections et aux suggestions."""
+        self._ecouteurs_suggestions.append(ecouteur)
+        return lambda: self._ecouteurs_suggestions.remove(ecouteur)
+
     def ecouter_journal(self, ecouteur: Callable[[dict], None]) -> Callable[[], None]:
         """Abonne le panneau aux nouveaux événements du journal."""
         self._ecouteurs_journal.append(ecouteur)
@@ -440,6 +478,12 @@ class LuminositeAdaptative:
         if self.lux is None:
             return None
         return self._signal.lux_filtre(_horloge())
+
+    def _lux_retenu(self) -> float | None:
+        """Dernière mesure retenue par le signal (sauts confirmés)."""
+        if self.lux is None:
+            return None
+        return self._signal.lux_vise(_horloge())
 
     @property
     def cible(self) -> int | None:
@@ -582,8 +626,8 @@ class LuminositeAdaptative:
             self._annuler_planification()
         self._prevenir()
 
-    def reprendre(self, raison: str = "bouton") -> None:
-        self._lever_pause(raison)
+    def reprendre(self, raison: str = "bouton", **details) -> None:
+        self._lever_pause(raison, **details)
         self._signal.oublier_reference()
         self._lancer()
         self._prevenir()
@@ -615,6 +659,7 @@ class LuminositeAdaptative:
         self._planifier(DELAI_APPLICATION_S)
         self._prevenir()
         self._actualiser_sante()
+        self._actualiser_suggestions()
 
     def commencer_mise_en_route(self) -> None:
         """Assistant de mise en route ouvert dans le panneau : la fonction
@@ -623,6 +668,9 @@ class LuminositeAdaptative:
         self._mises_en_route += 1
         if self._mises_en_route > 1:
             return
+        # Le point d'ancrage va recaler la courbe : la correction en cours
+        # ne la décrirait plus.
+        self._abandonner_correction("mise_en_route")
         if self.rampe is not None:
             self.rampe.interrompre("mise_en_route")
         self._annuler_planification()
@@ -694,6 +742,9 @@ class LuminositeAdaptative:
                 self._noter(evenement)
             if fige:
                 self._signal.oublier_reference()
+            if self._suivi is not None:
+                self._suivi.mesurer(maintenant, self.lux_filtre)
+            self._verifier_reprise()
         # Débit et non rebond : une rafale de mesures ne repousse pas
         # l'évaluation (un capteur à 0,5 s l'aurait repoussée sans fin).
         if self._annuler_application is None:
@@ -703,6 +754,11 @@ class LuminositeAdaptative:
     @callback
     def _verifier_capteur(self, _instant) -> None:
         self._echantillonner()
+        # Le filtre avance entre deux mesures d'un capteur qui ne publie que
+        # sur variation.
+        if self._suivi is not None and self.lux is not None:
+            self._suivi.mesurer(_horloge(), self.lux_filtre)
+        self._verifier_reprise()
         self._resoudre_retroaction(_horloge())
         self._actualiser_sante()
         if (self.active and self._tv.etat_connexion == "connecte"
@@ -762,6 +818,7 @@ class LuminositeAdaptative:
             return
         self._noter_reprise(valeur)
         self._pause(dt_util.utcnow() + timedelta(minutes=self.options[CONF_PAUSE_MIN]), origine)
+        self._observer_correction(mode, origine, valeur)
         self._prevenir()
 
     def _noter_reprise(self, valeur) -> None:
@@ -790,6 +847,12 @@ class LuminositeAdaptative:
 
     def _pause(self, fin: datetime, origine: str) -> None:
         cause = {"origine": origine, "horodatage": dt_util.utcnow().isoformat()}
+        # Éclairage de la reprise en main : la pause se lève s'il change
+        # nettement. Mesure retenue, vers laquelle va le filtre : une reprise
+        # en main pendant une transition vaut pour l'éclairage d'arrivée.
+        # Conservé avec la cause au redémarrage.
+        if origine != PAUSE_MANUELLE and (lux := self._lux_retenu()) is not None:
+            cause["lux"] = round(lux, 2)
         self._mettre_en_pause_jusqua(fin, cause)
         self._noter("pause", origine=origine, fin=fin.isoformat())
 
@@ -808,18 +871,214 @@ class LuminositeAdaptative:
         self._annuler_fin_pause = None
         self.reprendre("delai")
 
-    def _lever_pause(self, raison: str | None = None) -> None:
-        """`raison` : délai, bouton ou rallumage, notée au journal ; aucune
-        quand l'interrupteur change (son changement est déjà noté)."""
+    def _lever_pause(self, raison: str | None = None, **details) -> None:
+        """`raison` : délai, bouton, rallumage ou changement d'éclairage,
+        notée au journal ; aucune quand l'interrupteur change (son
+        changement est déjà noté)."""
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
             self._annuler_fin_pause = None
+        if self.fin_pause is not None:
+            self._abandonner_correction("pause_levee" if raison is not None else None)
         if self.fin_pause is not None and raison is not None:
-            self._noter("reprise", raison=raison)
+            self._noter("reprise", raison=raison, **details)
         self.fin_pause = None
         self.cause_pause = None
         self._eteint_pendant_pause = False
         self._reprise_en_cours = None
+
+    def _reference_reprise(self) -> float | None:
+        """Lux de la reprise en main, si la pause peut se lever quand
+        l'éclairage change : jamais pour une pause demandée depuis le
+        panneau (le temps d'un film, souvent lumière éteinte)."""
+        cause = self.cause_pause
+        if (self.fin_pause is None or cause is None
+                or not self.options[CONF_REPRISE_SUR_CHANGEMENT]
+                or cause.get("origine") == PAUSE_MANUELLE):
+            return None
+        return cause.get("lux")
+
+    def _verifier_reprise(self) -> bool:
+        """Lève la pause si le lux filtré a doublé ou diminué de moitié
+        depuis la reprise en main (reprise.changement_net)."""
+        if self._mises_en_route or (reference := self._reference_reprise()) is None:
+            return False
+        lux, retenu = self.lux_filtre, self._lux_retenu()
+        if lux is None or retenu is None or not changement_net(lux, retenu, reference,
+                                                                 self.options):
+            return False
+        self.reprendre("changement_eclairage", lux_depart=round(reference, 1), lux=round(lux, 1))
+        return True
+
+    def _surveiller_pause(self) -> None:
+        """Évaluation pendant une pause : levée sur changement d'éclairage,
+        sinon nouvelle vérification tant que le filtre avance (un capteur
+        qui ne publie que sur variation n'en donnera pas l'occasion)."""
+        if self._reference_reprise() is None or self._verifier_reprise():
+            return
+        instant = _horloge()
+        echeance = self._signal.prochaine_echeance(instant)
+        if echeance is not None and self._annuler_application is None:
+            self._planifier(max(echeance - instant, 0.1))
+
+    def _reprise_lux(self) -> dict | None:
+        """Lux sous lequel et au-delà duquel la pause en cours se lèvera."""
+        if (reference := self._reference_reprise()) is None:
+            return None
+        bas, haut = bornes_reprise(reference, self.options)
+        return {"bas": None if bas is None else round(bas, 1),
+                "haut": None if haut is None else round(haut, 1)}
+
+    # ---------------------------------------------------------- corrections
+    def _observer_correction(self, mode: str | None, origine: str, valeur) -> None:
+        """Reprise en main : correction candidate, retenue si la valeur est
+        gardée 10 minutes sous un lux stable. Un nouveau réglage la remplace
+        (les 10 minutes repartent)."""
+        self._abandonner_correction(None if origine in ORIGINES_CORRECTION else origine)
+        try:
+            valeur = round(float(valeur))
+        except (TypeError, ValueError):
+            return
+        if origine not in ORIGINES_CORRECTION:
+            return
+        constantes = self._signal.constantes
+        self._suivi = SuiviCorrection(
+            _horloge(), valeur, mode, origine,
+            lissage_s=max(constantes.lissage_montee_s, constantes.lissage_descente_s))
+        self._suivi.mesurer(_horloge(), self.lux_filtre)
+        self._annuler_suivi = async_track_point_in_utc_time(
+            self.hass, self._sur_fin_suivi, dt_util.utc_from_timestamp(self._suivi.echeance))
+
+    def _abandonner_correction(self, raison: str | None = None) -> None:
+        """Correction candidate abandonnée ; `raison` notée au journal (rien
+        quand un nouveau réglage la remplace ou que la fonction s'arrête)."""
+        if self._annuler_suivi is not None:
+            self._annuler_suivi()
+            self._annuler_suivi = None
+        if self._suivi is not None and raison is not None:
+            self._noter("correction_ecartee", raison=raison, valeur=self._suivi.valeur)
+        self._suivi = None
+
+    @callback
+    def _sur_fin_suivi(self, _maintenant) -> None:
+        self._annuler_suivi = None
+        suivi, self._suivi = self._suivi, None
+        if suivi is None:
+            return
+        instant = _horloge()
+        if self.lux is not None:
+            suivi.mesurer(instant, self.lux_filtre)
+        actuelle = self._actuelle()
+        raison = suivi.verdict(instant, None if actuelle is None else round(actuelle),
+                               self._tv.mode_image, self._tv.etat_connexion == "connecte",
+                               self.fin_pause is not None)
+        # La page n'affiche plus la correction en observation.
+        self._prevenir_details()
+        if raison is not None:
+            self._noter("correction_ecartee", raison=raison, valeur=suivi.valeur)
+            return
+        correction = suivi.correction(instant, self.options)
+        self._noter("correction", lux=correction.lux, valeur=correction.valeur,
+                    cible=correction.cible)
+        self.hass.async_create_task(self._enregistrer_correction(self.capteur, correction),
+                                    f"{DOMAIN} correction")
+
+    async def _enregistrer_correction(self, capteur: str, correction: Correction) -> None:
+        try:
+            await self._base_corrections.ajouter(capteur, correction)
+            await self._base_corrections.purger()
+        except Exception:  # noqa: BLE001 — la fonction marche sans
+            log.exception("Luminosité adaptative : correction non enregistrée")
+        await self._relire_corrections(capteur)
+
+    def _reinitialiser_corrections(self) -> None:
+        """Démarrage ou nouveau capteur : corrections de ce capteur, après
+        la purge."""
+        self._abandonner_correction()
+        self._corrections = []
+        self._corrections_chargees = False
+        self.hass.async_create_task(self._charger_corrections(self.capteur),
+                                    f"{DOMAIN} corrections")
+
+    async def _charger_corrections(self, capteur: str) -> None:
+        try:
+            await self._base_corrections.purger()
+        except Exception:  # noqa: BLE001 — la fonction marche sans
+            log.exception("Luminosité adaptative : corrections illisibles")
+        await self._relire_corrections(capteur)
+
+    async def _relire_corrections(self, capteur: str) -> None:
+        try:
+            corrections = await self._base_corrections.charger(capteur)
+        except Exception:  # noqa: BLE001 — la fonction marche sans
+            log.exception("Luminosité adaptative : corrections illisibles")
+            return
+        if capteur != self.capteur:
+            return
+        self._corrections = corrections
+        self._corrections_chargees = True
+        self._actualiser_suggestions()
+
+    def _calculer_suggestions(self) -> dict[str, Any]:
+        return {
+            "chargees": self._corrections_chargees,
+            "corrections": [{
+                "id": c.id, "horodatage": dt_util.utc_from_timestamp(c.horodatage).isoformat(),
+                "lux": c.lux, "valeur": c.valeur, "cible": c.cible,
+                "ecart": ecart(c, self.options), "mode_image": c.mode_image,
+                "origine": c.origine, "ecartee": c.ecartee, "plage": plage(c.lux),
+            } for c in self._corrections],
+            "suggestions": [asdict(s) for s in suggestions(self._corrections, self.options)],
+        }
+
+    def _actualiser_suggestions(self) -> None:
+        resultat = self._calculer_suggestions()
+        if resultat != self._suggestions:
+            self._suggestions = resultat
+            for ecouteur in list(self._ecouteurs_suggestions):
+                ecouteur()
+
+    def suggestions(self) -> dict[str, Any]:
+        """Corrections du capteur (écart à la courbe actuelle) et
+        suggestions de courbe."""
+        if self._suggestions is None:
+            self._suggestions = self._calculer_suggestions()
+        return self._suggestions
+
+    def _suggestion(self, indice: int):
+        suggestion = next((s for s in suggestions(self._corrections, self.options)
+                           if s.plage == indice), None)
+        if suggestion is None:
+            raise SuggestionInconnue(indice)
+        return suggestion
+
+    def appliquer_suggestion(self, indice: int) -> tuple[dict, dict]:
+        """Courbe proposée pour cette plage, recalculée ici (jamais celle
+        qu'envoie le panneau) ; les points d'ancrage sont oubliés, comme
+        après toute retouche de la courbe. Renvoie les options à
+        enregistrer et le compte rendu."""
+        suggestion = self._suggestion(indice)
+        self._noter("suggestion_appliquee", lux=suggestion.lux, ecart=suggestion.ecart,
+                    corrections=suggestion.nombre)
+        return dict(suggestion.options), {
+            "plage": indice, "points": suggestion.points, "ajout": suggestion.ajout,
+            "ancrages_oublies": bool(self.options.get(CONF_ANCRAGES)),
+            "cible": suggestion.cible}
+
+    async def ignorer_suggestion(self, indice: int) -> None:
+        """Corrections de la plage écartées des suggestions, gardées à
+        l'affichage : une nouvelle suggestion demandera 3 nouvelles
+        corrections."""
+        self._suggestion(indice)
+        ids = a_ecarter(self._corrections, indice)
+        await self._base_corrections.ecarter(ids)
+        self._noter("suggestion_ignoree", corrections=len(ids))
+        await self._relire_corrections(self.capteur)
+
+    async def oublier_correction(self, id_: int) -> None:
+        if not await self._base_corrections.oublier(id_):
+            raise CorrectionInconnue(id_)
+        await self._relire_corrections(self.capteur)
 
     # ----------------------------------------------------------- application
     def _reappliquer(self, delai_s: float, raison: str = "changement_exterieur") -> None:
@@ -862,7 +1121,11 @@ class LuminositeAdaptative:
             self._evaluer(), f"{DOMAIN} luminosité adaptative")
 
     async def _evaluer(self) -> None:
-        if self.etat != "active":
+        etat = self.etat
+        if etat == "pause":
+            self._surveiller_pause()
+            return
+        if etat != "active":
             return
         instant = _horloge()
         echeance = None
@@ -1198,6 +1461,7 @@ class LuminositeAdaptative:
             "cause_pause": self.cause_pause,
             "conflit": self.conflit,
             "rampe": self._resume_rampe(),
+            "reprise_lux": self._reprise_lux(),
         }
 
     def details(self) -> dict[str, Any]:
@@ -1227,6 +1491,10 @@ class LuminositeAdaptative:
             "emplacement": self.options[CONF_EMPLACEMENT],
             "derniere_mesure": (dt_util.utc_from_timestamp(dernier).isoformat()
                                 if dernier is not None else None),
+            # Correction en observation : valeur et fin des 10 minutes.
+            "correction_en_cours": None if self._suivi is None else {
+                "valeur": self._suivi.valeur,
+                "fin": dt_util.utc_from_timestamp(self._suivi.echeance).isoformat()},
         }
 
     def attributs(self) -> dict[str, Any]:

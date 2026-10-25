@@ -15,7 +15,7 @@ from homeassistant.config_entries import (SOURCE_REAUTH, ConfigEntry,
 from homeassistant.const import CONF_HOST
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
-from homeassistant.helpers.selector import (EntitySelector,
+from homeassistant.helpers.selector import (BooleanSelector, EntitySelector,
                                             EntitySelectorConfig,
                                             NumberSelector,
                                             NumberSelectorConfig,
@@ -32,7 +32,8 @@ from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_CONFIRMATION_SAUT,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
                     CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
-                    CONF_RAMPE_PAS, DOMAIN, EMPLACEMENTS, OPTIONS_AVANCEES,
+                    CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT, DOMAIN,
+                    EMPLACEMENTS, OPTIONS_AVANCEES,
                     OPTIONS_LUMINOSITE_DEFAUT)
 from .courbe import conserver_ancrages
 from .luminosite_adaptative import BORNES, modes_proposes, valider_options
@@ -245,6 +246,7 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
             vol.Required(CONF_LUX_MAX): _nombre(CONF_LUX_MAX, "lx", pas=0.1),
             vol.Required(CONF_LUMINOSITE_MAX): _nombre(CONF_LUMINOSITE_MAX),
             vol.Required(CONF_PAUSE_MIN): _nombre(CONF_PAUSE_MIN, "min"),
+            vol.Required(CONF_REPRISE_SUR_CHANGEMENT): BooleanSelector(),
             vol.Required(CONF_MODES_EXCLUS): SelectSelector(SelectSelectorConfig(
                 options=modes, multiple=True, translation_key=CONF_MODES_EXCLUS)),
             vol.Required(SECTION_AVANCEE): section(avance, {"collapsed": True}),

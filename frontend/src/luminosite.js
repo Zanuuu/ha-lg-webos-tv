@@ -27,6 +27,28 @@ export const LIBELLES_CAUSE = {
   pause_manuelle: 'pause demandée',
 }
 
+// Origine d'une correction retenue (les mêmes, sauf preset et retour
+// arrière, qui n'en font pas).
+export const LIBELLES_ORIGINE_CORRECTION = {
+  manuel: 'télécommande',
+  autre_application: 'autre application',
+  home_assistant: 'Home Assistant',
+  panneau: 'panneau',
+}
+
+// Pourquoi une correction n'a pas été retenue (reprise.SuiviCorrection).
+export const RAISONS_CORRECTION_ECARTEE = {
+  deconnecte: 'téléviseur éteint',
+  pause_levee: 'pause levée avant 10 minutes',
+  mode: 'mode d\'image changé',
+  valeur_changee: 'luminosité changée entre-temps',
+  lux_inconnu: 'aucune mesure du capteur',
+  lux_instable: 'éclairage instable',
+  mise_en_route: 'mise en route ouverte',
+  preset: 'application d\'un preset',
+  annulation: 'retour arrière dans l\'historique',
+}
+
 // Option groupée des modes HDR et Dolby Vision (const.MODES_HDR), absente
 // de l'arbre des menus.
 export const MODE_HDR = 'hdr'
@@ -222,6 +244,10 @@ export function validerOptions(options) {
   }
   if (options.emplacement_capteur !== undefined && !(options.emplacement_capteur in EMPLACEMENTS)) {
     erreurs.emplacement_capteur = 'Emplacement inconnu.'
+  }
+  if (options.reprise_sur_changement !== undefined
+      && typeof options.reprise_sur_changement !== 'boolean') {
+    erreurs.reprise_sur_changement = 'Cochée ou non.'
   }
   return erreurs
 }

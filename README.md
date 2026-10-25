@@ -189,8 +189,10 @@ pause** et son heure de fin, avec « Reprendre »
 ou « Pause 1 h » ; la **courbe** lux → luminosité, dont on déplace les
 points à la souris, au doigt ou au clavier, avec un **point intermédiaire**
 facultatif (« Ajouter un point intermédiaire ») ; l'**emplacement du capteur**
-avec un schéma de la pièce ; les autres réglages (capteur, durée de pause,
-modes laissés de côté, réglages avancés repliés), appliqués sans recharger
+avec un schéma de la pièce ; les **corrections** retenues en points sur la
+courbe, et les **suggestions** de retouche qu'elles appellent ; les autres
+réglages (capteur, durée de pause, reprise quand l'éclairage change, modes
+laissés de côté, réglages avancés repliés), appliqués sans recharger
 l'intégration ; et un **journal** des 50 derniers événements (transitions,
 pauses, reprises, mesures écartées, conflits, erreurs), tenu en mémoire
 depuis le démarrage de Home Assistant.
@@ -240,6 +242,16 @@ depuis le démarrage de Home Assistant.
   dure le délai choisi (120 min par défaut), ou jusqu'au prochain allumage
   du téléviseur ou au bouton « Reprendre » ; elle survit à un redémarrage
   de Home Assistant.
+- **Reprise quand l'éclairage change nettement** (option cochée par
+  défaut) : un réglage valait pour l'éclairage du moment ; quand la lumière
+  de la pièce double ou diminue de moitié depuis (lampe allumée ou éteinte,
+  tombée de la nuit), la pause prend fin. Le lux lissé et la mesure du
+  capteur doivent l'un et l'autre avoir changé : une ombre passagère ne
+  suffit pas. Au-delà des extrémités de la courbe, où la luminosité ne
+  changerait pas, la lumière ne compte pas. La page affiche les limites
+  (« ou dès que l'éclairage passe sous 9 lx ou au-delà de 35 lx »). La
+  pause « 1 h » demandée depuis la page n'est jamais levée ainsi : elle
+  est faite pour durer le temps d'un film, lumière éteinte.
 - **Modes laissés de côté** (par défaut FILMMAKER MODE, Expert et les
   contenus HDR / Dolby Vision) : la luminosité n'y est jamais modifiée. Un
   mode absent de la liste (« Créateur » par exemple) est aussi laissé de
@@ -254,6 +266,35 @@ depuis le démarrage de Home Assistant.
   apparaît **une seule fois** dans l'historique du panneau (origine
   « Luminosité adaptative », de la valeur de départ à celle d'arrivée), et
   son retour arrière restaure la valeur de départ.
+
+### Corrections et suggestions
+
+Un réglage de la luminosité gardé **10 minutes**, sans autre réglage et
+sous un éclairage stable, est retenu comme **correction** : lux lissé,
+valeur gardée, luminosité que donnait la courbe, mode d'image, heure.
+Comptent les réglages à la télécommande, par une autre application, par
+une entité ou une action Home Assistant (automatisations comprises) et
+depuis le panneau ; ni les presets, ni les retours arrière, ni les modes
+laissés de côté, ni la mise en route. Les corrections apparaissent en
+points sur la courbe, avec leur liste et un bouton « Oublier » pour celles
+qui valaient pour un contenu particulier.
+
+Quand au moins **3 corrections** d'une même plage de lumière (une
+demi-décade : 1 à 3 lx, 3 à 10 lx, 10 à 30 lx…) s'écartent de la courbe
+dans le même sens d'au moins **5 points** (médiane, sur les 10 plus
+récentes), la page propose une retouche : « Suggestion : +8 en pièce
+sombre, vers 2,2 lx (4 corrections) », avec ce qui change, un **aperçu**
+en pointillé sur la courbe, « Appliquer » et « Ignorer ». Rien n'est
+jamais appliqué sans vous. La retouche bouge le moins de points
+possible : la luminosité de l'extrémité pour une lumière au-delà de la
+courbe, sinon le point le plus proche juste assez pour que la courbe passe
+par vos réglages ; au milieu d'une courbe à deux points, un point
+intermédiaire est ajouté. Appliquer une suggestion oublie les points
+d'ancrage, comme toute retouche de la courbe. « Ignorer » met ses
+corrections de côté (elles restent affichées, en creux) : une nouvelle
+suggestion demande 3 nouvelles corrections. Les corrections sont propres
+au capteur choisi, gardées un an (500 au plus) dans la base de
+`<config>/lg_webos_tv/`, donc dans les sauvegardes.
 
 ### Santé de l'installation
 

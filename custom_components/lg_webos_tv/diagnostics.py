@@ -26,6 +26,7 @@ def _luminosite_adaptative(fonction) -> dict[str, Any] | None:
                           "valeurs": {"differentes": diagnostic["niveau"] != "ok"}}
         diagnostics.append(diagnostic)
     details = fonction.details()
+    suggestions = fonction.suggestions()
     return {
         "etat": details["etat"],
         "options": {cle: valeur for cle, valeur in fonction.options.items()
@@ -36,6 +37,9 @@ def _luminosite_adaptative(fonction) -> dict[str, Any] | None:
         "statistiques": sante["resume"],
         "jours": sante["jours"],
         "diagnostics": diagnostics,
+        # Nombres seulement : les corrections portent l'heure des réglages.
+        "corrections": len(suggestions["corrections"]),
+        "suggestions": len(suggestions["suggestions"]),
     }
 
 

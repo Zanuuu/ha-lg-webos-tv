@@ -41,7 +41,7 @@
     "step": {
       "init": {
         "title": "Luminosité adaptative",
-        "description": "Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une échelle logarithmique proche de la perception de l'œil. La mesure est lissée, et une variation brève ou isolée est ignorée. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset) met la fonction en pause. Si « Fonction Économie d'énergie » ou le mode d'image Éco règlent déjà la luminosité, la fonction s'efface et le signale dans Réparations. Sans capteur, la fonction est désactivée.",
+        "description": "Règle la luminosité des pixels OLED d'après un capteur de lumière ambiante, sur une échelle logarithmique proche de la perception de l'œil. La mesure est lissée, et une variation brève ou isolée est ignorée. Un réglage de la luminosité fait ailleurs (télécommande, Home Assistant, preset) met la fonction en pause, jusqu'à ce que l'éclairage change nettement. Si « Fonction Économie d'énergie » ou le mode d'image Éco règlent déjà la luminosité, la fonction s'efface et le signale dans Réparations. Sans capteur, la fonction est désactivée.",
         "data": {
           "capteur_lux": "Capteur de luminosité ambiante",
           "emplacement_capteur": "Emplacement du capteur",
@@ -52,6 +52,7 @@
           "luminosite_intermediaire": "Luminosité intermédiaire",
           "luminosite_max": "Luminosité maximale",
           "pause": "Pause après un réglage manuel",
+          "reprise_sur_changement": "Reprendre quand l'éclairage change nettement",
           "modes_exclus": "Modes d'image laissés de côté"
         },
         "data_description": {
@@ -61,7 +62,8 @@
           "lux_intermediaire": "Facultatif, avec sa luminosité : un troisième point de la courbe, entre la pièce sombre et la pièce lumineuse (par exemple une soirée sous les lampes). Vides tous deux : pas de point intermédiaire.",
           "luminosite_intermediaire": "Entre la luminosité minimale et la maximale.",
           "lux_max": "Au-dessus, la luminosité maximale s'applique.",
-          "pause": "La pause prend fin aussi au prochain allumage du téléviseur, ou avec le bouton « Reprendre ».",
+          "pause": "La pause prend fin aussi au prochain allumage du téléviseur, ou avec le bouton « Reprendre ». Une valeur gardée 10 minutes est retenue comme correction : le panneau propose de retoucher la courbe quand plusieurs vont dans le même sens.",
+          "reprise_sur_changement": "Fin de la pause quand la lumière de la pièce double ou diminue de moitié depuis le réglage (lampe allumée ou éteinte, tombée de la nuit). Sans effet sur une pause demandée depuis le panneau.",
           "modes_exclus": "Modes où la luminosité n'est jamais modifiée (modes calibrés)."
         },
         "sections": {

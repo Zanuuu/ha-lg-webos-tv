@@ -41,7 +41,7 @@
     "step": {
       "init": {
         "title": "Adaptive brightness",
-        "description": "Sets the OLED pixel brightness from an ambient light sensor, on a logarithmic scale close to how the eye perceives light. The reading is smoothed, and a brief or isolated change is ignored. A brightness change made elsewhere (remote, Home Assistant, preset) pauses the feature. If the TV's Energy Saving or the Eco picture mode already adjusts brightness, the feature steps back and reports it in Repairs. Without a sensor, the feature is off.",
+        "description": "Sets the OLED pixel brightness from an ambient light sensor, on a logarithmic scale close to how the eye perceives light. The reading is smoothed, and a brief or isolated change is ignored. A brightness change made elsewhere (remote, Home Assistant, preset) pauses the feature, until the lighting changes clearly. If the TV's Energy Saving or the Eco picture mode already adjusts brightness, the feature steps back and reports it in Repairs. Without a sensor, the feature is off.",
         "data": {
           "capteur_lux": "Ambient light sensor",
           "emplacement_capteur": "Sensor location",
@@ -52,6 +52,7 @@
           "luminosite_intermediaire": "Intermediate brightness",
           "luminosite_max": "Maximum brightness",
           "pause": "Pause after a manual change",
+          "reprise_sur_changement": "Resume when the lighting changes clearly",
           "modes_exclus": "Picture modes left alone"
         },
         "data_description": {
@@ -61,7 +62,8 @@
           "lux_intermediaire": "Optional, with its brightness: a third point of the curve, between the dark room and the bright room (an evening under the lamps, for example). Both empty: no intermediate point.",
           "luminosite_intermediaire": "Between the minimum and maximum brightness.",
           "lux_max": "Above this, the maximum brightness applies.",
-          "pause": "The pause also ends the next time the TV is turned on, or with the Resume button.",
+          "pause": "The pause also ends the next time the TV is turned on, or with the Resume button. A value kept for 10 minutes is recorded as a correction: the panel offers to adjust the curve when several point the same way.",
+          "reprise_sur_changement": "Ends the pause when the room light doubles or halves since the change (lamp switched on or off, nightfall). No effect on a pause requested from the panel.",
           "modes_exclus": "Modes where brightness is never changed (calibrated modes)."
         },
         "sections": {

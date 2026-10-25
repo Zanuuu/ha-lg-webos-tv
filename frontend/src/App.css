@@ -1962,3 +1962,97 @@ table.table-historique {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-width: 36rem;
 }
+
+/* ---------- Corrections et suggestions (lot 5) ---------- */
+
+/* Courbe suggérée, en pointillé par-dessus la courbe enregistrée. */
+.trace-apercu {
+  fill: none;
+  stroke: var(--etat-ok);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+  stroke-linejoin: round;
+}
+
+.correction-courbe {
+  fill: var(--etat-attente);
+  stroke: var(--noir);
+  stroke-width: 1.5;
+}
+
+/* Écartée des suggestions (« Ignorer ») : en creux. */
+.correction-ecartee {
+  fill: var(--noir);
+  stroke: var(--gris-texte);
+}
+
+.suggestions-luminosite {
+  margin: 0 0 1rem;
+  max-width: 44rem;
+}
+
+.message.suggestion-courbe {
+  border-left-color: var(--etat-ok);
+  background: var(--graphite);
+}
+
+.suggestion-courbe p {
+  margin: 0 0 0.5rem;
+}
+
+.changements-suggestion {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.actions-suggestion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.corrections-luminosite {
+  margin: 0 0 1rem;
+}
+
+.corrections-luminosite summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.3rem 0;
+}
+
+.corrections-luminosite p {
+  margin: 0.3rem 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.ligne-correction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+.case-reprise {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .trace-apercu {
+    stroke-width: 5;
+    stroke-dasharray: 14 10;
+  }
+
+  .correction-courbe {
+    r: 10;
+    stroke-width: 3;
+  }
+
+  .actions-suggestion button,
+  .ligne-correction button,
+  .case-reprise {
+    min-height: 44px;
+  }
+}

@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.9.0 — 2026-10-25
+
+Luminosité adaptative : reprise en main et suggestions (lot 5 de
+`docs/etude-luminosite-adaptative.md`).
+
+- **Changement de comportement de la pause** : elle prend fin aussi quand
+  l'éclairage change nettement, c'est-à-dire quand la lumière de la pièce
+  double ou diminue de moitié depuis le réglage qui l'a déclenchée (lampe
+  allumée ou éteinte, tombée de la nuit). Le lux lissé et la mesure du
+  capteur doivent avoir changé tous deux, et seulement dans la plage de
+  la courbe. Activé par défaut, y compris sur les installations
+  existantes ; pour garder l'ancien comportement, décochez « Reprendre
+  quand l'éclairage change nettement » (page du panneau ou Configurer).
+  La pause « 1 h » demandée depuis le panneau n'est jamais levée ainsi.
+  Une pause en cours au moment de la mise à jour ne l'est pas non plus.
+  La raison de la reprise est notée au journal, et la page affiche les
+  limites d'éclairage.
+- **Corrections** : un réglage de la luminosité gardé 10 minutes, sans
+  autre réglage et sous un éclairage stable, est enregistré (lux, valeur,
+  cible de la courbe, mode, heure ; table `corrections` de la base de
+  `<config>/lg_webos_tv/`, par capteur, un an et 500 lignes au plus).
+  Comptent la télécommande, une autre application, Home Assistant et le
+  panneau ; ni les presets, ni les retours arrière, ni les modes laissés
+  de côté, ni la mise en route. Points sur la courbe, liste avec
+  « Oublier » ; correction retenue ou écartée (avec la raison) au journal.
+- **Suggestions de courbe** : dès 3 corrections d'une même demi-décade de
+  lux qui s'écartent de la courbe dans le même sens d'au moins 5 points
+  (médiane des 10 plus récentes), la page propose une retouche, avec un
+  aperçu en pointillé, « Appliquer » (points d'ancrage oubliés) et
+  « Ignorer ». Jamais d'apprentissage silencieux. Le diagnostic
+  « Corrections fréquentes » renvoie vers la suggestion.
+- Commandes websocket `luminosite_adaptative/suggestions`,
+  `appliquer_suggestion`, `ignorer_suggestion` et `oublier_correction`
+  (administrateurs) ; corrections et suggestions dans le flux de la page ;
+  nombre de corrections et de suggestions dans les diagnostics.
+
 ## 2.8.1 — 2026-10-25
 
 - Nouvel identifiant d'application pour l'appairage

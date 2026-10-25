@@ -4,7 +4,7 @@
 
 export const NIVEAUX_ACTIFS = ['bloquant', 'avertissement', 'info']
 
-const AMBIANCES = {
+export const AMBIANCES = {
   sombre: 'pièce sombre',
   intermediaire: 'lumière intermédiaire',
   claire: 'pièce claire',
@@ -24,7 +24,7 @@ export function heures(secondes) {
 const nombre = (valeur) => valeur.toLocaleString('fr-FR')
 const lux = (valeur) => `${nombre(valeur)} lx`
 const pourcent = (fraction) => `${Math.round(fraction * 100)} %`
-const signe = (valeur) => (valeur > 0 ? `+${nombre(valeur)}` : nombre(valeur))
+export const signe = (valeur) => (valeur > 0 ? `+${nombre(valeur)}` : nombre(valeur))
 
 // Conseil de réglage du capteur selon son intégration (étude, § 4.1).
 function conseilCadence(plateforme) {
@@ -98,7 +98,8 @@ export function texteControle(d) {
 }
 
 // Diagnostic actif : { titre, pourquoi, action, libelleProposition }.
-export function texteDiagnostic(d, options) {
+// `suggestions` : nombre de suggestions de courbe en attente.
+export function texteDiagnostic(d, options, suggestions = 0) {
   const v = d.valeurs
   switch (d.id) {
     case 'capteur_fige':
@@ -251,8 +252,12 @@ export function texteDiagnostic(d, options) {
         titre: 'Corrections fréquentes',
         pourquoi: `Vous avez corrigé la luminosité ${v.reprises} fois en 7 jours, surtout en `
           + `${AMBIANCES[v.ambiance] || v.ambiance} (${signe(v.correction_moyenne)} en moyenne).`,
-        action: 'Si vous corrigez toujours dans le même sens, déplacez le point correspondant de '
-          + 'la courbe.',
+        action: suggestions > 0
+          ? 'Vos corrections dessinent déjà une retouche de la courbe : voyez la suggestion, '
+            + 'sous la courbe, et appliquez-la si elle vous convient.'
+          : 'Chaque correction gardée 10 minutes est retenue ; dès 3 dans le même sens pour un '
+            + 'même éclairage, une suggestion de courbe apparaît sous la courbe.',
+        lienSuggestion: suggestions > 0,
       }
     case 'pieces_differentes':
       return {

@@ -3,7 +3,8 @@ import * as api from '../api.js'
 import { useLuminositeAdaptative } from '../hooks/useLuminositeAdaptative.js'
 import {
   BORNES, EMPLACEMENTS, FINS_RAMPE, heure, LIBELLE_HDR, LIBELLES_CAUSE, LIBELLES_ETAT,
-  LIBELLES_PROFIL, MODE_HDR, NOMS_PLATEFORME, OPTIONS_AVANCEES, validerOptions,
+  LIBELLES_PROFIL, MODE_HDR, NOMS_PLATEFORME, OPTIONS_AVANCEES, RAISONS_CORRECTION_ECARTEE,
+  validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
 import { duree } from '../sante.js'
@@ -13,6 +14,7 @@ import CourbeLuminosite from './CourbeLuminosite.jsx'
 import MiseEnRoute from './MiseEnRoute.jsx'
 import SanteLuminosite from './SanteLuminosite.jsx'
 import SchemaEmplacement from './SchemaEmplacement.jsx'
+import SuggestionsLuminosite from './SuggestionsLuminosite.jsx'
 
 const PAUSE_MANUELLE_MIN = 60
 
@@ -20,6 +22,7 @@ const RAISONS_REPRISE = {
   delai: 'fin du délai de pause',
   bouton: 'bouton Reprendre',
   rallumage: 'téléviseur rallumé',
+  changement_eclairage: 'l\'éclairage a nettement changé',
 }
 
 const formaterLux = (lux) => `${lux.toLocaleString('fr-FR')} lx`
@@ -64,7 +67,7 @@ export default function VueLuminosite({
   index, luminosite, lectureSeule, connexion, ecriturePossible, reglages, onEcrire, onReprendre,
   onRecharge,
 }) {
-  const { configuration, erreur, details, journal, sante, relire } =
+  const { configuration, erreur, details, journal, sante, suggestions, relire } =
     useLuminositeAdaptative(Boolean(luminosite))
   // Parcours de mise en route ouvert : { depart: 'capteur' | 'ancrage' }.
   // Toujours ouvert tant que la fonction n'existe pas ; il reste ouvert à
@@ -138,6 +141,7 @@ export default function VueLuminosite({
             sante={sante}
             etat={details || luminosite}
             options={configuration.options}
+            suggestions={suggestions?.suggestions.length ?? 0}
             lectureSeule={lectureSeule}
             onAppliquer={enregistrer}
             onDesactiverEconomie={api.desactiverEconomieEnergie}
@@ -147,7 +151,10 @@ export default function VueLuminosite({
             configuration={configuration}
             lux={details?.lux_filtre ?? details?.lux ?? null}
             details={details}
+            suggestions={suggestions}
+            lectureSeule={lectureSeule}
             onEnregistrer={enregistrer}
+            onRelire={relire}
           />
           <AideFonctionsTeleviseur />
           <JournalLuminosite journal={journal} />
@@ -279,7 +286,9 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
             {cause
               ? `Pause depuis ${heure(cause.horodatage)} : ${LIBELLES_CAUSE[cause.origine] || cause.origine}. `
               : 'En pause. '}
-            {etat.fin_pause && `Reprise à ${heure(etat.fin_pause)}.`}
+            {etat.fin_pause && `Reprise à ${heure(etat.fin_pause)}`}
+            {etat.fin_pause && texteRepriseLux(etat.reprise_lux)}
+            {etat.fin_pause && '.'}
             <button
               type="button"
               className="bouton-reprendre"
@@ -312,6 +321,20 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
   )
 }
 
+// Limites d'éclairage qui lèveront la pause (reprise.bornes_reprise) ; l'une
+// manque quand la courbe est plate de ce côté.
+function texteRepriseLux(limites) {
+  if (!limites) return ''
+  const { bas, haut } = limites
+  if (bas != null && haut != null) {
+    return `, ou dès que l'éclairage passe sous ${formaterLux(bas)} ou au-delà de `
+      + `${formaterLux(haut)}`
+  }
+  if (bas != null) return `, ou dès que l'éclairage passe sous ${formaterLux(bas)}`
+  if (haut != null) return `, ou dès que l'éclairage dépasse ${formaterLux(haut)}`
+  return ''
+}
+
 // Rampe en cours : progression d'après la valeur notifiée par le téléviseur,
 // jamais d'après les pas demandés.
 function TransitionLuminosite({ rampe, cible, actuelle }) {
@@ -330,9 +353,13 @@ function TransitionLuminosite({ rampe, cible, actuelle }) {
   )
 }
 
-function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer }) {
+function ReglagesLuminosite({
+  index, configuration, lux, details, suggestions, lectureSeule, onEnregistrer, onRelire,
+}) {
   const { options, capteurs, modes_proposes: modes } = configuration
   const [brouillon, setBrouillon] = useState(options)
+  // Plage de la suggestion dont la courbe est tracée en pointillé.
+  const [apercu, setApercu] = useState(null)
   const [envoi, setEnvoi] = useState(false)
   const [message, setMessage] = useState(null)
   const modifie = normaliser(brouillon) !== normaliser(options)
@@ -340,6 +367,10 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
   const courbeModifiee = normaliser(brouillon, CLES_COURBE) !== normaliser(options, CLES_COURBE)
   const erreurs = validerOptions(brouillon)
   const valide = Object.keys(erreurs).length === 0
+  // Suggestion calculée sur la courbe enregistrée : sans aperçu pendant une
+  // retouche.
+  const suggestionApercue = courbeModifiee ? null
+    : suggestions?.suggestions.find((s) => s.plage === apercu) ?? null
 
   // Options relues (enregistrement, autre onglet) : le brouillon les suit
   // tant qu'il n'est pas modifié.
@@ -467,8 +498,21 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
         options={valide ? brouillon : options}
         lux={lux}
         ancrages={courbeModifiee ? [] : ancrages}
+        corrections={suggestions?.corrections ?? []}
+        apercu={suggestionApercue?.options ?? null}
         desactive={envoi}
         onChanger={changer}
+      />
+      <SuggestionsLuminosite
+        index={index}
+        donnees={suggestions}
+        options={options}
+        ancrages={ancrages}
+        apercu={suggestionApercue ? apercu : null}
+        bloque={courbeModifiee}
+        lectureSeule={lectureSeule}
+        onApercu={setApercu}
+        onAppliquee={onRelire}
       />
       {/* Une ligne par point de la courbe : lux, puis luminosité. */}
       <div className="grille-champs grille-points">
@@ -532,7 +576,21 @@ function ReglagesLuminosite({ index, configuration, lux, details, onEnregistrer 
       <div className="grille-champs">
         {champNombre('pause', 'Pause après un réglage manuel', 'min')}
       </div>
-      <p className="texte-attenue">La pause prend fin aussi au prochain allumage du téléviseur.</p>
+      <label className="case-mode case-reprise">
+        <input
+          type="checkbox"
+          checked={brouillon.reprise_sur_changement ?? true}
+          onChange={(e) => changer({ reprise_sur_changement: e.target.checked })}
+        />
+        Reprendre quand l'éclairage change nettement
+      </label>
+      <p className="texte-attenue">
+        La pause prend fin aussi au prochain allumage du téléviseur
+        {(brouillon.reprise_sur_changement ?? true)
+          && ', et dès que la lumière de la pièce double ou diminue de moitié depuis votre '
+            + 'réglage (sauf la pause « 1 h » demandée ici, faite pour durer)'}
+        . Un réglage gardé 10 minutes est retenu comme correction.
+      </p>
 
       <details className="reglages-avances">
         <summary>Réglages avancés</summary>
@@ -614,6 +672,19 @@ function texteEvenement(evenement) {
         + (LIBELLES_CAUSE[evenement.origine] || evenement.origine)
     case 'reprise':
       return `Reprise : ${RAISONS_REPRISE[evenement.raison] || evenement.raison}`
+        + (evenement.raison === 'changement_eclairage'
+          ? ` (${formaterLux(evenement.lux_depart)} → ${formaterLux(evenement.lux)})` : '')
+    case 'correction':
+      return `Correction retenue : luminosité ${evenement.valeur} à `
+        + `${formaterLux(evenement.lux)} (la courbe donnait ${evenement.cible})`
+    case 'correction_ecartee':
+      return `Correction non retenue (${evenement.valeur}) : `
+        + (RAISONS_CORRECTION_ECARTEE[evenement.raison] || evenement.raison)
+    case 'suggestion_appliquee':
+      return `Suggestion appliquée : ${evenement.ecart > 0 ? '+' : ''}${Math.round(evenement.ecart)} vers `
+        + `${formaterLux(evenement.lux)} (${evenement.corrections} corrections)`
+    case 'suggestion_ignoree':
+      return `Suggestion ignorée (${evenement.corrections} corrections écartées)`
     case 'retroaction':
       return `Effet de l'écran mesuré à ${evenement.sens === 'allumage' ? 'l\'allumage' : 'l\'extinction'}`
         + ` : ${formaterLux(evenement.avant)} avant, ${formaterLux(evenement.apres)} après`

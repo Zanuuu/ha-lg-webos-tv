@@ -18,7 +18,8 @@ from . import arbre, restauration
 from .const import (CONF_CAPTEUR_LUX, CONF_POINT_INTERMEDIAIRE, DOMAIN,
                     OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from .courbe import conserver_ancrages
-from .luminosite_adaptative import (AncrageImpossible, modes_proposes,
+from .luminosite_adaptative import (AncrageImpossible, CorrectionInconnue,
+                                    SuggestionInconnue, modes_proposes,
                                     nom_zone, valider_options, zone_entite,
                                     zone_televiseur)
 from .signal_lux import profil
@@ -330,6 +331,55 @@ async def _mise_en_route(hass, connection, msg, donnees) -> None:
     connection.send_result(msg["id"])
 
 
+async def _suggestions_luminosite(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is not None:
+        connection.send_result(msg["id"], fonction.suggestions())
+
+
+def _suggestion_inconnue(connection, msg) -> None:
+    connection.send_error(msg["id"], "introuvable",
+                          "Aucune suggestion pour cette plage de lux (déjà appliquée ?)")
+
+
+async def _appliquer_suggestion(hass, connection, msg, donnees) -> None:
+    """Courbe proposée, recalculée par la fonction, enregistrée sans
+    rechargement ; les points d'ancrage sont oubliés."""
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    try:
+        options, compte_rendu = fonction.appliquer_suggestion(msg["plage"])
+    except SuggestionInconnue:
+        _suggestion_inconnue(connection, msg)
+        return
+    entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(entree, options=options)
+    fonction.reconfigurer(options)
+    connection.send_result(msg["id"], {"options": options, "compte_rendu": compte_rendu})
+
+
+async def _ignorer_suggestion(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    try:
+        await fonction.ignorer_suggestion(msg["plage"])
+    except SuggestionInconnue:
+        _suggestion_inconnue(connection, msg)
+        return
+    connection.send_result(msg["id"], fonction.suggestions())
+
+
+async def _oublier_correction(hass, connection, msg, donnees) -> None:
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    try:
+        await fonction.oublier_correction(msg["correction_id"])
+    except CorrectionInconnue:
+        connection.send_error(msg["id"], "introuvable",
+                              f"Correction inconnue : {msg['correction_id']}")
+        return
+    connection.send_result(msg["id"], fonction.suggestions())
+
+
 async def _sante_luminosite(hass, connection, msg, donnees) -> None:
     if (fonction := _fonction(connection, msg, donnees)) is not None:
         connection.send_result(msg["id"], fonction.sante())
@@ -337,8 +387,8 @@ async def _sante_luminosite(hass, connection, msg, donnees) -> None:
 
 async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
     """Flux de la page Luminosité adaptative : état complet, lux compris,
-    événements du journal et santé de l'installation, seulement pendant
-    qu'elle est ouverte."""
+    événements du journal, santé de l'installation, corrections et
+    suggestions, seulement pendant qu'elle est ouverte."""
     if (fonction := _fonction(connection, msg, donnees)) is None:
         return
     dernier = fonction.details()
@@ -362,9 +412,15 @@ async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
         connection.send_message(websocket_api.event_message(
             msg["id"], {"type": "sante", "sante": fonction.sante()}))
 
+    @callback
+    def signaler_suggestions() -> None:
+        connection.send_message(websocket_api.event_message(
+            msg["id"], {"type": "suggestions", "suggestions": fonction.suggestions()}))
+
     # Le détail suit aussi chaque pas d'une rampe (valeur du téléviseur).
     ne_plus_ecouter = [fonction.ecouter(signaler), fonction.ecouter_details(signaler),
-                       fonction.ecouter_journal(noter), fonction.ecouter_sante(signaler_sante)]
+                       fonction.ecouter_journal(noter), fonction.ecouter_sante(signaler_sante),
+                       fonction.ecouter_suggestions(signaler_suggestions)]
 
     @callback
     def desabonner() -> None:
@@ -375,7 +431,7 @@ async def _suivre_luminosite(hass, connection, msg, donnees) -> None:
     connection.send_result(msg["id"])
     connection.send_message(websocket_api.event_message(msg["id"], {
         "type": "instantane", "details": dernier, "journal": list(fonction.journal),
-        "sante": fonction.sante()}))
+        "sante": fonction.sante(), "suggestions": fonction.suggestions()}))
 
 
 async def _abonner(hass, connection, msg, donnees) -> None:
@@ -460,6 +516,13 @@ COMMANDES = [
     _commande(_type("luminosite_adaptative/sante"), _sante_luminosite),
     _commande(_type("luminosite_adaptative/ancrer"), _ancrer_luminosite),
     _commande(_type("luminosite_adaptative/mise_en_route"), _mise_en_route),
+    _commande(_type("luminosite_adaptative/suggestions"), _suggestions_luminosite),
+    _commande({**_type("luminosite_adaptative/appliquer_suggestion"),
+               vol.Required("plage"): int}, _appliquer_suggestion),
+    _commande({**_type("luminosite_adaptative/ignorer_suggestion"),
+               vol.Required("plage"): int}, _ignorer_suggestion),
+    _commande({**_type("luminosite_adaptative/oublier_correction"),
+               vol.Required("correction_id"): int}, _oublier_correction),
     _commande(_type("luminosite_adaptative/suivre"), _suivre_luminosite),
     _commande(_type("abonner"), _abonner),
 ]

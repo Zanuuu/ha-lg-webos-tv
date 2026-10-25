@@ -1265,6 +1265,50 @@ celle-ci réutilise leurs détections.
   par le téléviseur, jamais celle du curseur ; refusé dans un mode laissé
   de côté. Abandon sans ancrage : la fonction reprend sa courbe.
 
+**Lot 5 livré en 2.9.0 : choix de mise en œuvre.**
+
+- Module pur `reprise.py` (levée de la pause, corrections, suggestions)
+  et persistance `corrections.py` : table `corrections` dans la base de
+  l'historique, rattachée au capteur (le lux d'un autre capteur n'est pas
+  comparable), un an et 500 lignes au plus. L'entrée HDMI n'est pas
+  enregistrée : l'intégration ne la connaît pas (il faudrait un abonnement
+  de plus dans `televiseur.py`, exclu pour les lots 1 à 5).
+- Levée de la pause (R7) : lux ramenés dans la plage de la courbe
+  (au-delà, la courbe est plate et reprendre réécrirait la valeur
+  écartée) ; le lux filtré **et** la dernière mesure retenue doivent avoir
+  franchi le facteur 2 dans le même sens, à 1 % près (le filtre ne fait
+  qu'approcher la nouvelle mesure). La référence est la mesure retenue au
+  moment de la reprise en main, vers laquelle allait le filtre : une
+  reprise en main pendant une transition vaut pour l'éclairage d'arrivée
+  (sans cela, la fin de la transition levait aussitôt la pause). Elle est
+  conservée avec la cause de la pause au redémarrage. Une pause demandée
+  depuis le panneau n'est jamais levée ainsi (le temps d'un film, lumière
+  éteinte) ; toute autre l'est, presets et retours arrière compris.
+- Correction retenue : valeur gardée 10 min (un nouveau réglage relance
+  le compte), fonction toujours en pause, téléviseur connecté, même mode,
+  luminosité relue égale ; lux filtré stable à un rapport 1,5 près, jugé
+  une fois le lissage arrivé (4 constantes de temps, 1 min par défaut),
+  lux enregistré = moyenne géométrique du minimum et du maximum. Avec une
+  pause de moins de 10 min, aucune correction n'est retenue.
+- Suggestions (R8) : écart mesuré à la courbe **actuelle** (une suggestion
+  appliquée fait tomber ses corrections près de zéro et disparaît d'elle-
+  même), 10 corrections les plus récentes par plage. Point visé : lux
+  médian (géométrique), cible + écart médian. La luminosité de
+  l'extrémité prend la valeur visée au-delà de la courbe ; dans le premier
+  ou le dernier tiers d'un segment, le point le plus proche bouge juste
+  assez (au plus 1,5 fois l'écart) ; dans le tiers central, ajout du point
+  intermédiaire sur une courbe à deux points, translation du segment d'un
+  bloc sur une courbe à trois points (le point le plus proche seul aurait
+  bougé de deux fois l'écart). Voisins poussés si la monotonie l'exige,
+  luminosité bornée à 0–100 (`approche`). Calcul côté intégration
+  seulement : le panneau trace la courbe proposée qu'elle envoie, sans
+  copie JS du calcul.
+- Arbitrages de l'utilisateur (25/10/2026) : seuils de l'étude (3, 5
+  points, 10 min) ; ancrages oubliés à l'application d'une suggestion ;
+  corrections = réglages isolés (télécommande, autre application, Home
+  Assistant, panneau) ; bouton « Ignorer », qui écarte toutes les
+  corrections de la plage (gardées à l'affichage).
+
 ---
 
 ## 8. Points ouverts

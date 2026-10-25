@@ -33,6 +33,9 @@ CONF_LUMINOSITE_MIN = "luminosite_min"
 CONF_LUMINOSITE_MAX = "luminosite_max"
 CONF_ECART_MINIMAL = "ecart_minimal"
 CONF_PAUSE_MIN = "pause"
+# La pause se lève aussi quand l'éclairage change nettement (lux filtré ×2 ou
+# ÷2 depuis la reprise en main), sauf pause demandée depuis le panneau.
+CONF_REPRISE_SUR_CHANGEMENT = "reprise_sur_changement"
 CONF_MODES_EXCLUS = "modes_exclus"
 # Point intermédiaire facultatif de la courbe, [lux, luminosité] ; absent,
 # la courbe est une droite sur ln(lux) entre les deux extrémités.
@@ -77,6 +80,8 @@ OPTIONS_LUMINOSITE_DEFAUT = {
     CONF_LUMINOSITE_MIN: 40,
     CONF_LUMINOSITE_MAX: 100,
     CONF_PAUSE_MIN: 120,
+    # 2.9.0 : vrai par défaut, y compris pour les installations existantes.
+    CONF_REPRISE_SUR_CHANGEMENT: True,
     CONF_MODES_EXCLUS: ["filmMaker", "expert1", "expert2", MODES_HDR],
     CONF_EMPLACEMENT: "inconnu",
 }

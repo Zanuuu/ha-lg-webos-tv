@@ -14,6 +14,7 @@ from homeassistant.helpers.typing import ConfigType
 from . import panneau, restauration, services, websocket
 from .const import (CONF_CAPTEUR_LUX, CONF_CLE_CLIENT, CONF_ECART_MINIMAL, DOMAIN,
                     ECART_MINIMAL_ANCIEN_DEFAUT)
+from .corrections import CorrectionsLuminosite
 from .ecritures import FileEcritures
 from .entite import descriptions
 from .historique import Historique
@@ -36,6 +37,8 @@ class DonneesLgWebosTv:
     ecritures: FileEcritures
     # Statistiques journalières de la luminosité adaptative (lot 3).
     statistiques: StatsLuminosite
+    # Corrections retenues, matière des suggestions de courbe (lot 5).
+    corrections: CorrectionsLuminosite
     # Absente tant qu'aucun capteur de lux n'est choisi dans les options.
     luminosite_adaptative: LuminositeAdaptative | None = None
 
@@ -88,6 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LgWebosTvConfigEntry) ->
             presets=Presets(dossier / "presets.sqlite"),
             ecritures=FileEcritures(ecrire),
             statistiques=StatsLuminosite(dossier / "historique.sqlite"),
+            corrections=CorrectionsLuminosite(dossier / "historique.sqlite"),
         )
 
     donnees = await hass.async_add_executor_job(construire)

@@ -14,8 +14,8 @@ function libelleJour(jour) {
 // Santé de l'installation (étude, § 4.5 et 4.7) : ce qui ne va pas, pourquoi,
 // le chiffre et quoi faire, puis les contrôles passés et les statistiques des
 // 7 derniers jours, mesurées par la fonction elle-même.
-export default function SanteLuminosite({ sante, etat, options, lectureSeule, onAppliquer,
-  onDesactiverEconomie }) {
+export default function SanteLuminosite({ sante, etat, options, suggestions = 0, lectureSeule,
+  onAppliquer, onDesactiverEconomie }) {
   const [envoi, setEnvoi] = useState(null)
   const [erreur, setErreur] = useState(null)
 
@@ -77,6 +77,7 @@ export default function SanteLuminosite({ sante, etat, options, lectureSeule, on
               key={d.id}
               diagnostic={d}
               options={options}
+              suggestions={suggestions}
               envoi={envoi === d.id}
               desactive={envoi !== null}
               onAppliquer={() => agir(d.id, () => onAppliquer(d.proposition))}
@@ -108,9 +109,24 @@ export default function SanteLuminosite({ sante, etat, options, lectureSeule, on
   )
 }
 
-function Diagnostic({ diagnostic: d, options, envoi, desactive, onAppliquer }) {
-  const { titre, pourquoi, action, libelleProposition, lienEmplacement } =
-    texteDiagnostic(d, options)
+// Lien interne de la page, défilement doux jusqu'à l'élément.
+function LienPage({ cible, children }) {
+  return (
+    <a
+      href={`#${cible}`}
+      onClick={(e) => {
+        e.preventDefault()
+        document.getElementById(cible)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }}
+    >
+      {children}
+    </a>
+  )
+}
+
+function Diagnostic({ diagnostic: d, options, suggestions, envoi, desactive, onAppliquer }) {
+  const { titre, pourquoi, action, libelleProposition, lienEmplacement, lienSuggestion } =
+    texteDiagnostic(d, options, suggestions)
   return (
     <li className={`diagnostic-sante diagnostic-${d.niveau}`}>
       <p className="titre-diagnostic">
@@ -119,7 +135,7 @@ function Diagnostic({ diagnostic: d, options, envoi, desactive, onAppliquer }) {
       </p>
       <p>{pourquoi}</p>
       {action && <p><strong>Que faire :</strong> {action}</p>}
-      {(d.proposition || lienEmplacement) && (
+      {(d.proposition || lienEmplacement || lienSuggestion) && (
         <p className="actions-diagnostic">
           {d.proposition && (
             <button type="button" className="bouton-principal" disabled={desactive}
@@ -128,16 +144,10 @@ function Diagnostic({ diagnostic: d, options, envoi, desactive, onAppliquer }) {
             </button>
           )}
           {lienEmplacement && (
-            <a
-              href="#emplacement-capteur"
-              onClick={(e) => {
-                e.preventDefault()
-                document.getElementById('emplacement-capteur')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-              }}
-            >
-              Voir le schéma des emplacements
-            </a>
+            <LienPage cible="emplacement-capteur">Voir le schéma des emplacements</LienPage>
+          )}
+          {lienSuggestion && (
+            <LienPage cible="suggestions-luminosite">Voir la suggestion</LienPage>
           )}
         </p>
       )}
