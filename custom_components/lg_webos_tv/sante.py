@@ -479,6 +479,9 @@ class Contexte:
     # Capteur de secours (secours.RapportCapteurs.resume, plus `fige`,
     # `disponible` et `actif`), sans identifiant ; None sans secours.
     secours: dict | None = None
+    # Soirée : la source peut-elle la faire commencer, la lumière bleue
+    # a-t-elle été refusée ; None si la Soirée est désactivée.
+    soiree: dict | None = None
 
 
 @dataclass
@@ -726,6 +729,21 @@ def _secours(ctx: Contexte) -> Diagnostic | None:
     return Diagnostic("secours", "ok", valeurs)
 
 
+def _soiree(ctx: Contexte) -> Diagnostic | None:
+    """Soirée (soiree.py) : une source qui ne peut pas la faire commencer
+    (entité absente, indisponible, input_datetime sans heure) ou « Réduire
+    la lumière bleue » refusé par le téléviseur. Pas de Réparation : la
+    luminosité adaptative marche sans (arbitrage A6)."""
+    soiree = ctx.soiree
+    if soiree is None:
+        return None
+    if not soiree["source_ok"]:
+        return Diagnostic("soiree", "avertissement", {"cause": "source", **soiree})
+    if soiree["lumiere_bleue_refusee"]:
+        return Diagnostic("soiree", "avertissement", {"cause": "lumiere_bleue", **soiree})
+    return Diagnostic("soiree", "ok", soiree)
+
+
 def evaluer(jours: list[StatsJour], aujourdhui: str, ctx: Contexte) -> list[Diagnostic]:
     """Diagnostics sur les 7 derniers jours, les cas bloquants d'abord."""
     jours = fenetre(jours, aujourdhui)
@@ -742,6 +760,7 @@ def evaluer(jours: list[StatsJour], aujourdhui: str, ctx: Contexte) -> list[Diag
         _refus(jours, ctx),
         _pauses(jours, ctx),
         _secours(ctx),
+        _soiree(ctx),
     ]
     if ctx.piece_capteur is not None and ctx.piece_televiseur is not None:
         differentes = ctx.piece_capteur != ctx.piece_televiseur

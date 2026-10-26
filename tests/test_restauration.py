@@ -13,6 +13,7 @@ from .conftest import attendre
 ID_NETTETE = "image.parametres-avances.clarte.ajuster-nettete"
 ID_CONTRASTE = "image.parametres-avances.luminosite.ajuster-le-contraste"
 ID_EARC = "son.parametres-avances.compatibilite-earc"
+ID_LUMIERE_BLEUE = "image.parametres-avances.reduire-lumiere-bleue"
 
 
 @pytest.fixture
@@ -67,6 +68,32 @@ async def test_annuler_refuse_si_mode_image_different(tv, historique, faux_clien
     assert resultat["ok"] is False
     assert "expert2" in resultat["raison"] and "expert1" in resultat["raison"]
     assert faux_client.valeurs["picture"]["sharpness"] == 25
+
+
+async def test_annuler_reglage_global_accepte_dans_un_autre_mode(tv, historique, faux_client):
+    """« Réduire la lumière bleue » vaut pour tous les modes (descripteur à
+    dimension vide) : le retour arrière n'est pas gardé par le mode."""
+    await restauration.ecrire_par_entree(tv, historique, ID_LUMIERE_BLEUE, "on", "panneau")
+    id_ecriture = (await historique.lister())[0]["id"]
+    changer_mode(tv, faux_client, "expert1")
+
+    resultat = await restauration.annuler_ecriture(tv, historique, id_ecriture)
+    assert resultat["ok"] is True
+    assert faux_client.valeurs["picture"]["eyeComfortMode"] == "off"
+
+
+async def test_preset_d_un_reglage_global_applique_dans_un_autre_mode(
+        tv, historique, presets, faux_client):
+    await creer_preset(tv, presets, "lumiere-bleue", [ID_LUMIERE_BLEUE])
+    [entree] = (await presets.recuperer("lumiere-bleue"))["entrees"]
+    assert entree["mode_image"] is None
+    changer_mode(tv, faux_client, "expert1")
+    faux_client.valeurs["picture"]["eyeComfortMode"] = "on"
+    tv.etat["picture"]["eyeComfortMode"] = "on"
+
+    resultat = await restauration.appliquer_preset(tv, historique, presets, "lumiere-bleue")
+    assert len(resultat["appliques"]) == 1
+    assert faux_client.valeurs["picture"]["eyeComfortMode"] == "off"
 
 
 async def test_annuler_entree_inconnue(tv, historique):

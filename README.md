@@ -40,7 +40,8 @@ dans la barre latérale.
   de lumière ambiante, en transitions douces, se cale sur votre
   préférence par une mise en route guidée, cède la main à tout réglage
   manuel, et dit ce qui gagnerait à être changé dans l'installation
-  (capteur, emplacement, courbe).
+  (capteur, emplacement, courbe). En option, une **Soirée** baisse la
+  luminosité le soir et peut activer « Réduire la lumière bleue ».
 - **Panneau « LG webOS TV »** dans la barre latérale : le menu Réglages
   complet (y compris les réglages que l'API n'expose pas, affichés « À
   régler sur la TV »), recherche d'un réglage (sans tenir compte des
@@ -95,14 +96,16 @@ Méthode »).
 | Interrupteur (`switch`) | Protection des yeux, Compatibilité eARC, SIMPLINK | |
 | Capteur (`sensor`) | Son — Mode Sélection, Pays | réglages en lecture seule |
 | Bouton (`button`) | Appliquer le preset Soirée | un par preset |
-| Luminosité adaptative | Luminosité adaptative (`switch`), État de la luminosité adaptative (`sensor`), Reprendre la luminosité adaptative (`button`), Décalage de la luminosité adaptative (`number`, configuration), Lux filtré et Ambiance (`sensor`) | si un capteur de lux est configuré |
+| Luminosité adaptative | Luminosité adaptative (`switch`), État de la luminosité adaptative (`sensor`), Reprendre la luminosité adaptative (`button`), Décalage de la luminosité adaptative (`number`, configuration), Lux filtré et Ambiance (`sensor`), Soirée (`binary_sensor`), Terminer la soirée (`button`) | si un capteur de lux est configuré |
 | Événement (`event`) | Réglage modifié sur le téléviseur | `manuel` ou `autre_application` |
 | Diagnostic | Connexion, Écriture des réglages impossible, Voie d'écriture | |
 
 **Réglages d'image et mode d'image.** Le téléviseur garde une valeur par
 mode d'image : une entité de réglage d'image montre et modifie la valeur du
 mode **actif**, indiqué par son attribut `mode_image`. Changer de mode met
-à jour toutes ces entités.
+à jour toutes ces entités. Exception : « Réduire la lumière bleue » vaut
+pour tous les modes (le téléviseur le déclare ainsi) ; un preset ou un
+retour arrière le rétablit quel que soit le mode actif.
 
 N'est exposé que ce dont la correspondance avec l'API est entièrement
 connue ; le reste reste accessible dans le panneau.
@@ -370,6 +373,56 @@ actions:
 
 Pas d'exemple pour le gamma : la correspondance entre les valeurs de l'API
 et les libellés du menu n'est pas encore établie.
+
+### Soirée
+
+Désactivée par défaut (Configurer › Soirée, ou section Soirée de la page).
+Le soir, la luminosité calculée est **baissée d'une fraction** (20 % par
+défaut, de 0 à 50 %) et, si vous le cochez, « Réduire la lumière bleue »
+est activé. D'après un consensus de chercheurs (Brown et al., 2022),
+limiter la lumière reçue le soir passe d'abord par baisser la luminosité
+des écrans ; réduire leur lumière bleue n'en retire qu'une partie. Aucun
+effet sur le sommeil n'est promis.
+
+- **Début** : à une heure fixe (21:00 par défaut), à l'heure d'une entité
+  `input_datetime`, ou quand un `binary_sensor` ou un `schedule` passe à
+  `on`. **Fin** : à l'heure de fin (06:00 par défaut), quand cette entité
+  repasse à `off`, ou par le bouton **Terminer la soirée** (la Soirée
+  reprend le lendemain). Téléviseur éteint puis rallumé avant la fin, elle
+  continue.
+- **Baisse** : appliquée à la luminosité calculée, décalage compris, en
+  transition douce (20 % : 100 devient 80, 40 devient 32). Une pause après
+  un réglage manuel est respectée : la baisse s'applique à la reprise ;
+  « Reprendre » ne termine pas la Soirée.
+- **Réduire la lumière bleue** est un réglage commun à tous les modes
+  d'image : il n'est pas activé dans les modes laissés de côté (le
+  changement de mode masque le basculement), et retrouve à la fin la valeur
+  relue sur le téléviseur au début, même après un redémarrage de Home
+  Assistant. S'il était déjà activé, il n'est pas touché ; si vous le
+  changez pendant la Soirée, il n'est plus touché jusqu'à la fin, et la
+  luminosité, elle, continue d'être réglée.
+- Pendant la Soirée, un réglage manuel de la luminosité n'est pas retenu
+  comme correction (une préférence du soir ne doit pas retoucher la courbe
+  du jour), et le point d'ancrage de la mise en route est refusé.
+
+L'entité **Soirée** (`binary_sensor`) est `on` pendant la Soirée ; ses
+attributs donnent la fin, la baisse et l'état de la lumière bleue. Exemple
+(identifiants à adapter) :
+
+```yaml
+# Lampe du salon en lumière chaude pendant la Soirée.
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.lg_webos_tv_soiree
+    to: "on"
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.lampe_salon
+    data:
+      color_temp_kelvin: 2700
+      brightness_pct: 40
+```
 
 ### Corrections et suggestions
 

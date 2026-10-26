@@ -22,7 +22,7 @@ from homeassistant.helpers.selector import (BooleanSelector, EntitySelector,
                                             NumberSelectorConfig,
                                             NumberSelectorMode, SelectSelector,
                                             SelectSelectorConfig,
-                                            SelectSelectorMode)
+                                            SelectSelectorMode, TimeSelector)
 from homeassistant.helpers.service_info.ssdp import (ATTR_UPNP_FRIENDLY_NAME,
                                                      SsdpServiceInfo)
 
@@ -35,11 +35,15 @@ from .const import (CONF_AMBIANCE_CLAIRE, CONF_AMBIANCE_SOMBRE,
                     CONF_LUMINOSITE_MAX, CONF_LUMINOSITE_MIN, CONF_LUX_MAX,
                     CONF_LUX_MIN, CONF_MODES_EXCLUS, CONF_PAUSE_MIN,
                     CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
-                    CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT, DOMAIN,
-                    EMPLACEMENTS, OPTIONS_AMBIANCE, OPTIONS_AVANCEES,
-                    OPTIONS_LUMINOSITE_DEFAUT)
+                    CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT,
+                    CONF_SOIREE, CONF_SOIREE_DEBUT, CONF_SOIREE_ENTITE,
+                    CONF_SOIREE_FIN, CONF_SOIREE_LUMIERE_BLEUE,
+                    CONF_SOIREE_REDUCTION, DOMAIN, EMPLACEMENTS,
+                    OPTIONS_AMBIANCE, OPTIONS_AVANCEES,
+                    OPTIONS_LUMINOSITE_DEFAUT, OPTIONS_SOIREE)
 from .courbe import conserver_ancrages
 from .luminosite_adaptative import BORNES, modes_proposes, valider_options
+from .soiree import DOMAINES_SOURCE
 from .televiseur import AppairageEchoue, appairer
 
 TITRE_DEFAUT = "LG webOS TV"
@@ -47,6 +51,8 @@ TITRE_DEFAUT = "LG webOS TV"
 # suivent sinon le profil du capteur et son emplacement), rampe et seuils de
 # l'ambiance (sinon les tiers de la courbe).
 SECTION_AVANCEE = "avance"
+# Section repliée de la Soirée (soiree.py), désactivée par défaut.
+SECTION_SOIREE = "section_soiree"
 # Point intermédiaire de la courbe : deux champs du formulaire, une seule
 # option `point_intermediaire` ([lux, luminosité]) ; vides tous deux, pas de
 # point.
@@ -199,9 +205,12 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
         saisie = None
         champs_point = None
         if user_input is not None:
-            # Options stockées à plat : la section n'est qu'une présentation.
-            saisie = {**user_input, **user_input.get(SECTION_AVANCEE, {})}
+            # Options stockées à plat : les sections ne sont qu'une
+            # présentation.
+            saisie = {**user_input, **user_input.get(SECTION_AVANCEE, {}),
+                      **user_input.get(SECTION_SOIREE, {})}
             saisie.pop(SECTION_AVANCEE, None)
+            saisie.pop(SECTION_SOIREE, None)
             point = [saisie.pop(LUX_INTERMEDIAIRE, None),
                      saisie.pop(LUMINOSITE_INTERMEDIAIRE, None)]
             champs_point = dict(zip((LUX_INTERMEDIAIRE, LUMINOSITE_INTERMEDIAIRE), point,
@@ -232,6 +241,20 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
             vol.Optional(CONF_AMBIANCE_SOMBRE): _nombre(CONF_AMBIANCE_SOMBRE, "lx", pas=0.1),
             vol.Optional(CONF_AMBIANCE_CLAIRE): _nombre(CONF_AMBIANCE_CLAIRE, "lx", pas=0.1),
         })
+        # Entités de l'intégration (la Soirée elle-même) : pas une source.
+        propres_soiree = [entite.entity_id for entite in er.async_entries_for_config_entry(
+            er.async_get(self.hass), self.config_entry.entry_id)
+            if entite.domain == "binary_sensor"]
+        soiree = vol.Schema({
+            vol.Required(CONF_SOIREE): BooleanSelector(),
+            # Vide : l'heure de début ; sinon l'entité la remplace.
+            vol.Required(CONF_SOIREE_DEBUT): TimeSelector(),
+            vol.Optional(CONF_SOIREE_ENTITE): EntitySelector(EntitySelectorConfig(
+                domain=list(DOMAINES_SOURCE), exclude_entities=propres_soiree)),
+            vol.Required(CONF_SOIREE_FIN): TimeSelector(),
+            vol.Required(CONF_SOIREE_REDUCTION): _nombre(CONF_SOIREE_REDUCTION, "%"),
+            vol.Required(CONF_SOIREE_LUMIERE_BLEUE): BooleanSelector(),
+        })
         # « Lux filtré » de la fonction elle-même : pas un capteur à choisir.
         propres = [entite.entity_id for entite in er.async_entries_for_config_entry(
             er.async_get(self.hass), self.config_entry.entry_id) if entite.domain == "sensor"]
@@ -261,10 +284,13 @@ class OptionsLgWebosTv(OptionsFlowWithReload):
             vol.Required(CONF_MODES_EXCLUS): SelectSelector(SelectSelectorConfig(
                 options=modes, multiple=True, translation_key=CONF_MODES_EXCLUS)),
             vol.Required(SECTION_AVANCEE): section(avance, {"collapsed": True}),
+            vol.Required(SECTION_SOIREE): section(soiree, {"collapsed": True}),
         })
         valeurs = {**OPTIONS_LUMINOSITE_DEFAUT, **self.config_entry.options, **(saisie or {})}
         valeurs[SECTION_AVANCEE] = {cle: valeurs.pop(cle) for cle in
                                     (*OPTIONS_AVANCEES, *OPTIONS_AMBIANCE) if cle in valeurs}
+        valeurs[SECTION_SOIREE] = {cle: valeurs.pop(cle) for cle in OPTIONS_SOIREE
+                                   if cle in valeurs}
         if (point := valeurs.pop(CONF_POINT_INTERMEDIAIRE, None)) is not None:
             valeurs[LUX_INTERMEDIAIRE], valeurs[LUMINOSITE_INTERMEDIAIRE] = point
         if champs_point is not None:

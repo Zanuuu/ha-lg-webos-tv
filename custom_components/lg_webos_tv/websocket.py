@@ -16,15 +16,16 @@ from homeassistant.util import dt as dt_util
 
 from . import arbre, restauration
 from .const import (CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS,
-                    CONF_POINT_INTERMEDIAIRE, DECALAGE_MAX, DECALAGE_MIN,
-                    DOMAIN, OPTIONS_AMBIANCE, OPTIONS_AVANCEES,
-                    OPTIONS_LUMINOSITE_DEFAUT)
+                    CONF_POINT_INTERMEDIAIRE, CONF_SOIREE_ENTITE, DECALAGE_MAX,
+                    DECALAGE_MIN, DOMAIN, OPTIONS_AMBIANCE, OPTIONS_AVANCEES,
+                    OPTIONS_LUMINOSITE_DEFAUT, OPTIONS_SOIREE)
 from .courbe import conserver_ancrages
 from .luminosite_adaptative import (AncrageImpossible, CorrectionInconnue,
                                     SuggestionInconnue, modes_proposes,
                                     nom_zone, valider_options, zone_entite,
                                     zone_televiseur)
 from .signal_lux import profil
+from .soiree import DOMAINES_SOURCE
 from .presets import PresetExistant, PresetInconnu, capturer_snapshot
 
 # Textes des erreurs de validation des options (mêmes clés que le formulaire).
@@ -35,10 +36,14 @@ ERREURS_OPTIONS = {
     "mode_inconnu": "mode d'image inconnu",
     "emplacement_inconnu": "emplacement inconnu",
     "capteur_inconnu": "capteur introuvable",
+    "entite_inconnue": "entité introuvable",
     "point_intermediaire_hors_courbe":
         "doit tomber entre les deux extrémités de la courbe, en lux et en luminosité",
     "secours_identique": "doit être différent du capteur principal",
     "ambiance_seuils_croises": "le seuil de la pièce claire doit dépasser celui de la pièce sombre",
+    "heure_invalide": "heure invalide",
+    "soiree_debut_egal_fin": "doit différer de l'heure de début",
+    "soiree_entite_invalide": "entité input_datetime, binary_sensor ou schedule attendue",
 }
 
 # Refus du point d'ancrage (luminosite_adaptative.AncrageImpossible).
@@ -46,6 +51,7 @@ ERREURS_ANCRAGE = {
     "deconnecte": "le téléviseur n'est pas connecté",
     "mode_exclu": "le mode d'image actuel est laissé de côté : passez dans un autre mode",
     "indisponible": "mesure du capteur ou luminosité du téléviseur inconnue",
+    "soiree": "Soirée en cours : terminez-la pour caler la courbe du jour",
 }
 # Capteurs qui ont publié depuis moins d'une heure : proposés juste après
 # ceux de la pièce du téléviseur.
@@ -259,13 +265,33 @@ def _capteurs_lux(hass: HomeAssistant) -> list[dict]:
     return sorted(capteurs, key=rang)
 
 
+def _sources_soiree(hass: HomeAssistant) -> list[dict]:
+    """Entités qui peuvent faire commencer la Soirée, comme le sélecteur du
+    formulaire : input_datetime avec une heure, binary_sensor, schedule, sauf
+    ceux de l'intégration (la Soirée elle-même, la connexion)."""
+    registre = er.async_get(hass)
+
+    def propre(entity_id: str) -> bool:
+        entite = registre.async_get(entity_id)
+        return entite is not None and entite.platform == DOMAIN
+
+    sources = [{"entity_id": etat.entity_id, "nom": etat.name, "domaine": etat.domain,
+                "etat": etat.state}
+               for etat in hass.states.async_all(DOMAINES_SOURCE)
+               if (etat.domain != "input_datetime" or etat.attributes.get("has_time"))
+               and not propre(etat.entity_id)]
+    return sorted(sources, key=lambda s: (DOMAINES_SOURCE.index(s["domaine"]),
+                                          s["nom"].casefold()))
+
+
 async def _configuration_luminosite(hass, connection, msg, donnees) -> None:
     entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
     connection.send_result(msg["id"], {
         "options": {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: None,
-                    CONF_CAPTEUR_SECOURS: None, **entree.options},
+                    CONF_CAPTEUR_SECOURS: None, CONF_SOIREE_ENTITE: None, **entree.options},
         "modes_proposes": await hass.async_add_executor_job(modes_proposes),
         "capteurs": _capteurs_lux(hass),
+        "sources_soiree": _sources_soiree(hass),
         "piece_televiseur": nom_zone(hass, zone_televiseur(hass)),
     })
 
@@ -276,11 +302,12 @@ async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
     la fonction : ses entités n'existent que si un capteur est choisi. Une
     option avancée à `null` revient à la valeur du profil du capteur, un
     point intermédiaire à `null` est retiré. Les points d'ancrage sont
-    oubliés si la courbe change. Un capteur de secours ou un seuil
-    d'ambiance à `null` est retiré."""
+    oubliés si la courbe change. Un capteur de secours, un seuil d'ambiance
+    ou l'entité de début de la Soirée à `null` est retiré."""
     entree = hass.config_entries.async_loaded_entries(DOMAIN)[0]
     connues = {*OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX, *OPTIONS_AVANCEES,
-               CONF_POINT_INTERMEDIAIRE, CONF_CAPTEUR_SECOURS, *OPTIONS_AMBIANCE}
+               CONF_POINT_INTERMEDIAIRE, CONF_CAPTEUR_SECOURS, *OPTIONS_AMBIANCE,
+               *OPTIONS_SOIREE}
     saisie = {**OPTIONS_LUMINOSITE_DEFAUT, **entree.options,
               **{cle: valeur for cle, valeur in msg["options"].items() if cle in connues}}
     capteur = saisie.pop(CONF_CAPTEUR_LUX, None) or None
@@ -293,6 +320,9 @@ async def _configurer_luminosite(hass, connection, msg, donnees) -> None:
     secours = options.get(CONF_CAPTEUR_SECOURS)
     if secours is not None and hass.states.get(secours) is None:
         erreurs.setdefault(CONF_CAPTEUR_SECOURS, "capteur_inconnu")
+    source = options.get(CONF_SOIREE_ENTITE)
+    if source is not None and hass.states.get(source) is None:
+        erreurs.setdefault(CONF_SOIREE_ENTITE, "entite_inconnue")
     if erreurs:
         connection.send_error(msg["id"], "invalide", "Options invalides : " + " ; ".join(
             f"{cle} : {ERREURS_OPTIONS[code]}" for cle, code in erreurs.items()))
@@ -316,6 +346,16 @@ async def _decalage_luminosite(hass, connection, msg, donnees) -> None:
     if (fonction := _fonction(connection, msg, donnees)) is not None:
         fonction.regler_decalage(msg["valeur"], "panneau")
         connection.send_result(msg["id"], _luminosite(donnees))
+
+
+async def _terminer_soiree(hass, connection, msg, donnees) -> None:
+    """« Terminer la soirée » depuis le panneau, comme le bouton."""
+    if (fonction := _fonction(connection, msg, donnees)) is None:
+        return
+    if not fonction.terminer_soiree("panneau"):
+        connection.send_error(msg["id"], "hors_soiree", "Aucune Soirée en cours")
+        return
+    connection.send_result(msg["id"], _luminosite(donnees))
 
 
 async def _desactiver_economie_energie(hass, connection, msg, donnees) -> None:
@@ -537,6 +577,7 @@ COMMANDES = [
               _decalage_luminosite),
     _commande({**_type("luminosite_adaptative/configurer"), vol.Required("options"): dict},
               _configurer_luminosite),
+    _commande(_type("luminosite_adaptative/terminer_soiree"), _terminer_soiree),
     _commande(_type("luminosite_adaptative/desactiver_economie_energie"),
               _desactiver_economie_energie),
     _commande(_type("luminosite_adaptative/sante"), _sante_luminosite),

@@ -71,10 +71,19 @@ def entrees_pilotables() -> list[dict]:
     return [e for e in par_id().values() if _est_pilotable_api(e.get("api"))]
 
 
+# Réglages d'image communs à tous les modes : leur descripteur, publié par le
+# téléviseur (inventaire-api.json), a une dimension vide, là où celui de
+# `backlight` déclare ['input', 'pictureMode']. Seuls 7 descripteurs de la
+# catégorie sont lisibles ; les autres réglages restent tenus pour propres au
+# mode (docs/etude-luminosite-adaptative.md, § 8.3 ; à confirmer par P10).
+CLES_GLOBALES = {("picture", "eyeComfortMode")}
+
+
 def mode_dependant(categorie: str, cle: str) -> bool:
     """Les réglages d'image sont propres au mode d'image actif — sauf la
-    sélection du mode elle-même, qui n'est pas propre à un mode."""
-    return categorie == "picture" and cle != "pictureMode"
+    sélection du mode elle-même et les réglages globaux (CLES_GLOBALES)."""
+    return (categorie == "picture" and cle != "pictureMode"
+            and (categorie, cle) not in CLES_GLOBALES)
 
 
 # Clés dont l'API attend un booléen JSON natif plutôt que "on"/"off" : écrire

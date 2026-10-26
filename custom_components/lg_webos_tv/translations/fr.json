@@ -98,6 +98,25 @@
               "ambiance_sombre": "Seuil de l'entité « Ambiance ». Vide : premier tiers de la courbe, qui suit ses retouches.",
               "ambiance_claire": "Seuil de l'entité « Ambiance ». Vide : dernier tiers de la courbe, qui suit ses retouches."
             }
+          },
+          "section_soiree": {
+            "name": "Soirée",
+            "description": "Le soir, la luminosité est baissée d'une fraction et, si vous le cochez, « Réduire la lumière bleue » est activé. D'après un consensus de chercheurs (Brown et al., 2022), limiter la lumière reçue le soir passe d'abord par baisser la luminosité des écrans ; réduire la lumière bleue n'en retire qu'une partie. Aucun effet sur le sommeil n'est promis.",
+            "data": {
+              "soiree": "Activer la Soirée",
+              "soiree_debut": "Début",
+              "soiree_entite": "Ou début donné par une entité (facultatif)",
+              "soiree_fin": "Fin",
+              "soiree_reduction": "Baisse de la luminosité",
+              "soiree_lumiere_bleue": "Activer aussi « Réduire la lumière bleue »"
+            },
+            "data_description": {
+              "soiree_debut": "Heure locale.",
+              "soiree_entite": "Un input_datetime donne l'heure de début ; un binary_sensor ou un schedule fait commencer la Soirée en passant à « on » et la finit en repassant à « off ». Remplace l'heure de début.",
+              "soiree_fin": "La Soirée finit aussi par le bouton « Terminer la soirée ». Téléviseur éteint puis rallumé avant cette heure : elle continue.",
+              "soiree_reduction": "Fraction retirée à la luminosité calculée, décalage compris (20 % : 100 devient 80, 40 devient 32). Une pause après un réglage manuel est respectée : la baisse s'applique à la reprise.",
+              "soiree_lumiere_bleue": "Réglage commun à tous les modes d'image : il n'est pas activé dans les modes laissés de côté, et retrouve sa valeur d'avant à la fin de la Soirée. Si vous le changez pendant la Soirée, il n'est plus touché jusqu'à la fin."
+            }
           }
         }
       }
@@ -111,7 +130,10 @@
       "point_intermediaire_incomplet": "Indiquez le lux et la luminosité du point intermédiaire, ou aucun des deux.",
       "point_intermediaire_hors_courbe": "Doit tomber entre la pièce sombre et la pièce lumineuse, et entre les luminosités minimale et maximale.",
       "secours_identique": "Doit être différent du capteur principal.",
-      "ambiance_seuils_croises": "Le seuil de l'ambiance claire doit dépasser celui de l'ambiance sombre."
+      "ambiance_seuils_croises": "Le seuil de l'ambiance claire doit dépasser celui de l'ambiance sombre.",
+      "heure_invalide": "Heure invalide.",
+      "soiree_debut_egal_fin": "Doit différer de l'heure de début.",
+      "soiree_entite_invalide": "Choisissez une entité input_datetime, binary_sensor ou schedule."
     }
   },
   "entity": {
@@ -121,6 +143,9 @@
       },
       "ecriture_impossible": {
         "name": "Écriture des réglages impossible"
+      },
+      "luminosite_adaptative_soiree": {
+        "name": "Soirée"
       }
     },
     "sensor": {
@@ -189,6 +214,9 @@
       },
       "luminosite_adaptative_reprendre": {
         "name": "Reprendre la luminosité adaptative"
+      },
+      "luminosite_adaptative_terminer_soiree": {
+        "name": "Terminer la soirée"
       }
     },
     "switch": {

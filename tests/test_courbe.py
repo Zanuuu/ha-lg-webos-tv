@@ -20,7 +20,8 @@ HORODATAGE = "2026-10-25T20:00:00+00:00"
 
 @pytest.mark.parametrize("cas", VECTEURS["cibles"], ids=lambda cas: cas["nom"])
 def test_vecteurs_de_cible(cas):
-    assert calculer_cible(cas["lux"], cas["options"], cas.get("decalage", 0)) == cas["cible"]
+    assert calculer_cible(cas["lux"], cas["options"], cas.get("decalage", 0),
+                          cas.get("reduction", 0)) == cas["cible"]
 
 
 @pytest.mark.parametrize("cas", VECTEURS["validation"], ids=lambda cas: cas["nom"])

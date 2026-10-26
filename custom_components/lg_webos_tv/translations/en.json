@@ -98,6 +98,25 @@
               "ambiance_sombre": "Threshold of the “Ambience” entity. Empty: first third of the curve, following its changes.",
               "ambiance_claire": "Threshold of the “Ambience” entity. Empty: last third of the curve, following its changes."
             }
+          },
+          "section_soiree": {
+            "name": "Evening",
+            "description": "In the evening, brightness is lowered by a fraction and, if ticked, the TV's blue light reduction is turned on. According to a researchers' consensus (Brown et al., 2022), limiting the light received in the evening starts with dimming screens; reducing blue light only removes part of it. No effect on sleep is promised.",
+            "data": {
+              "soiree": "Enable Evening",
+              "soiree_debut": "Start",
+              "soiree_entite": "Or start given by an entity (optional)",
+              "soiree_fin": "End",
+              "soiree_reduction": "Brightness reduction",
+              "soiree_lumiere_bleue": "Also turn on the TV's blue light reduction"
+            },
+            "data_description": {
+              "soiree_debut": "Local time.",
+              "soiree_entite": "An input_datetime gives the start time; a binary_sensor or a schedule starts the Evening when turning “on” and ends it when back “off”. Replaces the start time.",
+              "soiree_fin": "The Evening also ends with the “End evening” button. If the TV is turned off and back on before this time, it goes on.",
+              "soiree_reduction": "Fraction taken off the computed brightness, offset included (20%: 100 becomes 80, 40 becomes 32). A pause after a manual adjustment is respected: the reduction applies when it resumes.",
+              "soiree_lumiere_bleue": "Shared by all picture modes: it is not turned on in the modes left aside, and gets its previous value back when the Evening ends. If you change it during the Evening, it is left alone until the end."
+            }
           }
         }
       }
@@ -111,7 +130,10 @@
       "point_intermediaire_incomplet": "Enter both the lux and the brightness of the intermediate point, or neither.",
       "point_intermediaire_hors_courbe": "Must lie between the dark room and the bright room, and between the minimum and maximum brightness.",
       "secours_identique": "Must differ from the main sensor.",
-      "ambiance_seuils_croises": "The bright threshold must be above the dark threshold."
+      "ambiance_seuils_croises": "The bright threshold must be above the dark threshold.",
+      "heure_invalide": "Invalid time.",
+      "soiree_debut_egal_fin": "Must differ from the start time.",
+      "soiree_entite_invalide": "Choose an input_datetime, binary_sensor or schedule entity."
     }
   },
   "entity": {
@@ -121,6 +143,9 @@
       },
       "ecriture_impossible": {
         "name": "Settings write unavailable"
+      },
+      "luminosite_adaptative_soiree": {
+        "name": "Evening"
       }
     },
     "sensor": {
@@ -189,6 +214,9 @@
       },
       "luminosite_adaptative_reprendre": {
         "name": "Resume adaptive brightness"
+      },
+      "luminosite_adaptative_terminer_soiree": {
+        "name": "End evening"
       }
     },
     "switch": {

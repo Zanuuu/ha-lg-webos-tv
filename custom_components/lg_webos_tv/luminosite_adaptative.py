@@ -35,7 +35,11 @@ téléviseur les attribue tous à notre client). Ici :
 - un décalage pilotable par les automatisations s'ajoute à la cible ; un
   capteur de secours prend le relais d'un principal indisponible ou figé,
   une fois leur facteur relatif appris (secours.py) ; le lux filtré et
-  l'ambiance de la pièce (ambiance.py) sont exposés en entités.
+  l'ambiance de la pièce (ambiance.py) sont exposés en entités ;
+- la Soirée (soiree.py), à partir d'une heure ou d'une entité, baisse la
+  cible d'une fraction et peut activer « Réduire la lumière bleue », réglage
+  global piloté à part : valeur de base relue puis restaurée, reprise en
+  main propre à ce réglage.
 """
 
 import logging
@@ -43,10 +47,11 @@ import math
 from collections import deque
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (EVENT_HOMEASSISTANT_STOP, STATE_UNAVAILABLE,
+                                 STATE_UNKNOWN)
 from homeassistant.core import (Event, EventStateChangedData,
                                 EventStateReportedData, HomeAssistant, State,
                                 callback)
@@ -71,6 +76,9 @@ from .const import (CONF_ANCRAGES, CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS,
                     CONF_POINT_INTERMEDIAIRE, CONF_RAMPE_DEBIT,
                     CONF_RAMPE_PAS, CONF_REPRISE_SUR_CHANGEMENT, DOMAIN,
                     CONF_AMBIANCE_CLAIRE, CONF_AMBIANCE_SOMBRE,
+                    CONF_SOIREE, CONF_SOIREE_DEBUT, CONF_SOIREE_ENTITE,
+                    CONF_SOIREE_FIN, CONF_SOIREE_LUMIERE_BLEUE,
+                    CONF_SOIREE_REDUCTION, OPTIONS_SOIREE,
                     ECART_MINIMAL_DEFAUT, EMPLACEMENTS, MODES_HDR,
                     OPTIONS_AVANCEES, OPTIONS_LUMINOSITE_DEFAUT)
 from . import courbe
@@ -85,6 +93,9 @@ from .sante import (CONSERVATION_JOURS, RAMPE_DELTA_MIN, Accumulateur,
                     fenetre, resume, resume_jour)
 from .secours import RapportCapteurs, choisir
 from .signal_lux import REEVALUATION_S, Cadence, SignalLux, constantes, profil
+from .soiree import (DOMAINE_HEURE, LUMIERE_BLEUE_ACTIVE, REDUCTION_MAX, EtatSoiree,
+                     PiloteLumiereBleue, Source, SuiviSoiree, lire_heure)
+from .soiree import valider as valider_soiree
 
 log = logging.getLogger(__name__)
 
@@ -93,6 +104,10 @@ ID_MODE = "image.mode-selection"
 ID_ECONOMIE = "general.economie-energie.fonction-economie-energie"
 CATEGORIE, CLE = "picture", "backlight"
 CLE_ECONOMIE = "energySaving"
+# « Réduire la lumière bleue » : réglage global (arbre.CLES_GLOBALES), écrit
+# sans garde de mode.
+ID_LUMIERE_BLEUE = "image.parametres-avances.reduire-lumiere-bleue"
+CLE_LUMIERE_BLEUE = "eyeComfortMode"
 # Valeurs de « Fonction Économie d'énergie » qui règlent elles-mêmes la
 # luminosité (Auto : d'après le capteur du téléviseur). `screen_off`
 # (Écran désactivé) n'en est pas une : il n'y a plus d'image à régler.
@@ -143,8 +158,10 @@ BORNES = {CONF_LUX_MIN: (1, 1000), CONF_LUX_MAX: (2, 100000),
           CONF_HYSTERESIS_MONTEE: (0, 100), CONF_HYSTERESIS_DESCENTE: (0, 90),
           CONF_CONFIRMATION_SAUT: (0, 60), CONF_GEL_ECRITURE: (0, 120),
           CONF_RAMPE_PAS: (1, 10), CONF_RAMPE_DEBIT: (1, 20),
+          CONF_SOIREE_REDUCTION: (0, REDUCTION_MAX),
           **{cle: (1, LUX_PLAFOND) for cle in OPTIONS_AMBIANCE}}
-ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_PAUSE_MIN, *OPTIONS_AVANCEES)
+ENTIERS = (CONF_LUMINOSITE_MIN, CONF_LUMINOSITE_MAX, CONF_PAUSE_MIN, *OPTIONS_AVANCEES,
+           CONF_SOIREE_REDUCTION)
 
 # Par ordre de priorité (voir LuminositeAdaptative.etat).
 ETATS = ["desactivee", "televiseur_deconnecte", "consultation", "mise_en_route", "pause",
@@ -158,7 +175,9 @@ ENTITES = (("switch", "luminosite_adaptative"),
            ("button", "luminosite_adaptative_reprendre"),
            ("number", "luminosite_adaptative_decalage"),
            ("sensor", "luminosite_adaptative_lux_filtre"),
-           ("sensor", "luminosite_adaptative_ambiance"))
+           ("sensor", "luminosite_adaptative_ambiance"),
+           ("binary_sensor", "luminosite_adaptative_soiree"),
+           ("button", "luminosite_adaptative_terminer_soiree"))
 
 
 def modes_proposes() -> list[str]:
@@ -175,9 +194,10 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
     formulaire."""
     erreurs = {}
     # Vides : option avancée qui suit le profil, courbe sans point
-    # intermédiaire, seuil d'ambiance qui suit la courbe, pas de secours.
+    # intermédiaire, seuil d'ambiance qui suit la courbe, pas de secours,
+    # option de la Soirée à sa valeur par défaut (ou sans entité de début).
     facultatives = (*OPTIONS_AVANCEES, *OPTIONS_AMBIANCE, CONF_POINT_INTERMEDIAIRE,
-                    CONF_CAPTEUR_SECOURS)
+                    CONF_CAPTEUR_SECOURS, *OPTIONS_SOIREE)
     options = {cle: valeur for cle, valeur in options.items()
                if not (cle in facultatives and valeur in (None, ""))}
     for cle, (bas, haut) in BORNES.items():
@@ -215,6 +235,8 @@ def valider_options(options: dict, modes: list[str]) -> tuple[dict, dict[str, st
         erreurs[CONF_EMPLACEMENT] = "emplacement_inconnu"
     if not isinstance(options.get(CONF_REPRISE_SUR_CHANGEMENT, True), bool):
         erreurs[CONF_REPRISE_SUR_CHANGEMENT] = "hors_bornes"
+    options, erreurs_soiree = valider_soiree(options)
+    erreurs = {**erreurs_soiree, **erreurs}
     if erreurs:
         return options, erreurs
     # Les sélecteurs numériques rendent des flottants.
@@ -398,6 +420,18 @@ class LuminositeAdaptative:
         self._suggestions: dict | None = None
         self._ecouteurs_suggestions: list[Callable[[], None]] = []
 
+        # Soirée : plage en cours (ou terminée à la main), entité source suivie,
+        # pilote de « Réduire la lumière bleue ». Fin de soirée terminée et
+        # pilote restaurés par l'entité « Soirée » au redémarrage.
+        self._suivi_soiree = SuiviSoiree()
+        self._etat_soiree = EtatSoiree(False)
+        self._lumiere_bleue = PiloteLumiereBleue()
+        self._ecriture_lumiere_bleue = None
+        self._lumiere_bleue_refusee = False
+        self._annuler_soiree: Callable[[], None] | None = None
+        self._ne_plus_suivre_source: Callable[[], None] | None = None
+        self._source_suivie: str | None = None
+
         self._ecouteurs: list[Callable[[], None]] = []
         # Seulement le détail (page du panneau) : prévenus à chaque pas d'une
         # rampe, sans réécrire l'état des entités.
@@ -422,6 +456,9 @@ class LuminositeAdaptative:
             self.hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, self._sur_arret_hass),
         ]
         self._suivre_capteur()
+        self._suivre_source_soiree()
+        # Sans journal : l'état d'avant le redémarrage n'est pas encore relu.
+        self._evaluer_soiree(noter=False)
 
     def _suivre_capteur(self) -> None:
         for ne_plus_suivre in self._ne_plus_suivre_capteur:
@@ -489,6 +526,16 @@ class LuminositeAdaptative:
         if self._annuler_signal is not None:
             self._annuler_signal()
             self._annuler_signal = None
+        self._annuler_echeance_soiree()
+        if self._ne_plus_suivre_source is not None:
+            self._ne_plus_suivre_source()
+            self._ne_plus_suivre_source = None
+        # La lumière bleue n'est pas restaurée ici : un rechargement de
+        # l'entrée en pleine Soirée la remettrait aussitôt. Le pilote passe à
+        # l'instance suivante par l'entité « Soirée ».
+        if self._ecriture_lumiere_bleue is not None:
+            self._ecriture_lumiere_bleue.cancel()
+            self._ecriture_lumiere_bleue = None
         self._abandonner_correction()
         if self._annuler_fin_pause is not None:
             self._annuler_fin_pause()
@@ -639,8 +686,17 @@ class LuminositeAdaptative:
         return self._signal.lux_vise(_horloge())
 
     def _cible_de(self, lux: float) -> int:
-        """Cible de la courbe plus le décalage pilotable."""
-        return calculer_cible(lux, self.options, self.decalage)
+        """Cible de la courbe plus le décalage pilotable, baissée pendant la
+        Soirée."""
+        return calculer_cible(lux, self.options, self.decalage, self.reduction_soiree)
+
+    @property
+    def soiree_active(self) -> bool:
+        return self.options[CONF_SOIREE] and self._etat_soiree.active
+
+    @property
+    def reduction_soiree(self) -> int:
+        return self.options[CONF_SOIREE_REDUCTION] if self.soiree_active else 0
 
     @property
     def cible(self) -> int | None:
@@ -791,6 +847,8 @@ class LuminositeAdaptative:
             self._lancer()
         else:
             self._annuler_planification()
+        # Fonction désactivée : la lumière bleue revient à sa base.
+        self._piloter_lumiere_bleue()
         self._prevenir()
 
     def reprendre(self, raison: str = "bouton", **details) -> None:
@@ -811,8 +869,14 @@ class LuminositeAdaptative:
     def reconfigurer(self, options: dict) -> None:
         """Options modifiées depuis le panneau, appliquées sans recharger
         l'intégration (qui couperait la connexion au téléviseur). Une pause
-        en cours est conservée."""
-        self.options = {**OPTIONS_LUMINOSITE_DEFAUT, **options}
+        en cours est conservée, une Soirée terminée aussi tant que sa source
+        ne change pas."""
+        anciennes, self.options = self.options, {**OPTIONS_LUMINOSITE_DEFAUT, **options}
+        source = (CONF_SOIREE, CONF_SOIREE_ENTITE, CONF_SOIREE_DEBUT, CONF_SOIREE_FIN)
+        if any(anciennes.get(cle) != self.options.get(cle) for cle in source):
+            self._suivi_soiree.oublier()
+            self._suivre_source_soiree()
+        self._evaluer_soiree("options")
         secours = options.get(CONF_CAPTEUR_SECOURS) or None
         if options[CONF_CAPTEUR_LUX] != self.capteur or secours != self.capteur_secours:
             # Le rapport de l'ancienne paire, avant de repartir de celui de
@@ -897,6 +961,9 @@ class LuminositeAdaptative:
         demandée). Renvoie les options à enregistrer et le compte rendu."""
         if self._tv.etat_connexion != "connecte":
             raise AncrageImpossible("deconnecte")
+        # La luminosité choisie le soir ne dit rien de la courbe du jour.
+        if self.soiree_active:
+            raise AncrageImpossible("soiree")
         # La luminosité d'un mode calibré ne dit rien de la préférence.
         if self.mode_exclu(self._tv.mode_image):
             raise AncrageImpossible("mode_exclu")
@@ -914,6 +981,27 @@ class LuminositeAdaptative:
         self._noter("ancrage", lux=round(lux, 1), luminosite=round(valeur),
                     points=compte_rendu["points"], decalage=self.decalage)
         return {**options, CONF_ANCRAGES: ancrages}, compte_rendu
+
+    def terminer_soiree(self, origine: str) -> bool:
+        """« Terminer la soirée » : finie jusqu'à la fin de sa plage. Renvoie
+        faux s'il n'y avait pas de Soirée en cours."""
+        if not self.soiree_active:
+            return False
+        self._suivi_soiree.terminer(self._etat_soiree)
+        self._evaluer_soiree("terminee", origine=origine)
+        return True
+
+    def restaurer_soiree(self, terminee_jusqua: datetime | None,
+                         lumiere_bleue: dict | None) -> None:
+        """Soirée terminée et lumière bleue posée d'avant le redémarrage,
+        relues par l'entité « Soirée » : de quoi la rétablir le lendemain
+        même si Home Assistant a redémarré entre-temps."""
+        self._suivi_soiree.terminee_jusqua = (dt_util.as_local(terminee_jusqua)
+                                              if terminee_jusqua is not None else None)
+        self._lumiere_bleue = PiloteLumiereBleue.depuis_dict(lumiere_bleue)
+        self._evaluer_soiree(noter=False)
+        self._piloter_lumiere_bleue()
+        self._prevenir()
 
     async def desactiver_economie_energie(self, origine: str) -> dict:
         """« Fonction Économie d'énergie » sur Désactivé, sur demande
@@ -1002,6 +1090,10 @@ class LuminositeAdaptative:
             if evenement["etat"] == "connecte":
                 if self._eteint_pendant_pause:
                     self._lever_pause("rallumage")
+                # Rallumé dans la plage : la Soirée continue ; hors plage, la
+                # lumière bleue posée revient à sa base.
+                self._evaluer_soiree()
+                self._piloter_lumiere_bleue()
                 self._reappliquer(DELAI_APPLICATION_S)
             elif evenement["etat"] == "deconnecte" and self.fin_pause is not None:
                 self._eteint_pendant_pause = True
@@ -1009,6 +1101,7 @@ class LuminositeAdaptative:
         elif evenement["type"] == "ecriture":
             if evenement["possible"]:
                 self._reappliquer(DELAI_APPLICATION_S)
+                self._piloter_lumiere_bleue()
             self._prevenir()
         elif evenement["type"] == "changement" and evenement["categorie"] == CATEGORIE:
             reglages, origine = evenement["reglages"], evenement["origine"]
@@ -1022,13 +1115,28 @@ class LuminositeAdaptative:
                 self._reappliquer(DELAI_APPLICATION_S)
             elif CLE_ECONOMIE in reglages:
                 self._reappliquer(DELAI_APPLICATION_S)
-            if "pictureMode" in reglages or CLE_ECONOMIE in reglages:
+            if CLE_LUMIERE_BLEUE in reglages and origine in ORIGINES_EXTERIEURES:
+                self._reprendre_lumiere_bleue(origine)
+            # Entrée dans un mode laissé de côté, ou sortie ; lumière bleue
+            # changée par le téléviseur. Pas sur une écriture de notre
+            # client : la nôtre est déjà suivie, et celle d'une entité ou du
+            # panneau sera une reprise en main dès que l'historique dira son
+            # origine.
+            if "pictureMode" in reglages or (CLE_LUMIERE_BLEUE in reglages
+                                             and origine != "application"):
+                self._piloter_lumiere_bleue()
+            if {"pictureMode", CLE_ECONOMIE, CLE_LUMIERE_BLEUE} & reglages.keys():
                 self._prevenir()
 
     @callback
     def _sur_ecriture(self, ecriture: dict) -> None:
         if ecriture["origine"] == ORIGINE:
             return
+        if (ecriture["categorie"], ecriture["cle"]) == (CATEGORIE, CLE_LUMIERE_BLEUE):
+            # Entité, panneau, preset ou retour arrière : le téléviseur les
+            # attribue à notre client, seul l'historique dit leur origine.
+            self._reprendre_lumiere_bleue(ecriture["origine"])
+            self._prevenir()
         if (ecriture["categorie"], ecriture["cle"]) == (CATEGORIE, CLE):
             self._reprise_en_main(ecriture["mode_image"], ecriture["origine"],
                                   ecriture["nouvelle"])
@@ -1170,6 +1278,11 @@ class LuminositeAdaptative:
         except (TypeError, ValueError):
             return
         if origine not in ORIGINES_CORRECTION:
+            return
+        if self.soiree_active:
+            # La luminosité voulue le soir ne dit rien de la courbe du jour :
+            # mesurée avec ou sans la baisse, elle la fausserait.
+            self._noter("correction_ecartee", raison="soiree", valeur=valeur)
             return
         if self.capteur_actif != "principal":
             # Lux du secours, via un facteur approché : pas comparable aux
@@ -1693,6 +1806,189 @@ class LuminositeAdaptative:
                 "disponible": self.lux_secours is not None,
                 "actif": self.capteur_actif == "secours"}
 
+    # -------------------------------------------------------------- soirée
+    def _suivre_source_soiree(self) -> None:
+        """Entité qui fait commencer la Soirée, suivie seulement si l'option
+        est active."""
+        entite = self.options.get(CONF_SOIREE_ENTITE) if self.options[CONF_SOIREE] else None
+        if entite == self._source_suivie:
+            return
+        if self._ne_plus_suivre_source is not None:
+            self._ne_plus_suivre_source()
+            self._ne_plus_suivre_source = None
+        self._source_suivie = entite
+        if entite is not None:
+            self._ne_plus_suivre_source = async_track_state_change_event(
+                self.hass, [entite], self._sur_source_soiree)
+
+    def _source_soiree(self) -> Source:
+        entite = self.options.get(CONF_SOIREE_ENTITE)
+        if entite is None:
+            return Source(debut=lire_heure(self.options[CONF_SOIREE_DEBUT]))
+        etat = self.hass.states.get(entite)
+        if entite.split(".")[0] == DOMAINE_HEURE:
+            if etat is None or not etat.attributes.get("has_time"):
+                return Source(debut=None)
+            attributs = etat.attributes
+            return Source(debut=time(attributs.get("hour", 0), attributs.get("minute", 0),
+                                     attributs.get("second", 0)))
+        if etat is None or etat.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return Source(interrupteur=True, allumee=None)
+        return Source(interrupteur=True, allumee=etat.state == "on",
+                      depuis=dt_util.as_local(etat.last_changed))
+
+    @property
+    def source_soiree_ok(self) -> bool | None:
+        """La source peut-elle faire commencer la Soirée ? None si la Soirée
+        est désactivée."""
+        if not self.options[CONF_SOIREE]:
+            return None
+        source = self._source_soiree()
+        return source.allumee is not None if source.interrupteur else source.debut is not None
+
+    def _evaluer_soiree(self, raison: str = "heure", noter: bool = True, **details) -> bool:
+        """Soirée en cours ou non, prochaine échéance programmée. Au début et
+        à la fin : nouvelle cible appliquée en rampe, sans condition
+        d'hystérésis ; une pause n'est pas levée (appliquée à la reprise).
+        Renvoie vrai si elle a commencé ou fini."""
+        if self.options[CONF_SOIREE]:
+            etat = self._suivi_soiree.evaluer(dt_util.now(), self._source_soiree(),
+                                              lire_heure(self.options[CONF_SOIREE_FIN]))
+        else:
+            etat = EtatSoiree(False)
+        ancienne, self._etat_soiree = self._etat_soiree.active, etat
+        self._programmer_soiree(etat.echeance)
+        if ancienne == etat.active:
+            return False
+        if noter:
+            if etat.active:
+                self._noter("soiree_debut", fin=etat.fin.isoformat(),
+                            reduction=self.options[CONF_SOIREE_REDUCTION])
+            else:
+                self._noter("soiree_fin", raison=raison, **details)
+        if not etat.active:
+            self._lumiere_bleue.fin_soiree()
+        # Correction mesurée sous l'autre cible : plus comparable.
+        self._abandonner_correction("soiree")
+        if self.rampe is None and self.etat == "active":
+            # Une rampe en cours suit d'elle-même la nouvelle cible.
+            self._signal.oublier_reference()
+            self._planifier(DELAI_APPLICATION_S)
+        self._piloter_lumiere_bleue()
+        self._prevenir()
+        return True
+
+    def _programmer_soiree(self, echeance: datetime | None) -> None:
+        self._annuler_echeance_soiree()
+        if echeance is not None:
+            self._annuler_soiree = async_track_point_in_utc_time(
+                self.hass, self._sur_echeance_soiree, dt_util.as_utc(echeance))
+
+    def _annuler_echeance_soiree(self) -> None:
+        if self._annuler_soiree is not None:
+            self._annuler_soiree()
+            self._annuler_soiree = None
+
+    @callback
+    def _sur_echeance_soiree(self, _maintenant) -> None:
+        self._annuler_soiree = None
+        self._evaluer_soiree("heure")
+
+    @callback
+    def _sur_source_soiree(self, _evenement: Event[EventStateChangedData]) -> None:
+        if not self._evaluer_soiree("entite"):
+            # L'heure d'un input_datetime a pu changer sans début ni fin.
+            self._prevenir()
+        # Source devenue indisponible ou revenue.
+        self._actualiser_sante()
+
+    def _lumiere_bleue_actuelle(self) -> str | None:
+        valeur = self._tv.etat.get(CATEGORIE, {}).get(CLE_LUMIERE_BLEUE)
+        return None if valeur is None else str(valeur)
+
+    def _piloter_lumiere_bleue(self) -> None:
+        """« Réduire la lumière bleue » aligné sur la Soirée : activée pendant
+        la Soirée (option cochée, mode non laissé de côté), base restaurée
+        sinon. Une écriture à la fois ; rien téléviseur éteint ou en
+        consultation (repris à la connexion)."""
+        if (self._ecriture_lumiere_bleue is not None or not self._desabonnements
+                or self._tv.etat_connexion != "connecte" or self._tv.ecriture_possible is False):
+            return
+        actuelle = self._lumiere_bleue_actuelle()
+        en_soiree = self.active and self.soiree_active
+        mode_exclu = self.mode_exclu(self._tv.mode_image)
+        option = self.options[CONF_SOIREE_LUMIERE_BLEUE]
+        valeur = self._lumiere_bleue.voulue(en_soiree, option, mode_exclu, actuelle)
+        if valeur is None:
+            return
+        raison = "soiree" if valeur == LUMIERE_BLEUE_ACTIVE else (
+            "mode_exclu" if en_soiree and option else "fin")
+        self._lumiere_bleue.avant_ecriture(valeur, actuelle)
+        self._ecriture_lumiere_bleue = self.hass.async_create_background_task(
+            self._ecrire_lumiere_bleue(valeur, raison), f"{DOMAIN} lumière bleue")
+
+    async def _ecrire_lumiere_bleue(self, valeur: str, raison: str) -> None:
+        try:
+            resultat = await self._ecritures.demander(ID_LUMIERE_BLEUE, valeur, ORIGINE)
+        except Exception as exc:  # noqa: BLE001 — exposé dans le journal et la santé
+            resultat = {"ok": False, "raison": str(exc)}
+        self._ecriture_lumiere_bleue = None
+        if resultat["ok"]:
+            self._lumiere_bleue.confirmee(valeur)
+            self._lumiere_bleue_refusee = False
+            self._noter("lumiere_bleue", action=("posee" if valeur == LUMIERE_BLEUE_ACTIVE
+                                                 else "restauree"), raison=raison)
+        else:
+            # Pas de nouvel essai avant le prochain événement (connexion,
+            # mode, Soirée) : un refus durable ne doit pas boucler.
+            self._lumiere_bleue_refusee = True
+            self._noter("lumiere_bleue", action="refusee", valeur=valeur,
+                        erreur=resultat["raison"])
+        self._prevenir()
+        self._actualiser_sante()
+        if resultat["ok"]:
+            # Soirée ou mode changés pendant l'écriture.
+            self._piloter_lumiere_bleue()
+
+    def _reprendre_lumiere_bleue(self, origine: str) -> None:
+        """Réglage de l'utilisateur : reprise en main de ce seul réglage, sans
+        pause de la luminosité."""
+        if self._lumiere_bleue.reprendre_en_main(self.active and self.soiree_active):
+            self._noter("lumiere_bleue", action="reprise_en_main", origine=origine)
+
+    def resume_soiree(self) -> dict[str, Any]:
+        etat = self._etat_soiree
+        return {
+            "configuree": self.options[CONF_SOIREE],
+            "active": self.soiree_active,
+            "fin": etat.fin.isoformat() if self.soiree_active and etat.fin else None,
+            "terminee_jusqua": (etat.terminee_jusqua.isoformat()
+                                if etat.terminee_jusqua is not None else None),
+            "reduction": self.options[CONF_SOIREE_REDUCTION],
+            "lumiere_bleue": {
+                "option": self.options[CONF_SOIREE_LUMIERE_BLEUE],
+                "valeur": self._lumiere_bleue_actuelle(),
+                "posee": self._lumiere_bleue.posee,
+                "reprise": self._lumiere_bleue.reprise,
+                "refusee": self._lumiere_bleue_refusee,
+            },
+        }
+
+    def _sante_soiree(self) -> dict | None:
+        """Soirée pour la page Santé, sans l'identifiant de la source."""
+        if not self.options[CONF_SOIREE]:
+            return None
+        entite = self.options.get(CONF_SOIREE_ENTITE)
+        return {"source": entite.split(".")[0] if entite else "heure",
+                "source_ok": bool(self.source_soiree_ok),
+                "lumiere_bleue_refusee": self._lumiere_bleue_refusee}
+
+    def persistance_soiree(self) -> dict[str, Any]:
+        """Données gardées par l'entité « Soirée » au redémarrage."""
+        terminee = self._suivi_soiree.terminee_jusqua
+        return {"terminee_jusqua": terminee.isoformat() if terminee is not None else None,
+                "lumiere_bleue": self._lumiere_bleue.en_dict()}
+
     # ------------------------------------------------- lux filtré, ambiance
     def restaurer_ambiance(self, valeur: str | None, depuis: datetime | None) -> None:
         """Ambiance d'avant le redémarrage, relue par son entité : elle tient
@@ -1778,7 +2074,7 @@ class LuminositeAdaptative:
             plateforme=self._plateforme, conflit=self._conflit_signale,
             fige=self._fige_signale, ecriture_possible=self._tv.ecriture_possible,
             piece_capteur=piece_capteur, piece_televiseur=piece_televiseur,
-            secours=self._resume_secours())
+            secours=self._resume_secours(), soiree=self._sante_soiree())
         jours = [*self._jours.values(), self._accumulateur.stats]
         aujourdhui = self._accumulateur.stats.jour
         return {
@@ -1823,6 +2119,7 @@ class LuminositeAdaptative:
             "decalage": self.decalage,
             "capteur_actif": self.capteur_actif,
             "ambiance": self.ambiance,
+            "soiree": self.resume_soiree(),
         }
 
     def details(self) -> dict[str, Any]:
@@ -1867,9 +2164,13 @@ class LuminositeAdaptative:
             "correction_en_cours": None if self._suivi is None else {
                 "valeur": self._suivi.valeur,
                 "fin": dt_util.utc_from_timestamp(self._suivi.echeance).isoformat()},
-            # Cible de la courbe seule, avant le décalage.
+            # Cible de la courbe seule, avant le décalage ; puis décalage
+            # compris, sans la baisse de la Soirée.
             "cible_courbe": (None if lux_filtre is None
                              else calculer_cible(lux_filtre, self.options)),
+            "cible_sans_soiree": (None if lux_filtre is None
+                                  else calculer_cible(lux_filtre, self.options, self.decalage)),
+            "source_soiree_ok": self.source_soiree_ok,
             "lux_principal": self.lux_principal,
             "secours": secours,
             "ambiance_depuis": depuis.isoformat() if depuis is not None else None,
@@ -1892,4 +2193,5 @@ class LuminositeAdaptative:
             "derniere_erreur": self.derniere_erreur,
             "decalage": self.decalage,
             "capteur_actif": self.capteur_actif,
+            "soiree": self.soiree_active,
         }

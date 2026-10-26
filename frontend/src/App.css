@@ -1086,6 +1086,39 @@ select {
   width: 7.5rem;
 }
 
+.champs-soiree {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.champs-soiree:disabled {
+  opacity: 0.55;
+}
+
+.saisie-heure {
+  width: 7.5rem;
+}
+
+.etat-soiree p {
+  margin: 0;
+}
+
+.etat-soiree .message {
+  margin-top: 0.5rem;
+}
+
+.badge-soiree {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--etat-attente);
+  color: var(--etat-attente);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .modes-exclus {
   margin: 0 0 1rem;
   padding: 0;

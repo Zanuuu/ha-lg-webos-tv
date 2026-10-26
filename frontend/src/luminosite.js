@@ -49,6 +49,7 @@ export const RAISONS_CORRECTION_ECARTEE = {
   annulation: 'retour arrière dans l\'historique',
   secours: 'mesurée avec le capteur de secours',
   decalage: 'décalage changé entre-temps',
+  soiree: 'faite pendant la Soirée',
 }
 
 // Ambiances de la pièce (ambiance.AMBIANCES).
@@ -60,6 +61,32 @@ export const LIBELLES_AMBIANCE = {
 
 // Bornes du décalage pilotable (const.DECALAGE_MIN, DECALAGE_MAX).
 export const DECALAGE = [-30, 30]
+
+// Soirée (soiree.py) : sources possibles, fin, actions sur « Réduire la
+// lumière bleue » notées au journal.
+export const DOMAINES_SOURCE_SOIREE = ['input_datetime', 'binary_sensor', 'schedule']
+export const FINS_SOIREE = {
+  heure: 'heure de fin',
+  entite: 'entité de début repassée à « off »',
+  terminee: 'terminée à la main',
+  options: 'réglages modifiés',
+}
+export const ACTIONS_LUMIERE_BLEUE = {
+  posee: 'activée',
+  restauree: 'rétablie à sa valeur d\'avant',
+  reprise_en_main: 'réglée ailleurs : laissée telle quelle jusqu\'à la fin de la Soirée',
+  refusee: 'écriture refusée par le téléviseur',
+}
+export const RAISONS_LUMIERE_BLEUE = {
+  soiree: 'début de la Soirée',
+  mode_exclu: 'mode d\'image laissé de côté',
+  fin: 'fin de la Soirée',
+}
+
+// « HH:MM » valide (soiree.lire_heure, sans les secondes du formulaire).
+export function heureValide(texte) {
+  return typeof texte === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(texte)
+}
 
 // Rapport habituel entre le principal et le secours (secours.RapportCapteurs
 // .resume) : `facteur` = lux du principal / lux du secours.
@@ -116,6 +143,7 @@ export const BORNES = {
   rampe_debit: [1, 20],
   ambiance_sombre: [1, 100000],
   ambiance_claire: [1, 100000],
+  soiree_reduction: [0, 50],
 }
 
 // Seuils de l'ambiance (const.OPTIONS_AMBIANCE) : vides, les tiers de la
@@ -236,8 +264,9 @@ export function pointsCourbe(options) {
 // Portage de courbe.calculer_cible (vecteurs partagés :
 // tests/vecteurs_courbe.json) : interpolation par morceaux sur le logarithme
 // du lux, plate au-delà des extrémités, plus le décalage pilotable, arrondi
-// 0,5 vers le haut, borné à 0–100.
-export function calculerCible(lux, options, decalage = 0) {
+// 0,5 vers le haut, borné à 0–100 ; baisse de la Soirée (`reduction`, en %)
+// appliquée à la valeur bornée.
+export function calculerCible(lux, options, decalage = 0, reduction = 0) {
   const courbe = pointsCourbe(options).map(([l, v]) => [Math.log(l), v])
   const x = Math.log(Math.max(lux, 1))
   let valeur = courbe[courbe.length - 1][1]
@@ -253,7 +282,9 @@ export function calculerCible(lux, options, decalage = 0) {
       }
     }
   }
-  return Math.min(Math.max(Math.floor(valeur + decalage + 0.5), 0), 100)
+  valeur += decalage
+  if (reduction) valeur = Math.min(Math.max(valeur, 0), 100) * (1 - reduction / 100)
+  return Math.min(Math.max(Math.floor(valeur + 0.5), 0), 100)
 }
 
 // Tiers de la plage de la courbe en ln(lux) (ambiance.seuils_courbe) :
@@ -272,7 +303,7 @@ export function validerOptions(options) {
   const erreurs = {}
   for (const [cle, [bas, haut]] of Object.entries(BORNES)) {
     const valeur = options[cle]
-    if ((cle in OPTIONS_AVANCEES || OPTIONS_AMBIANCE.includes(cle))
+    if ((cle in OPTIONS_AVANCEES || OPTIONS_AMBIANCE.includes(cle) || cle === 'soiree_reduction')
         && (valeur === null || valeur === undefined)) continue
     if (!estNombre(valeur) || valeur < bas || valeur > haut) {
       erreurs[cle] = `Entre ${bas} et ${haut}.`
@@ -317,6 +348,18 @@ export function validerOptions(options) {
   if (options.reprise_sur_changement !== undefined
       && typeof options.reprise_sur_changement !== 'boolean') {
     erreurs.reprise_sur_changement = 'Cochée ou non.'
+  }
+  // soiree.valider
+  for (const cle of ['soiree_debut', 'soiree_fin']) {
+    if (options[cle] != null && !heureValide(options[cle])) erreurs[cle] = 'Heure au format HH:MM.'
+  }
+  if (!options.soiree_entite && !erreurs.soiree_debut && !erreurs.soiree_fin
+      && options.soiree_debut != null && options.soiree_debut === options.soiree_fin) {
+    erreurs.soiree_fin = 'Doit différer de l\'heure de début.'
+  }
+  if (options.soiree_entite
+      && !DOMAINES_SOURCE_SOIREE.includes(options.soiree_entite.split('.')[0])) {
+    erreurs.soiree_entite = 'Entité input_datetime, binary_sensor ou schedule.'
   }
   return erreurs
 }

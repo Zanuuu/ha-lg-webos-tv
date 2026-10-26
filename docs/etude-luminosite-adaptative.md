@@ -1186,7 +1186,7 @@ Dans l'ordre ; chacun livrable seul, validé par vous avant le suivant.
 | **4 — Mise en route guidée** | R6 (pièce, profil, vérifications, point d'ancrage), R9 (point intermédiaire de la courbe) | lots 1, 3 (P7 à l'essai réel) | 2.8.0 |
 | **5 — Reprise en main et suggestions** | R7 (levée sur changement d'ambiance), R8 (corrections, suggestions, points sur la courbe) | lot 4 ; arbitrage A2 | 2.9.0 |
 | **6 — Options** | R11 (décalage pilotable), R12 (capteur de secours), R14a (entités « Lux filtré » et « Ambiance ») | arbitrage A1 | 2.10.0 |
-| **7 — Soirée et autres réglages** | R15 (soirée), R16 (niveau noir compensé), R13 (gamma) ; R14b (ambiances intégrées) écarté pour l'instant (décision A8) | P5 bis, P9, P10 (P11 à l'essai réel) | ultérieur |
+| **7 — Soirée et autres réglages** | R15 (soirée), R16 (niveau noir compensé), R13 (gamma) ; R14b (ambiances intégrées) écarté pour l'instant (décision A8) | P5 bis, P9, P10 (P11 à l'essai réel) | 7a (R15) : 2.11.0 ; 7b : ultérieur |
 
 Le lot 1 passe en premier pour les raisons du § 1.2 ; les rampes viennent
 ensuite parce qu'elles sont le gain le plus visible une fois le signal
@@ -1346,6 +1346,54 @@ celle-ci réutilise leurs détections.
   « Lux filtré » au dixième sous 100 lx, suivi tant que le filtre avance,
   quel que soit l'état de la fonction.
 
+**Lot 7a livré en 2.11.0 : choix de mise en œuvre.**
+
+P5 bis, P9 et P10 n'ayant pas été menés, le lot 7 est coupé en deux : 7a
+(R15 Soirée, scripts et modes opératoires de la séance, portée de
+`eyeComfortMode`) ; 7b (R13 gamma selon l'ambiance, R16 niveau noir
+compensé, pilotes par réglage du § 5.1) attend leurs résultats
+(`docs/essais-lot7.md`).
+
+- Module pur `soiree.py` : plage quotidienne (passant minuit), sources
+  heure, `input_datetime` (son heure, date ignorée), `binary_sensor` et
+  `schedule` (début au passage à `on`, fin au retour à `off` ou à l'heure
+  de fin) ; « Terminer la soirée » vaut jusqu'à la fin de la plage en
+  cours, conservé au redémarrage ; pilote de la lumière bleue.
+- Arbitrages de l'utilisateur (25/10/2026) : **baisse en fraction**,
+  `(courbe + décalage)` bornée à 0–100 puis × (1 − r), r = 20 % par
+  défaut (le plafond de −20 points en haut de la courbe), à confirmer par
+  P11 ; un plafond absolu n'aurait eu aucun effet dans une pièce sombre,
+  là où l'écran fournit l'essentiel de la lumière à l'œil. **Extinction =
+  suspension** : rallumé dans la plage, la Soirée continue ; hors plage,
+  la lumière bleue posée est restaurée à la connexion. **Soirée et pause
+  indépendantes** : le début ne lève pas une pause (baisse appliquée à la
+  reprise, comme le décalage), « Reprendre » ne termine pas la Soirée,
+  bouton dédié « Terminer la soirée ». **Lumière bleue pas dans les modes
+  laissés de côté** : base restaurée en y entrant, réactivée en sortant.
+- Décisions par défaut, validées avec le plan : reprises en main de la
+  Soirée **non retenues comme corrections** (une préférence du soir ne
+  retouche pas la courbe du jour ; l'écart n'est donc mesuré ni avec ni
+  sans la baisse), correction en observation abandonnée au début et à la
+  fin ; point d'ancrage refusé pendant la Soirée ; aucune Réparation
+  (diagnostic `soiree` de la page Santé : source inutilisable, lumière
+  bleue refusée). Le diagnostic « courbe calée de travers », jugé sur
+  l'histogramme du lux, n'est pas touché ; les rampes de début et de fin,
+  espacées d'heures, ne font pas d'allers-retours.
+- Lumière bleue : écrite par la file coalescente sans garde de mode,
+  téléviseur connecté et écriture accordée ; « posée » seulement après
+  confirmation ; restaurée quand la Soirée finit, quand la fonction est
+  désactivée, ou à la connexion suivante ; jamais à l'arrêt de
+  l'intégration (un rechargement en pleine Soirée la remettrait aussitôt).
+  Reprise en main détectée par la notification (`manuel`,
+  `autre_application`) ou par l'historique (entité, panneau, preset,
+  retour arrière) ; une notification de notre client n'est pas réévaluée,
+  l'historique dit ensuite son origine. Un refus n'est pas retenté avant
+  l'événement suivant (connexion, mode, Soirée).
+- Correction de `arbre.mode_dependant` (§ 8.3) faite sans P10 : le
+  descripteur du téléviseur est la même source qui fonde « la luminosité
+  est propre au mode » ; un test recoupe `CLES_GLOBALES` avec
+  l'inventaire. Si P10 la contredit, une ligne à retirer.
+
 ---
 
 ## 8. Points ouverts
@@ -1415,13 +1463,15 @@ lot de mesures préalable : chaque essai accompagne le lot qu'il valide
 ### 8.3 Constat annexe
 
 **Réduire la lumière bleue est global, l'arbre le traite comme propre au
-mode.** `arbre.mode_dependant` déclare propre au mode toute clé `picture`
+mode.** `arbre.mode_dependant` déclarait propre au mode toute clé `picture`
 sauf `pictureMode`. Or le descripteur de `eyeComfortMode` a une dimension
-vide [Observé : inventaire]. Conséquences supposées : un preset n'en
-rétablit la valeur que si le mode de la capture est actif, et la garde de
-mode d'un retour arrière peut la refuser à tort. À confirmer par P10, puis
-à corriger à part (même remarque, à vérifier, pour `energySaving`, rangé
-dans la catégorie `picture` mais présenté dans Général).
+vide [Observé : inventaire]. Conséquences : un preset n'en rétablissait la
+valeur que si le mode de la capture était actif, et la garde de mode d'un
+retour arrière pouvait la refuser à tort. **Corrigé en 2.11.0**
+(`arbre.CLES_GLOBALES`), à confirmer par P10. Même remarque, **non
+corrigée** faute de descripteur, pour `energySaving`, rangé dans la
+catégorie `picture` mais présenté dans Général : proposition, à trancher
+par P10 (`essai_portee.py` le teste aussi).
 
 **Historique jamais purgé.** L'historique SQLite n'est jamais purgé. Sans les rampes, la luminosité
 adaptative ajoute quelques dizaines de lignes par jour, sans gravité ; avec

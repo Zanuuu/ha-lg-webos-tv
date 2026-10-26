@@ -58,11 +58,16 @@ def _en_ln(options: dict) -> list[tuple[float, float]]:
     return [(math.log(lux), valeur) for lux, valeur in points(options)]
 
 
-def calculer_cible(lux: float, options: dict, decalage: float = 0) -> int:
+def calculer_cible(lux: float, options: dict, decalage: float = 0,
+                   reduction: float = 0) -> int:
     """Interpolation par morceaux sur le logarithme du lux, bornée aux
     extrémités, plus le décalage pilotable (entité « Décalage »), le tout
-    borné à 0–100 : le décalage peut dépasser les luminosités de la courbe."""
+    borné à 0–100 : le décalage peut dépasser les luminosités de la courbe.
+    `reduction` (Soirée, en %) s'applique ensuite, à la valeur bornée : la
+    baisse vaut pour ce que le téléviseur aurait affiché."""
     valeur = _valeur(math.log(max(lux, LUX_PLANCHER)), _en_ln(options)) + decalage
+    if reduction:
+        valeur = min(max(valeur, 0), 100) * (1 - reduction / 100)
     # Arrondi « commercial » (0,5 vers le haut), comme Jinja dans l'ancien
     # blueprint, plutôt que l'arrondi au pair de round().
     return min(max(int(math.floor(valeur + 0.5)), 0), 100)

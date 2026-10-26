@@ -1,5 +1,48 @@
 # Changelog
 
+## 2.11.0 — 2026-10-26
+
+Luminosité adaptative : Soirée (lot 7a de
+`docs/etude-luminosite-adaptative.md` ; le gamma selon l'ambiance et le
+niveau noir compensé attendent les essais P5 bis, P9 et P10).
+
+- **Soirée**, désactivée par défaut (formulaire, section repliée, et page
+  du panneau) : à partir d'une heure, de l'heure d'un `input_datetime`, ou
+  quand un `binary_sensor` ou un `schedule` passe à `on`, jusqu'à l'heure de
+  fin, au retour à `off` de l'entité, ou au bouton « Terminer la soirée »
+  (terminée jusqu'à la fin de sa plage, conservé au redémarrage).
+  Téléviseur éteint puis rallumé avant la fin : elle continue.
+- **Baisse de la luminosité** : fraction (20 % par défaut, 0 à 50 %)
+  retirée de la cible, décalage compris, appliquée en rampe sans condition
+  d'hystérésis ; une pause n'est pas levée (la baisse s'applique à la
+  reprise) et « Reprendre » ne termine pas la Soirée. Courbe appliquée en
+  pointillé baisse comprise.
+- **Réduire la lumière bleue**, en option : activé pendant la Soirée, valeur
+  de base relue sur le téléviseur et restaurée à la fin (même après un
+  redémarrage, par l'entité « Soirée »), rien d'écrit s'il était déjà
+  activé ; pas dans les modes laissés de côté ; un réglage de
+  l'utilisateur pendant la Soirée (télécommande, entité, panneau, preset)
+  en est une reprise en main propre à ce réglage, sans pause de la
+  luminosité. Écrit sans garde de mode.
+- Pendant la Soirée, les reprises en main ne sont pas retenues comme
+  corrections, et le point d'ancrage est refusé ; une correction en
+  observation est abandonnée au début et à la fin.
+- Entités « Soirée » (`binary_sensor`) et « Terminer la soirée »
+  (`button`), créées et retirées avec la fonction ; commande websocket
+  `luminosite_adaptative/terminer_soiree` (administrateurs) ; `configurer`
+  accepte les options de la Soirée, `configuration` liste les entités
+  sources. Journal (début, fin, lumière bleue) et diagnostic de la page
+  Santé (source indisponible, lumière bleue refusée), sans Réparation.
+  Diagnostics : l'entité source est réduite à son domaine.
+- **« Réduire la lumière bleue » traité comme commun à tous les modes**
+  (descripteur du téléviseur à dimension vide) : preset et retour arrière
+  ne sont plus refusés dans un autre mode d'image.
+- Scripts de la séance d'essais P5 bis et P10 (`outils/scripts/essai_gamma.py`,
+  `essai_portee.py`) et modes opératoires de P5 bis, P9, P10 et P11
+  (`docs/essais-lot7.md`).
+- Rétrocompatible sans migration : sans les options de la Soirée,
+  comportement de la 2.10.0.
+
 ## 2.10.0 — 2026-10-25
 
 Luminosité adaptative : options (lot 6 de

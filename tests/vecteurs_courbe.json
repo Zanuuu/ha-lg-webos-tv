@@ -1,5 +1,5 @@
 {
- "_note": "Vecteurs partagés entre tests/test_courbe.py et frontend/tests/courbe.test.js : calcul de la cible (décalage compris) et validation des options de la courbe, identiques côté intégration et panneau.",
+ "_note": "Vecteurs partagés entre tests/test_courbe.py et frontend/tests/courbe.test.js : calcul de la cible (décalage et baisse de la Soirée compris) et validation des options de la courbe, identiques côté intégration et panneau.",
  "cibles": [
   {
    "nom": "2 points, 0 lx",
@@ -336,6 +336,92 @@
    "lux": 40,
    "decalage": 5,
    "cible": 85
+  },
+  {
+   "nom": "Soirée −20 %, pièce lumineuse",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 300,
+   "reduction": 20,
+   "cible": 80
+  },
+  {
+   "nom": "Soirée −20 %, pièce sombre",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 5,
+   "reduction": 20,
+   "cible": 32
+  },
+  {
+   "nom": "Soirée −20 %, 50 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 50,
+   "reduction": 20,
+   "cible": 59
+  },
+  {
+   "nom": "Soirée −20 % après un décalage qui dépasse 100",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 300,
+   "decalage": 10,
+   "reduction": 20,
+   "cible": 80
+  },
+  {
+   "nom": "Soirée −20 % après un décalage négatif",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 2,
+   "decalage": -30,
+   "reduction": 20,
+   "cible": 8
+  },
+  {
+   "nom": "Soirée −50 %, 20 lx",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 20,
+   "reduction": 50,
+   "cible": 30
+  },
+  {
+   "nom": "Soirée à 0 %",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100
+   },
+   "lux": 50,
+   "reduction": 0,
+   "cible": 74
   }
  ],
  "validation": [
@@ -667,6 +753,124 @@
     "capteur_secours": "sensor.b"
    },
    "erreurs": []
+  },
+  {
+   "nom": "Soirée valide",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "soiree": true,
+    "soiree_debut": "21:00",
+    "soiree_fin": "06:00",
+    "soiree_reduction": 20,
+    "soiree_lumiere_bleue": true
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "Soirée : début égal à la fin",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "soiree": true,
+    "soiree_debut": "21:00",
+    "soiree_fin": "21:00",
+    "soiree_reduction": 20,
+    "soiree_lumiere_bleue": true
+   },
+   "erreurs": [
+    "soiree_fin"
+   ]
+  },
+  {
+   "nom": "Soirée : début égal à la fin, mais début donné par une entité",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "soiree": true,
+    "soiree_debut": "21:00",
+    "soiree_fin": "21:00",
+    "soiree_reduction": 20,
+    "soiree_lumiere_bleue": true,
+    "soiree_entite": "schedule.soir"
+   },
+   "erreurs": []
+  },
+  {
+   "nom": "Soirée : heure invalide",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "soiree": true,
+    "soiree_debut": "25:00",
+    "soiree_fin": "06:00",
+    "soiree_reduction": 20,
+    "soiree_lumiere_bleue": true
+   },
+   "erreurs": [
+    "soiree_debut"
+   ]
+  },
+  {
+   "nom": "Soirée : entité d'un autre domaine",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "soiree": true,
+    "soiree_debut": "21:00",
+    "soiree_fin": "06:00",
+    "soiree_reduction": 20,
+    "soiree_lumiere_bleue": true,
+    "soiree_entite": "sensor.salon"
+   },
+   "erreurs": [
+    "soiree_entite"
+   ]
+  },
+  {
+   "nom": "Soirée : baisse au-delà de 50 %",
+   "options": {
+    "lux_min": 5,
+    "lux_max": 300,
+    "luminosite_min": 40,
+    "luminosite_max": 100,
+    "pause": 120,
+    "modes_exclus": [],
+    "emplacement_capteur": "a",
+    "soiree": true,
+    "soiree_debut": "21:00",
+    "soiree_fin": "06:00",
+    "soiree_reduction": 60,
+    "soiree_lumiere_bleue": true
+   },
+   "erreurs": [
+    "soiree_reduction"
+   ]
   }
  ]
 }

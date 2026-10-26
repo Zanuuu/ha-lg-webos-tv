@@ -6,7 +6,8 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS, CONF_CLE_CLIENT
+from .const import (CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS, CONF_CLE_CLIENT,
+                    CONF_SOIREE_ENTITE)
 from .entite import descriptions
 
 A_MASQUER = {CONF_HOST, CONF_CLE_CLIENT}
@@ -15,7 +16,8 @@ A_MASQUER = {CONF_HOST, CONF_CLE_CLIENT}
 def _luminosite_adaptative(fonction) -> dict[str, Any] | None:
     """État, réglages et santé de la fonction, sans donnée personnelle : ni
     l'identifiant du capteur (souvent le nom de la pièce), ni les noms de
-    pièce."""
+    pièce, ni l'entité qui fait commencer la Soirée (son nom dit souvent
+    l'heure du coucher de quelqu'un)."""
     if fonction is None:
         return None
     sante = fonction.sante()
@@ -30,7 +32,11 @@ def _luminosite_adaptative(fonction) -> dict[str, Any] | None:
     return {
         "etat": details["etat"],
         "options": {cle: valeur for cle, valeur in fonction.options.items()
-                    if cle not in (CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS)},
+                    if cle not in (CONF_CAPTEUR_LUX, CONF_CAPTEUR_SECOURS, CONF_SOIREE_ENTITE)},
+        # Source de la Soirée réduite à son type.
+        "soiree_source": (None if CONF_SOIREE_ENTITE not in fonction.options
+                          else fonction.options[CONF_SOIREE_ENTITE].split(".")[0]),
+        "soiree": details["soiree"],
         "decalage": details["decalage"],
         "capteur_actif": details["capteur_actif"],
         "ambiance": details["ambiance"],

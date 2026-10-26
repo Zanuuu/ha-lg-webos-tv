@@ -34,6 +34,7 @@ class FauxClient:
             "picture": {
                 "sharpness": 10, "contrast": 100, "backlight": 80,
                 "pictureMode": "expert2", "energySaving": "off", "motionEyeCare": "off",
+                "eyeComfortMode": "off",
             },
             "sound": {"soundMode": "standard", "eArcSupport": "on"},
         }

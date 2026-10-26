@@ -82,6 +82,17 @@ OPTIONS_AMBIANCE = (CONF_AMBIANCE_SOMBRE, CONF_AMBIANCE_CLAIRE)
 # Décalage pilotable de la luminosité adaptative (entité number), ajouté à la
 # cible de la courbe.
 DECALAGE_MIN, DECALAGE_MAX = -30, 30
+# Soirée (soiree.py) : à partir d'une heure ou d'une entité, luminosité
+# baissée d'une fraction et, en option, « Réduire la lumière bleue ».
+# Désactivée par défaut ; heures en « HH:MM », heure locale.
+CONF_SOIREE = "soiree"
+CONF_SOIREE_DEBUT = "soiree_debut"
+CONF_SOIREE_ENTITE = "soiree_entite"
+CONF_SOIREE_FIN = "soiree_fin"
+CONF_SOIREE_REDUCTION = "soiree_reduction"
+CONF_SOIREE_LUMIERE_BLEUE = "soiree_lumiere_bleue"
+OPTIONS_SOIREE = (CONF_SOIREE, CONF_SOIREE_DEBUT, CONF_SOIREE_ENTITE, CONF_SOIREE_FIN,
+                  CONF_SOIREE_REDUCTION, CONF_SOIREE_LUMIERE_BLEUE)
 # Option groupée des modes HDR et Dolby Vision (hdr*, dolbyHdr*) : leurs
 # libellés français ne figurent pas dans l'arbre des menus.
 MODES_HDR = "hdr"
@@ -95,4 +106,11 @@ OPTIONS_LUMINOSITE_DEFAUT = {
     CONF_REPRISE_SUR_CHANGEMENT: True,
     CONF_MODES_EXCLUS: ["filmMaker", "expert1", "expert2", MODES_HDR],
     CONF_EMPLACEMENT: "inconnu",
+    # 20 % : le plafond de −20 points proposé par l'étude en haut de la
+    # courbe (100 → 80), à confirmer par l'essai P11.
+    CONF_SOIREE: False,
+    CONF_SOIREE_DEBUT: "21:00",
+    CONF_SOIREE_FIN: "06:00",
+    CONF_SOIREE_REDUCTION: 20,
+    CONF_SOIREE_LUMIERE_BLEUE: False,
 }

@@ -99,6 +99,10 @@ export function texteControle(d) {
       return `Capteur et téléviseur dans la même pièce (${v.televiseur}).`
     case 'secours':
       return `Capteur de secours : prêt à prendre le relais. ${texteRapportSecours(v)}`
+    case 'soiree':
+      return v.source === 'heure'
+        ? 'Soirée : commence à heure fixe.'
+        : 'Soirée : l\'entité qui la fait commencer répond.'
     default:
       return d.id
   }
@@ -279,6 +283,23 @@ export function texteDiagnostic(d, options, suggestions = 0) {
       }
     case 'secours':
       return texteSecours(v)
+    case 'soiree':
+      return v.cause === 'source'
+        ? {
+            titre: 'La Soirée ne peut pas commencer',
+            pourquoi: v.source === 'input_datetime'
+              ? 'L\'entité input_datetime choisie est introuvable, ou ne donne pas d\'heure.'
+              : 'L\'entité qui fait commencer la Soirée est introuvable ou indisponible.',
+            action: 'Vérifiez cette entité, ou choisissez une heure fixe dans les réglages de la '
+              + 'Soirée.',
+          }
+        : {
+            titre: 'Le téléviseur refuse « Réduire la lumière bleue »',
+            pourquoi: 'La dernière écriture de ce réglage n\'a pas été confirmée ; la baisse de '
+              + 'luminosité de la Soirée, elle, s\'applique.',
+            action: 'Voyez le journal ; si cela persiste, décochez « Réduire la lumière bleue » '
+              + 'dans les réglages de la Soirée.',
+          }
     case 'pieces_differentes':
       return {
         titre: 'Capteur dans une autre pièce',

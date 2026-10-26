@@ -42,11 +42,12 @@ const seuilTexte = (lux) => formaterLux(Math.round(lux * 10) / 10)
 // `corrections` : réglages manuels retenus, en points, ramenés sur la courbe
 // seule (valeur moins le décalage du moment, comme leur écart) ; `apercu` :
 // options d'une courbe suggérée, tracée en tirets ; `decalage` : décalage
-// pilotable, la courbe appliquée est tracée en pointillé ; `seuils` : seuils
+// pilotable et `reduction` : baisse de la Soirée en cours (%), la courbe
+// appliquée est tracée en pointillé ; `seuils` : seuils
 // de l'ambiance, en repères verticaux. Sans `onChanger`, la courbe est un
 // aperçu, sans poignées.
 export default function CourbeLuminosite({ options, lux, ancrages = [], corrections = [],
-  apercu = null, decalage = 0, seuils = null, desactive, onChanger }) {
+  apercu = null, decalage = 0, reduction = 0, seuils = null, desactive, onChanger }) {
   const svgRef = useRef(null)
   const luxFin = domaineLux(options, lux)
   const xDeLux = (l) => X0 + (Math.log10(borner(l, 1, luxFin)) / Math.log10(luxFin)) * (X1 - X0)
@@ -68,8 +69,9 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
   const dernier = points[points.length - 1]
   const trace = tracer(options)
 
-  // Courbe plus décalage, bornée à 0–100 : échantillonnée, la borne peut
-  // couper un segment en son milieu.
+  // Courbe plus décalage, bornée à 0–100, puis baissée pendant la Soirée
+  // (courbe.calculer_cible) : échantillonnée, la borne peut couper un
+  // segment en son milieu.
   function tracerApplique() {
     const n = 160
     const enLn = pointsCourbe(options).map(([lx, v]) => [Math.log(lx), v])
@@ -85,11 +87,14 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
     return Array.from({ length: n + 1 }, (_, i) => {
       const x = X0 + ((X1 - X0) * i) / n
       const v = valeur(Math.log(Math.max(luxDeX(x), 1)))
-      return `${i === 0 ? 'M' : 'L'} ${x} ${yDeLum(borner(v + decalage, 0, 100))}`
+      return `${i === 0 ? 'M' : 'L'} ${x} `
+        + `${yDeLum(borner(v + decalage, 0, 100) * (1 - reduction / 100))}`
     }).join(' ')
   }
 
-  const cible = lux !== null && lux !== undefined ? calculerCible(lux, options, decalage) : null
+  const cible = lux !== null && lux !== undefined
+    ? calculerCible(lux, options, decalage, reduction) : null
+  const appliquee = decalage !== 0 || reduction !== 0
   const maintenant = cible !== null ? { x: xDeLux(Math.max(lux, 1)), y: yDeLum(cible) } : null
   const milieu = options.point_intermediaire
 
@@ -232,7 +237,7 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
           </line>
         ))}
         <path d={trace} className="trace-courbe" />
-        {decalage !== 0 && <path d={tracerApplique()} className="trace-appliquee" />}
+        {appliquee && <path d={tracerApplique()} className="trace-appliquee" />}
         {apercu && <path d={tracer(apercu)} className="trace-apercu" />}
         {corrections.map((c) => (
           <circle key={c.id} cx={xDeLux(Math.max(c.lux, 1))}
@@ -273,8 +278,9 @@ export default function CourbeLuminosite({ options, lux, ancrages = [], correcti
             + 'du clavier.'
           : '.'}
         {ancrages.length > 0 && ' Losanges : vos points d\'ancrage.'}
-        {decalage !== 0 && ` Pointillé : la courbe appliquée, décalage `
-          + `${decalage > 0 ? '+' : ''}${decalage}.`}
+        {appliquee && ` Pointillé : la courbe appliquée, ${[
+          decalage !== 0 && `décalage ${decalage > 0 ? '+' : ''}${decalage}`,
+          reduction !== 0 && `Soirée −${reduction} %`].filter(Boolean).join(', ')}.`}
         {corrections.length > 0 && ' Points : vos corrections retenues.'}
         {apercu && ' Tirets : la courbe suggérée.'}
         {seuils && ` Repères verticaux : ambiance sombre sous ${seuilTexte(seuils[0])}, claire `

@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import * as api from '../api.js'
 import { useLuminositeAdaptative } from '../hooks/useLuminositeAdaptative.js'
 import {
-  BORNES, DECALAGE, EMPLACEMENTS, FINS_RAMPE, heure, LIBELLE_HDR, LIBELLES_AMBIANCE,
-  LIBELLES_CAUSE, LIBELLES_ETAT, LIBELLES_PROFIL, MODE_HDR, NOMS_PLATEFORME, OPTIONS_AMBIANCE,
-  OPTIONS_AVANCEES, RAISONS_CORRECTION_ECARTEE, seuilsCourbe, texteRapportSecours,
-  validerOptions,
+  ACTIONS_LUMIERE_BLEUE, BORNES, DECALAGE, EMPLACEMENTS, FINS_RAMPE, FINS_SOIREE, heure,
+  LIBELLE_HDR, LIBELLES_AMBIANCE, LIBELLES_CAUSE, LIBELLES_ETAT, LIBELLES_PROFIL, MODE_HDR,
+  NOMS_PLATEFORME, OPTIONS_AMBIANCE, OPTIONS_AVANCEES, RAISONS_CORRECTION_ECARTEE,
+  RAISONS_LUMIERE_BLEUE, seuilsCourbe, texteRapportSecours, validerOptions,
 } from '../luminosite.js'
 import { libelleChoix } from '../arbre.js'
 import { duree } from '../sante.js'
@@ -42,13 +42,15 @@ function texteProfil(profil) {
 }
 
 // Les options avancées et les seuils d'ambiance vides (null) suivent le
-// profil ou la courbe, un point intermédiaire ou un secours vide est absent :
+// profil ou la courbe, un point intermédiaire, un secours ou une entité de
+// début de Soirée vide est absent :
 // sans effet sur la comparaison avec les options enregistrées, où ils
 // n'apparaissent pas.
 function normaliser(options, cles = null) {
   return JSON.stringify(Object.fromEntries(Object.entries(options)
     .filter(([cle, valeur]) => !((cle in OPTIONS_AVANCEES || OPTIONS_AMBIANCE.includes(cle)
-      || cle === 'point_intermediaire' || cle === 'capteur_secours') && valeur == null))
+      || cle === 'point_intermediaire' || cle === 'capteur_secours' || cle === 'soiree_entite')
+      && valeur == null))
     .filter(([cle]) => cles === null || cles.includes(cle))
     .sort(([a], [b]) => a.localeCompare(b))))
 }
@@ -61,6 +63,32 @@ const CLES_COURBE = ['lux_min', 'lux_max', 'luminosite_min', 'luminosite_max',
 // Avec un seul point d'ancrage, le deuxième se prend dans une ambiance au
 // moins 4 fois plus sombre (courbe.FACTEUR_DEUX_POINTS).
 const FACTEUR_DEUX_POINTS = 4
+
+// D'après Brown et al. (2022), sans promesse de santé (étude, § 3.6.2).
+const TEXTE_SOIREE = 'Le soir, la luminosité calculée est baissée d\'une fraction et, si vous le '
+  + 'cochez, « Réduire la lumière bleue » est activé. D\'après un consensus de chercheurs (Brown '
+  + 'et al., 2022), limiter la lumière reçue le soir passe d\'abord par baisser la luminosité des '
+  + 'écrans ; réduire la lumière bleue n\'en retire qu\'une partie. Aucun effet sur le sommeil '
+  + 'n\'est promis.'
+
+const DOMAINES_SOURCE = {
+  input_datetime: 'heure',
+  binary_sensor: 'capteur binaire',
+  schedule: 'planning',
+}
+
+function libelleSource(source) {
+  return `${source.nom} (${DOMAINES_SOURCE[source.domaine] || source.domaine})`
+}
+
+// Début de la Soirée, en clair : heure fixe ou entité.
+function texteDebutSoiree(options, sources) {
+  const entite = options.soiree_entite
+  if (!entite) return `à ${options.soiree_debut}`
+  const source = sources.find((s) => s.entity_id === entite)
+  const nom = source ? `« ${source.nom} »` : entite
+  return entite.startsWith('input_datetime.') ? `à l'heure de ${nom}` : `quand ${nom} passe à « on »`
+}
 
 function libelleCapteur(capteur) {
   const valeur = capteur.unite ? `${capteur.valeur} ${capteur.unite}` : capteur.valeur
@@ -132,6 +160,8 @@ export default function VueLuminosite({
           <EtatLuminosite
             index={index}
             etat={details || luminosite}
+            options={configuration.options}
+            sources={configuration.sources_soiree ?? []}
             lectureSeule={lectureSeule}
             onReprendre={onReprendre}
           />
@@ -211,7 +241,7 @@ function CarteMiseEnRoute({ ancrages, lux, lectureSeule, onOuvrir }) {
   )
 }
 
-function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
+function EtatLuminosite({ index, etat, options, sources, lectureSeule, onReprendre }) {
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState(null)
   const active = etat.etat !== 'desactivee'
@@ -255,9 +285,11 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
           <dt>Luminosité calculée</dt>
           <dd>
             {etat.cible ?? '—'}
-            {etat.decalage ? (
+            {etat.decalage || etat.soiree?.active ? (
               <span className="texte-attenue detail-cible">
-                {' '}courbe {etat.cible_courbe ?? '—'}, décalage {signe(etat.decalage)}
+                {' '}courbe {etat.cible_courbe ?? '—'}
+                {etat.decalage ? `, décalage ${signe(etat.decalage)}` : ''}
+                {etat.soiree?.active ? `, Soirée −${etat.soiree.reduction} %` : ''}
               </span>
             ) : null}
           </dd>
@@ -278,6 +310,16 @@ function EtatLuminosite({ index, etat, lectureSeule, onReprendre }) {
       </dl>
 
       <DecalageLuminosite decalage={etat.decalage ?? 0} desactive={lectureSeule} />
+
+      <EtatSoiree
+        soiree={etat.soiree}
+        sourceOk={etat.source_soiree_ok}
+        modeExclu={etat.mode_exclu}
+        options={options}
+        sources={sources}
+        desactive={lectureSeule || envoi}
+        onTerminer={() => agir(api.terminerSoiree)}
+      />
 
       {etat.rampe && <TransitionLuminosite rampe={etat.rampe} cible={etat.cible}
         actuelle={etat.actuelle} />}
@@ -440,6 +482,54 @@ function DecalageLuminosite({ decalage, desactive }) {
   )
 }
 
+// Soirée (soiree.py) : en cours, terminée à la main, ou à venir ; état de
+// « Réduire la lumière bleue » d'après la valeur notifiée par le téléviseur.
+function EtatSoiree({ soiree, sourceOk, modeExclu, options, sources, desactive, onTerminer }) {
+  if (!soiree?.configuree) return null
+  const bleue = soiree.lumiere_bleue
+  let texteBleue = null
+  if (soiree.active && bleue.option) {
+    if (bleue.reprise) {
+      texteBleue = '« Réduire la lumière bleue » réglé ailleurs : laissé tel quel jusqu\'à la fin.'
+    } else if (modeExclu) {
+      texteBleue = '« Réduire la lumière bleue » n\'est pas activé dans ce mode laissé de côté.'
+    } else if (bleue.refusee) {
+      texteBleue = '« Réduire la lumière bleue » : écriture refusée par le téléviseur.'
+    } else if (bleue.valeur === 'on') {
+      texteBleue = '« Réduire la lumière bleue » activé.'
+    }
+  }
+  return (
+    <div className="ligne-carte etat-soiree" aria-live="polite">
+      {soiree.active ? (
+        <p>
+          <span className="badge-soiree">Soirée</span>{' '}
+          Jusqu'à {heure(soiree.fin)} : luminosité −{soiree.reduction} %.
+          {texteBleue && ` ${texteBleue}`}
+          <button type="button" className="bouton-reprendre" disabled={desactive}
+            onClick={onTerminer}>
+            Terminer la soirée
+          </button>
+        </p>
+      ) : (
+        <p className="texte-attenue">
+          {soiree.terminee_jusqua
+            ? `Soirée terminée jusqu'à ${heure(soiree.terminee_jusqua)}.`
+            : `Soirée ${texteDebutSoiree(options, sources)}, jusqu'à ${options.soiree_fin} : `
+              + `luminosité −${soiree.reduction} %${bleue.option
+                ? ' et « Réduire la lumière bleue »' : ''}.`}
+        </p>
+      )}
+      {sourceOk === false && (
+        <p className="message message-conflit">
+          La Soirée ne peut pas commencer : l'entité de début est introuvable, indisponible, ou
+          ne donne pas d'heure. Le détail est dans Santé de l'installation.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // Limites d'éclairage qui lèveront la pause (reprise.bornes_reprise) ; l'une
 // manque quand la courbe est plate de ce côté.
 function texteRepriseLux(limites) {
@@ -476,6 +566,7 @@ function ReglagesLuminosite({
   index, configuration, lux, details, suggestions, lectureSeule, onEnregistrer, onRelire,
 }) {
   const { options, capteurs, modes_proposes: modes } = configuration
+  const sources = configuration.sources_soiree ?? []
   const [brouillon, setBrouillon] = useState(options)
   // Plage de la suggestion dont la courbe est tracée en tirets.
   const [apercu, setApercu] = useState(null)
@@ -580,6 +671,23 @@ function ReglagesLuminosite({
     )
   }
 
+  // Heure « HH:MM » (Soirée), dans le fuseau de Home Assistant.
+  function champHeure(cle, libelle) {
+    return (
+      <label className="champ-luminosite">
+        <span>{libelle}</span>
+        <input
+          type="time"
+          className="saisie-heure"
+          value={brouillon[cle] ?? ''}
+          aria-invalid={erreurs[cle] ? true : undefined}
+          onChange={(e) => changer({ [cle]: e.target.value || null })}
+        />
+        {erreurs[cle] && <span className="erreur-reglage">{erreurs[cle]}</span>}
+      </label>
+    )
+  }
+
   // Seuil de l'ambiance : vide, il suit la courbe (affiché en indication).
   function champSeuil(cle, libelle, indice) {
     const [bas, haut] = BORNES[cle]
@@ -637,6 +745,7 @@ function ReglagesLuminosite({
   const capteurConnu = capteurs.some((c) => c.entity_id === brouillon.capteur_lux)
   const secoursConnu = capteurs.some((c) => c.entity_id === brouillon.capteur_secours)
   const retrait = !brouillon.capteur_lux
+  const sourceConnue = sources.some((s) => s.entity_id === brouillon.soiree_entite)
   // Rapport appris : seulement pour la paire enregistrée.
   const rapport = details?.secours && brouillon.capteur_secours === options.capteur_secours
     && brouillon.capteur_lux === options.capteur_lux ? texteRapportSecours(details.secours) : null
@@ -651,6 +760,7 @@ function ReglagesLuminosite({
         corrections={suggestions?.corrections ?? []}
         apercu={suggestionApercue?.options ?? null}
         decalage={details?.decalage ?? 0}
+        reduction={details?.soiree?.active ? details.soiree.reduction : 0}
         seuils={seuilsAmbiance(valide ? brouillon : options)}
         desactive={envoi}
         onChanger={changer}
@@ -795,6 +905,72 @@ function ReglagesLuminosite({
         </div>
       </details>
 
+      <details className="reglages-avances reglages-soiree">
+        <summary>Soirée{options.soiree ? ' (activée)' : ''}</summary>
+        <p className="texte-attenue">{TEXTE_SOIREE}</p>
+        <label className="case-mode">
+          <input
+            type="checkbox"
+            checked={brouillon.soiree ?? false}
+            onChange={(e) => changer({ soiree: e.target.checked })}
+          />
+          Activer la Soirée
+        </label>
+        <fieldset className="champs-soiree" disabled={!brouillon.soiree}>
+          <div className="grille-champs">
+            <label className="champ-luminosite champ-large">
+              <span>Début</span>
+              <select
+                value={brouillon.soiree_entite ?? ''}
+                aria-invalid={erreurs.soiree_entite ? true : undefined}
+                onChange={(e) => changer({ soiree_entite: e.target.value || null })}
+              >
+                <option value="">À heure fixe</option>
+                {sources.map((s) => (
+                  <option key={s.entity_id} value={s.entity_id}>{libelleSource(s)}</option>
+                ))}
+                {!sourceConnue && brouillon.soiree_entite && (
+                  <option value={brouillon.soiree_entite}>
+                    {brouillon.soiree_entite} (introuvable)
+                  </option>
+                )}
+              </select>
+              {erreurs.soiree_entite && (
+                <span className="erreur-reglage">{erreurs.soiree_entite}</span>
+              )}
+            </label>
+            {!brouillon.soiree_entite && champHeure('soiree_debut', 'Heure de début')}
+            {champHeure('soiree_fin', 'Heure de fin')}
+            {champNombre('soiree_reduction', 'Baisse de la luminosité', '%')}
+          </div>
+          <p className="texte-attenue">
+            {brouillon.soiree_entite?.startsWith('input_datetime.')
+              ? 'La Soirée commence chaque jour à l\'heure de cette entité. '
+              : brouillon.soiree_entite
+                ? 'La Soirée commence quand cette entité passe à « on » et finit quand elle '
+                  + 'repasse à « off ». '
+                : ''}
+            Elle finit à l'heure de fin ou par « Terminer la soirée » ; téléviseur éteint puis
+            rallumé avant, elle continue. La baisse est retirée de la luminosité calculée,
+            décalage compris (20 % : 100 devient 80, 40 devient 32) ; une pause après un réglage
+            manuel est respectée, la baisse s'applique à la reprise.
+          </p>
+          <label className="case-mode">
+            <input
+              type="checkbox"
+              checked={brouillon.soiree_lumiere_bleue ?? false}
+              onChange={(e) => changer({ soiree_lumiere_bleue: e.target.checked })}
+            />
+            Activer aussi « Réduire la lumière bleue »
+          </label>
+          <p className="texte-attenue">
+            Réglage commun à tous les modes d'image : il n'est pas activé dans les modes laissés
+            de côté, et retrouve sa valeur d'avant à la fin de la Soirée. Si vous le changez
+            pendant la Soirée, il n'est plus touché jusqu'à la fin.
+          </p>
+        </fieldset>
+      </details>
+
       <fieldset className="modes-exclus">
         <legend>Modes d'image laissés de côté</legend>
         <p className="texte-attenue">La luminosité n'y est jamais modifiée (modes calibrés).</p>
@@ -911,6 +1087,21 @@ function texteEvenement(evenement) {
     case 'ambiance':
       return `Ambiance ${LIBELLES_AMBIANCE[evenement.valeur]} (${formaterLux(evenement.lux)}), `
         + `après ${LIBELLES_AMBIANCE[evenement.ancienne]}`
+    case 'soiree_debut':
+      return `Soirée : luminosité −${evenement.reduction} % jusqu'à ${heure(evenement.fin)}`
+    case 'soiree_fin':
+      return `Fin de la Soirée : ${FINS_SOIREE[evenement.raison] || evenement.raison}`
+        + (evenement.origine
+          ? ` (${LIBELLES_CAUSE[evenement.origine]?.replace('réglage ', '') || evenement.origine})`
+          : '')
+    case 'lumiere_bleue':
+      return `« Réduire la lumière bleue » ${ACTIONS_LUMIERE_BLEUE[evenement.action]
+        || evenement.action}`
+        + (evenement.raison ? ` (${RAISONS_LUMIERE_BLEUE[evenement.raison] || evenement.raison})` : '')
+        + (evenement.origine
+          ? ` (${LIBELLES_CAUSE[evenement.origine]?.replace('réglage ', '') || evenement.origine})`
+          : '')
+        + (evenement.erreur ? ` : ${evenement.erreur}` : '')
     case 'activation':
       return 'Fonction activée'
     case 'desactivation':

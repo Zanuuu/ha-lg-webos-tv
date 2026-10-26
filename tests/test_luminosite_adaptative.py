@@ -18,7 +18,8 @@ from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
-from custom_components.lg_webos_tv.const import (CONF_CAPTEUR_LUX, DOMAIN,
+from custom_components.lg_webos_tv.config_flow import SECTION_SOIREE
+from custom_components.lg_webos_tv.const import (CONF_CAPTEUR_LUX, DOMAIN, OPTIONS_SOIREE,
                                                  OPTIONS_LUMINOSITE_DEFAUT)
 from custom_components.lg_webos_tv.luminosite_adaptative import (
     BORNES, ENTITES, ID_MODE, ID_OLED, modes_proposes, valider_options)
@@ -32,6 +33,13 @@ from custom_components.lg_webos_tv.sante import Accumulateur, StatsJour
 from .conftest import entite
 
 LUX = "sensor.salon_lux"
+# Saisie du formulaire des options aux valeurs par défaut : la Soirée dans sa
+# section, l'écart minimal laissé vide (il suit sa valeur par défaut).
+SAISIE_DEFAUT = {
+    **{k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items()
+       if k != "ecart_minimal" and k not in OPTIONS_SOIREE},
+    SECTION_SOIREE: {k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items() if k in OPTIONS_SOIREE},
+}
 TELECOMMANDE = "com.webos.app.quicksettings"
 
 
@@ -327,7 +335,11 @@ async def test_panneau_suit_l_etat_et_reprend(hass: HomeAssistant, fonction, fau
     assert instantane["luminosite_adaptative"] == {
         "etat": "active", "entree_id": ID_OLED, "cible": 60, "fin_pause": None,
         "cause_pause": None, "conflit": None, "rampe": None, "reprise_lux": None,
-        "decalage": 0, "capteur_actif": "principal", "ambiance": "intermediaire"}
+        "decalage": 0, "capteur_actif": "principal", "ambiance": "intermediaire",
+        "soiree": {"configuree": False, "active": False, "fin": None, "terminee_jusqua": None,
+                   "reduction": 20, "lumiere_bleue": {
+                       "option": False, "valeur": "off", "posee": False, "reprise": False,
+                       "refusee": False}}}
 
     await faux_client.notifier("picture", {"backlight": "55"}, caller=TELECOMMANDE)
     await hass.async_block_till_done()
@@ -449,7 +461,7 @@ async def test_page_configuration(hass: HomeAssistant, fonction, ws):
     reponse = await ws("luminosite_adaptative/configuration")
     resultat = reponse["result"]
     assert resultat["options"] == {**OPTIONS_LUMINOSITE_DEFAUT, CONF_CAPTEUR_LUX: LUX,
-                                   "capteur_secours": None}
+                                   "capteur_secours": None, "soiree_entite": None}
     assert resultat["modes_proposes"] == modes_proposes()
     assert [c["entity_id"] for c in resultat["capteurs"]] == [LUX]
     assert resultat["capteurs"][0]["valeur"] == "20"
@@ -568,7 +580,7 @@ async def test_options_creent_puis_retirent_la_fonction(hass: HomeAssistant, ins
     flux = await hass.config_entries.options.async_init(installe.entry_id)
     assert flux["type"] is FlowResultType.FORM
     # Écart minimal et constantes du signal dans la section repliée.
-    saisie = {**{k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items() if k != "ecart_minimal"},
+    saisie = {**SAISIE_DEFAUT,
               CONF_CAPTEUR_LUX: LUX, "avance": {"ecart_minimal": 3}}
     flux = await hass.config_entries.options.async_configure(
         flux["flow_id"], {**saisie, "lux_max": 5})
@@ -1012,7 +1024,7 @@ async def test_page_options_avancees(hass: HomeAssistant, fonction, ws):
 @pytest.mark.parametrize("options_entree", [{}])
 async def test_formulaire_section_avancee(hass: HomeAssistant, installe):
     flux = await hass.config_entries.options.async_init(installe.entry_id)
-    saisie = {**{k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items() if k != "ecart_minimal"},
+    saisie = {**SAISIE_DEFAUT,
               CONF_CAPTEUR_LUX: LUX, "emplacement_capteur": "b",
               "avance": {"ecart_minimal": 3, "confirmation_saut_s": 0, "rampe_debit": 6}}
     flux = await hass.config_entries.options.async_configure(flux["flow_id"], saisie)
@@ -1405,7 +1417,7 @@ ANCRAGES = [{"lux": 20, "luminosite": 70, "horodatage": "2026-10-25T20:00:00+00:
 
 async def formulaire(hass, entree, **valeurs):
     flux = await hass.config_entries.options.async_init(entree.entry_id)
-    saisie = {**{k: v for k, v in OPTIONS_LUMINOSITE_DEFAUT.items() if k != "ecart_minimal"},
+    saisie = {**SAISIE_DEFAUT,
               CONF_CAPTEUR_LUX: LUX, "avance": {}, **valeurs}
     return await hass.config_entries.options.async_configure(flux["flow_id"], saisie)
 
