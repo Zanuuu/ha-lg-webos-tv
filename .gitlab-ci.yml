@@ -1,0 +1,9 @@
+# Pipeline par composants (ci-components) : inclusions et entrées seulement.
+# Ce dépôt est publié : real-data n'y admet que les valeurs réservées à la documentation et
+# les services publics déclarés dans .real-data-allow.
+include:
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_ROOT_NAMESPACE/platform/ci-components/workflow@1
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_ROOT_NAMESPACE/platform/ci-components/secrets@1
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_ROOT_NAMESPACE/platform/ci-components/real-data@1
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_ROOT_NAMESPACE/platform/ci-components/mr-title@1
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_ROOT_NAMESPACE/platform/ci-components/release@1

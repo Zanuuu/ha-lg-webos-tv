@@ -1,0 +1,48 @@
+# Exceptions au contrôle real-data : services publics que ce dépôt cite ou appelle.
+# Une valeur par ligne, sa raison en commentaire. Un domaine couvre ses sous-domaines.
+# Ce dépôt est publié : aucune adresse, aucun nom d'hôte de l'installation n'y entre.
+
+android-developers.googleblog.com    # source citée par la documentation (docs/)
+android.googlesource.com             # source citée par la documentation (docs/)
+anthropic.com                        # adresse de co-auteur dans les messages de commit
+args.de                              # faux positif : attribut Python `args.de` (argument --de)
+awolvision.com                       # source citée par la documentation (docs/)
+com.webos.settingsservice            # faux positif : identifiant de service webOS (luna://), pas un hôte
+community.homey.app                  # source citée par la documentation (docs/)
+community.openhab.org                # source citée par la documentation (docs/)
+developers.home-assistant.io         # source citée par la documentation (docs/)
+displaydaily.com                     # source citée par la documentation (docs/)
+en.wikipedia.org                     # source citée par la documentation (docs/)
+esphome.io                           # source citée par la documentation (docs/)
+github.com                           # dépôt public de l'intégration, dépendances et licences
+hacs.xyz                             # documentation de HACS
+hub.displaycal.net                   # source citée par la documentation (docs/)
+itu.int                              # source citée par la documentation (docs/)
+json-schema.org                      # schéma JSON des inventaires
+kr.eguide.lgappstv.com               # manuel en ligne du constructeur
+learn.microsoft.com                  # source citée par la documentation (docs/)
+library.imaging.org                  # source citée par la documentation (docs/)
+opencollective.com                   # liens de financement des dépendances (package-lock.json)
+organic-electronics.engin.umich.edu  # source citée par la documentation (docs/)
+pmc.ncbi.nlm.nih.gov                 # source citée par la documentation (docs/)
+reactjs.org                          # message d'erreur de React dans le panneau compilé
+registry.npmjs.org                   # registre des dépendances du panneau (package-lock.json)
+tidelift.com                         # liens de financement des dépendances (package-lock.json)
+venustitan-guidance.readthedocs.io   # source citée par la documentation (docs/)
+wolles-elektronikkiste.de            # source citée par la documentation (docs/)
+www.cl.cam.ac.uk                     # source citée par la documentation (docs/)
+www.hasscn.top                       # source citée par la documentation (docs/)
+www.home-assistant.io                # source citée par la documentation (docs/)
+www.lg.com                           # source citée par la documentation (docs/)
+www.ossila.com                       # source citée par la documentation (docs/)
+www.researchgate.net                 # source citée par la documentation (docs/)
+www.rgbautomatyka.pl                 # source citée par la documentation (docs/)
+www.rtings.com                       # source citée par la documentation (docs/)
+www.slashgear.com                    # source citée par la documentation (docs/)
+www.techradar.com                    # source citée par la documentation (docs/)
+www.trustedreviews.com               # source citée par la documentation (docs/)
+www.w3.org                           # espaces de noms SVG dans le panneau compilé
+www.whathifi.com                     # source citée par la documentation (docs/)
+www.xatakahome.com                   # source citée par la documentation (docs/)
+www1.eere.energy.gov                 # source citée par la documentation (docs/)
+zigbee2mqtt.io                       # source citée par la documentation (docs/)
