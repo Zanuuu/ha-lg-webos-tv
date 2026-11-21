@@ -1,0 +1,6 @@
+{
+  "extends": ["local>homelab/platform/renovate"],
+  "prBodyNotes": [
+    "{{#if (equals manager 'npm')}}Le paquet `custom_components/lg_webos_tv/frontend/panneau.js` est construit et commité : le reconstruire sur cette branche avant fusion (`npm run build` dans `frontend/`).{{/if}}"
+  ]
+}
