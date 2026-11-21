@@ -19,7 +19,7 @@
     "bscpylgtv"
   ],
   "requirements": [
-    "bscpylgtv==0.5.2"
+    "bscpylgtv==0.5.5"
   ],
   "single_config_entry": true,
   "ssdp": [

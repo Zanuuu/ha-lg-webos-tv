@@ -1,6 +1,6 @@
 # Scripts d'exploration et de diagnostic (outils/scripts/), à installer dans
 # le venv de test : uv pip install --python .venv -r outils/requirements.txt
-bscpylgtv==0.5.2
+bscpylgtv==0.5.5
 websockets
 jsonschema
 beautifulsoup4
